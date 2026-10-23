@@ -1,0 +1,27 @@
+# Lancement sur la machine virtuelle Linux : docker compose up -d
+# Puis, une seule fois pour la démo : docker compose exec web python manage.py charger_demo
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: atelier
+      POSTGRES_USER: atelier
+      POSTGRES_PASSWORD: atelier-a-changer
+    volumes:
+      - donnees:/var/lib/postgresql/data
+    restart: unless-stopped
+  web:
+    build: .
+    environment:
+      POSTGRES_DB: atelier
+      POSTGRES_USER: atelier
+      POSTGRES_PASSWORD: atelier-a-changer
+      POSTGRES_HOST: db
+      DJANGO_DEBUG: "1"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    restart: unless-stopped
+volumes:
+  donnees:

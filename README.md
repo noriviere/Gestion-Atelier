@@ -1,0 +1,73 @@
+# Gestion Atelier
+
+Application web de gestion des données d'atelier : stock de pièces d'usure et de consommables,
+arborescence d'outillage, fiches produit par machine, avec trois niveaux d'accès.
+
+Cette version est une **démo** avec des données fictives, destinée à présenter le projet.
+
+## Ce que montre la démo
+
+- **Stock** : articles avec type d'inventaire, emplacement, stock mini et quantité mini de commande,
+  plusieurs fournisseurs dont un préféré, sorties et entrées de stock.
+- **À commander** : articles sous le stock mini, regroupés par fournisseur préféré, imprimable.
+- **Inventaires tournants** : fréquence de comptage par article, feuille de comptage imprimable
+  par type d'inventaire, saisie des quantités comptées qui corrige le stock.
+- **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
+- **Produits** : un produit par machine avec cadence, outillages, consommables et notes,
+  affiché sous forme de fiche imprimable.
+- **Profils** : `Admin`, `Méthode et management` (paramétrage via le menu Paramétrage),
+  `Régleur et opérateur` (consultation, mouvements de stock, comptages).
+
+Comptes de démonstration, tous avec le mot de passe `demo` :
+`admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.
+
+## Lancer la démo sur un PC (Python 3.11 ou plus)
+
+```bash
+python -m venv .venv
+source .venv/bin/activate        # Windows : .venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py charger_demo
+python manage.py runserver 0.0.0.0:8000
+```
+
+Puis ouvrir http://localhost:8000 (ou l'adresse du PC depuis un autre poste du réseau).
+
+## Lancer sur la machine virtuelle Linux (Docker)
+
+```bash
+docker compose up -d --build
+docker compose exec web python manage.py charger_demo
+```
+
+L'application répond sur le port 8000, avec une base PostgreSQL.
+
+## Modifier les données fictives
+
+Toutes les données de la démo sont dans [`demo/donnees.py`](demo/donnees.py), sous forme de listes
+simples. Après modification, `python manage.py charger_demo` efface et recharge tout.
+
+## Règles de calcul
+
+- Un article est **à commander** quand son stock est inférieur ou égal au stock mini.
+- La **quantité suggérée** ramène le stock au niveau du mini, plus le mini de commande :
+  `max(mini de commande, stock mini − stock + mini de commande)`.
+- Un article est **à inventorier** quand son dernier comptage date de plus que sa fréquence.
+
+## Tests
+
+```bash
+python manage.py test tests
+```
+
+## Organisation du code
+
+| Dossier | Contenu |
+| --- | --- |
+| `comptes/` | Profils d'accès, connexion obligatoire, commande `charger_demo` |
+| `inventaire/` | Fournisseurs, articles, mouvements, inventaires |
+| `outillage/` | Outils, sous-ensembles et pièces montées |
+| `produits/` | Machines, produits, fiches produit sur machine |
+| `demo/` | Données fictives |
+| `templates/`, `static/` | Gabarit commun et feuille de style |

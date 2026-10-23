@@ -1,0 +1,84 @@
+:root {
+  --fond: #f4f5f7; --carte: #fff; --texte: #1d2330; --discret: #5b6475; --bord: #d9dde4;
+  --accent: #1f5fbf; --alerte: #c0392b; --alerte-fond: #fdecea; --ok: #1e7d4f; --ok-fond: #e7f5ee;
+  --attention: #a86200; --attention-fond: #fff4e0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--fond); color: var(--texte); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+header.barre { background: #1d2330; color: #fff; display: flex; align-items: center; gap: 16px; padding: 0 24px; flex-wrap: wrap; }
+header.barre .logo { font-weight: 700; font-size: 17px; padding: 14px 0; color: #fff; }
+header.barre nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+header.barre nav a { color: #cfd5e0; padding: 16px 9px; font-size: 14px; white-space: nowrap; border-bottom: 3px solid transparent; }
+header.barre nav a.actif, header.barre nav a:hover { color: #fff; border-bottom-color: #6ea1ff; text-decoration: none; }
+header.barre .utilisateur { font-size: 13px; color: #cfd5e0; display: flex; gap: 12px; align-items: center; }
+header.barre .utilisateur form { margin: 0; }
+header.barre .utilisateur button { background: none; border: 1px solid #56607a; color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.badge-profil { background: #33405a; padding: 3px 8px; border-radius: 10px; }
+main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 18px; margin: 28px 0 10px; }
+.sous-titre { color: var(--discret); margin: 0 0 20px; }
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; }
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.tuile { background: var(--carte); border: 1px solid var(--bord); border-radius: 10px; padding: 16px 18px; display: block; color: var(--texte); }
+.tuile:hover { border-color: var(--accent); text-decoration: none; }
+.tuile .valeur { font-size: 30px; font-weight: 700; }
+.tuile .libelle { color: var(--discret); }
+.tuile.alerte .valeur { color: var(--alerte); }
+.tuile.attention .valeur { color: var(--attention); }
+table { width: 100%; border-collapse: collapse; background: var(--carte); }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--bord); vertical-align: top; }
+th { font-size: 13px; color: var(--discret); font-weight: 600; background: #fafbfc; }
+td.nombre, th.nombre { text-align: right; font-variant-numeric: tabular-nums; }
+.tableau { border: 1px solid var(--bord); border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
+.etiquette { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #eef1f5; color: var(--discret); white-space: nowrap; }
+.etiquette.alerte { background: var(--alerte-fond); color: var(--alerte); font-weight: 600; }
+.etiquette.ok { background: var(--ok-fond); color: var(--ok); }
+.etiquette.attention { background: var(--attention-fond); color: var(--attention); }
+.etiquette.prefere { background: #e8f0fe; color: var(--accent); }
+form.filtres { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+input, select, textarea { font: inherit; padding: 7px 10px; border: 1px solid var(--bord); border-radius: 6px; background: #fff; }
+input.compte { width: 90px; text-align: right; }
+.bouton, button.bouton { display: inline-block; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font: inherit; cursor: pointer; }
+.bouton.secondaire { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+.bouton:hover { text-decoration: none; filter: brightness(1.08); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 20px; }
+.messages { list-style: none; padding: 0; margin: 0 0 16px; }
+.messages li { padding: 10px 14px; border-radius: 8px; background: var(--ok-fond); color: var(--ok); }
+.messages li.error { background: var(--alerte-fond); color: var(--alerte); }
+.deux-colonnes { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+@media (max-width: 900px) { .deux-colonnes { grid-template-columns: 1fr; } }
+dl.infos { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+dl.infos dt { color: var(--discret); }
+dl.infos dd { margin: 0; font-weight: 500; }
+.fil { font-size: 13px; color: var(--discret); margin-bottom: 6px; }
+ul.arbre, ul.arbre ul { list-style: none; margin: 0; padding-left: 22px; border-left: 2px solid var(--bord); }
+ul.arbre { padding-left: 0; border-left: 0; }
+ul.arbre li { margin: 6px 0; }
+.noeud-outil { font-weight: 600; }
+.noeud-outil::before { content: "▸ "; color: var(--discret); }
+.noeud-piece { font-size: 14px; color: var(--texte); }
+.noeud-piece::before { content: "• "; color: var(--discret); }
+.notes { white-space: pre-line; background: #fffbea; border: 1px solid #f0e2a8; border-radius: 8px; padding: 12px 14px; }
+.discret { color: var(--discret); font-size: 13px; }
+.connexion { max-width: 380px; margin: 80px auto; }
+.connexion label { display: block; margin: 12px 0 4px; font-weight: 600; }
+.connexion input { width: 100%; }
+.comptes-demo { font-size: 13px; color: var(--discret); margin-top: 18px; }
+.comptes-demo code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; }
+.fiche-entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 3px solid var(--texte); padding-bottom: 12px; margin-bottom: 16px; }
+.fiche-entete .cadence { text-align: right; }
+.fiche-entete .cadence .valeur { font-size: 34px; font-weight: 700; }
+.case { display: inline-block; width: 90px; height: 22px; border-bottom: 1px solid #555; }
+.impression-seule { display: none; }
+@media print {
+  header.barre, .no-print, .actions, .messages { display: none !important; }
+  .impression-seule { display: block; }
+  body { background: #fff; font-size: 12px; }
+  main { padding: 0; max-width: none; }
+  .carte, .tableau { border: 0; padding: 0; }
+  a { color: inherit; }
+  .notes { background: none; }
+}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titre %}Stock – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Stock</h1>
+<p class="sous-titre">Pièces d'usure et consommables.</p>
+<form class="filtres" method="get">
+  <input type="search" name="q" value="{{ filtres.q }}" placeholder="Référence, désignation, emplacement">
+  <select name="categorie"><option value="">Toutes catégories</option>
+    {% for code, nom in categories %}<option value="{{ code }}" {% if filtres.categorie == code %}selected{% endif %}>{{ nom }}</option>{% endfor %}
+  </select>
+  <select name="type"><option value="">Tous types d'inventaire</option>
+    {% for t in types %}<option value="{{ t.pk }}" {% if filtres.type == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nom }}</option>{% endfor %}
+  </select>
+  <label><input type="checkbox" name="alerte" value="1" {% if filtres.alerte %}checked{% endif %}> Sous le mini seulement</label>
+  <button class="bouton" type="submit">Filtrer</button>
+  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'admin:inventaire_article_add' %}">Nouvel article</a>{% endif %}
+</form>
+<div class="tableau"><table>
+  <tr><th>Référence</th><th>Désignation</th><th>Catégorie</th><th>Type d'inventaire</th><th>Emplacement</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th class="nombre">Mini cde</th></tr>
+  {% for a in articles %}
+  <tr>
+    <td><a href="{{ a.get_absolute_url }}">{{ a.reference }}</a></td>
+    <td>{{ a.designation }}</td>
+    <td><span class="etiquette">{{ a.get_categorie_display }}</span></td>
+    <td>{{ a.type_inventaire }}</td>
+    <td>{{ a.emplacement }}</td>
+    <td class="nombre">{% if a.a_commander %}<span class="etiquette alerte">{{ a.stock|floatformat:"-2" }}</span>{% else %}{{ a.stock|floatformat:"-2" }}{% endif %}</td>
+    <td class="nombre">{{ a.stock_mini|floatformat:"-2" }}</td>
+    <td class="nombre">{{ a.mini_commande|floatformat:"-2" }}</td>
+  </tr>
+  {% empty %}<tr><td colspan="8">Aucun article.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

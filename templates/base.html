@@ -1,0 +1,37 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titre %}Gestion Atelier{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'atelier.css' %}">
+</head>
+<body>
+{% if user.is_authenticated %}
+<header class="barre">
+  <a class="logo" href="{% url 'accueil' %}">Gestion Atelier</a>
+  {% with nom=request.resolver_match.url_name %}
+  <nav>
+    <a href="{% url 'accueil' %}" class="{% if nom == 'accueil' %}actif{% endif %}">Accueil</a>
+    <a href="{% url 'articles' %}" class="{% if nom == 'articles' or nom == 'article' %}actif{% endif %}">Stock</a>
+    <a href="{% url 'a_commander' %}" class="{% if nom == 'a_commander' %}actif{% endif %}">À commander</a>
+    <a href="{% url 'inventaires' %}" class="{% if nom == 'inventaires' or nom == 'comptage' %}actif{% endif %}">Inventaires</a>
+    <a href="{% url 'outils' %}" class="{% if nom == 'outils' or nom == 'outil' %}actif{% endif %}">Outillage</a>
+    <a href="{% url 'produits' %}" class="{% if nom == 'produits' or nom == 'produit' or nom == 'fiche' %}actif{% endif %}">Produits</a>
+    <a href="{% url 'machines' %}" class="{% if nom == 'machines' or nom == 'machine' %}actif{% endif %}">Machines</a>
+    {% if peut_modifier %}<a href="{% url 'admin:index' %}">Paramétrage</a>{% endif %}
+  </nav>
+  {% endwith %}
+  <div class="utilisateur">
+    <span>{{ user.get_full_name|default:user.username }}</span>
+    <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>
+    <form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit">Déconnexion</button></form>
+  </div>
+</header>
+{% endif %}
+<main>
+  {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+  {% block contenu %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titre %}Inventaires – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Inventaires tournants</h1>
+<p class="sous-titre">Chaque article a un type d'inventaire et sa propre fréquence de comptage.</p>
+<div class="tableau"><table>
+  <tr><th>Type d'inventaire</th><th class="nombre">Articles</th><th class="nombre">À compter</th><th></th></tr>
+  {% for t in types %}
+  <tr><td><strong>{{ t.type.nom }}</strong><br><span class="discret">{{ t.type.description }}</span></td>
+    <td class="nombre">{{ t.total }}</td>
+    <td class="nombre">{% if t.dus %}<span class="etiquette attention">{{ t.dus }}</span>{% else %}<span class="etiquette ok">0</span>{% endif %}</td>
+    <td><a href="{% url 'comptage' t.type.pk %}">Saisir un comptage</a> · <a href="{% url 'feuille_comptage' t.type.pk %}">Feuille à imprimer</a></td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

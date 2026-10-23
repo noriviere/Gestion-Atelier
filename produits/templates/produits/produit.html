@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titre %}{{ produit.reference }} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'produits' %}">Produits</a> › {{ produit.reference }}</div>
+<h1>{{ produit.reference }} – {{ produit.designation }}</h1>
+<p class="sous-titre">{% if produit.client %}Client : {{ produit.client }}{% endif %}</p>
+{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:produits_produit_change' produit.pk %}">Modifier le produit</a> <a class="bouton secondaire" href="{% url 'admin:produits_produitmachine_add' %}?produit={{ produit.pk }}">Ajouter une machine</a></div>{% endif %}
+{% if produit.notes %}<div class="notes">{{ produit.notes }}</div>{% endif %}
+<h2>Fiches par machine</h2>
+<div class="tableau"><table>
+  <tr><th>Machine</th><th class="nombre">Cadence</th><th></th></tr>
+  {% for f in fabrications %}
+  <tr><td>{{ f.machine }}</td><td class="nombre">{{ f.cadence|floatformat:"-1"|default:"—" }} pièces/h</td><td><a href="{{ f.get_absolute_url }}">Ouvrir la fiche</a></td></tr>
+  {% empty %}<tr><td colspan="3">Ce produit n'est associé à aucune machine.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

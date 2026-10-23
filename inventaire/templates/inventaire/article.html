@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block titre %}{{ article.reference }} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'articles' %}">Stock</a> › {{ article.reference }}</div>
+<h1>{{ article.reference }} – {{ article.designation }}</h1>
+<p class="sous-titre">{{ article.get_categorie_display }} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
+{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:inventaire_article_change' article.pk %}">Modifier l'article</a></div>{% endif %}
+
+<div class="deux-colonnes">
+  <div>
+    <div class="carte">
+      <dl class="infos">
+        <dt>Stock actuel</dt><dd>{% if article.a_commander %}<span class="etiquette alerte">{{ article.stock|floatformat:"-2" }} {{ article.unite }} – à commander</span>{% else %}<span class="etiquette ok">{{ article.stock|floatformat:"-2" }} {{ article.unite }}</span>{% endif %}</dd>
+        <dt>Stock mini</dt><dd>{{ article.stock_mini|floatformat:"-2" }}</dd>
+        <dt>Mini de commande</dt><dd>{{ article.mini_commande|floatformat:"-2" }}</dd>
+        {% if article.a_commander %}<dt>Quantité suggérée</dt><dd>{{ article.quantite_a_commander|floatformat:"-2" }}</dd>{% endif %}
+        <dt>Inventaire</dt><dd>tous les {{ article.frequence_inventaire }} jours · dernier : {{ article.dernier_inventaire|date:"d/m/Y"|default:"jamais" }}
+          {% if article.inventaire_du %}<span class="etiquette attention">à compter</span>{% endif %}</dd>
+      </dl>
+    </div>
+
+    <h2>Fournisseurs</h2>
+    <div class="tableau"><table>
+      <tr><th>Fournisseur</th><th>Réf. fournisseur</th><th class="nombre">Prix</th><th class="nombre">Délai</th></tr>
+      {% for l in liens_fournisseurs %}
+      <tr><td>{{ l.fournisseur }} {% if l.prefere %}<span class="etiquette prefere">préféré</span>{% endif %}</td>
+        <td>{{ l.reference_fournisseur }}</td><td class="nombre">{% if l.prix %}{{ l.prix }} €{% endif %}</td>
+        <td class="nombre">{% if l.delai %}{{ l.delai }} j{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="4">Aucun fournisseur renseigné.</td></tr>{% endfor %}
+    </table></div>
+
+    <h2>Utilisé par</h2>
+    <div class="carte">
+      {% for l in liens_outils %}<div>Outil <a href="{{ l.outil.get_absolute_url }}">{{ l.outil }}</a> <span class="discret">({{ l.quantite }} montée{{ l.quantite|pluralize }})</span></div>{% endfor %}
+      {% for c in consommations %}<div>Produit <a href="{{ c.fabrication.get_absolute_url }}">{{ c.fabrication.produit.reference }} sur {{ c.fabrication.machine.code }}</a> <span class="discret">{{ c.quantite }}</span></div>{% endfor %}
+      {% if not liens_outils and not consommations %}<span class="discret">Aucun outil ni produit.</span>{% endif %}
+    </div>
+  </div>
+
+  <div>
+    {% if peut_mouvementer %}
+    <div class="carte">
+      <h2 style="margin-top:0">Sortie / entrée de stock</h2>
+      <form method="post">{% csrf_token %}
+        {% for choix in form.type %}<div>{{ choix }}</div>{% endfor %}
+        <p>{{ form.quantite.label_tag }}<br>{{ form.quantite }} {{ form.quantite.errors }}</p>
+        <p>{{ form.commentaire.label_tag }}<br>{{ form.commentaire }}</p>
+        <button class="bouton" type="submit">Enregistrer</button>
+      </form>
+    </div>
+    {% endif %}
+    <h2>Mouvements</h2>
+    <div class="carte">
+      {% for m in mouvements %}
+      <div style="margin-bottom:10px"><strong>{{ m.get_type_display }}</strong> {{ m.quantite|floatformat:"-2" }} → stock {{ m.stock_apres|floatformat:"-2" }}<br>
+        <span class="discret">{{ m.date|date:"d/m/Y H:i" }} · {{ m.utilisateur|default:"—" }}{% if m.commentaire %} · {{ m.commentaire }}{% endif %}</span></div>
+      {% empty %}<span class="discret">Aucun mouvement.</span>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

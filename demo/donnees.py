@@ -4,8 +4,12 @@ Machines S1 à S8, MAD1 et MAD2 ; produits N2 à N12 ; pour chaque produit un je
 (chargeur, outillage face, pince, outillage dos) qui porte des pièces d'usure
 (patin, porte-lame, tige, peigne) ; consommables : huile, bandes et meules.
 
-Les pièces d'usure existent en trois tailles (P, M, G) partagées entre produits voisins :
-une même pièce apparaît donc dans plusieurs outils, comme dans la réalité.
+Machines S1 à S8 : meules ; MAD1 et MAD2 : bandes.
+Pièces d'usure : certaines sont partagées entre produits d'une même taille (P, M, G),
+d'autres sont propres à un produit :
+- patin et tige : partagés par taille ;
+- porte-lame : partagé pour les tailles P et M, propre au produit pour N10 à N12 ;
+- peigne : propre à chaque produit.
 Modifier ce fichier puis relancer `python manage.py charger_demo` suffit pour changer la démo.
 Les dates de dernier inventaire sont exprimées en « il y a N jours ».
 """
@@ -50,13 +54,14 @@ ARTICLES = [
     ("PAT-G", "Patin taille G", "usure", "Magasin pièces d'usure", "A1-03", "pièce", 12, 8, 16, 90, 30),
     ("PL-P", "Porte-lame taille P", "usure", "Magasin pièces d'usure", "A2-01", "pièce", 5, 4, 4, 180, 60),
     ("PL-M", "Porte-lame taille M", "usure", "Magasin pièces d'usure", "A2-02", "pièce", 3, 4, 4, 180, 200),
-    ("PL-G", "Porte-lame taille G", "usure", "Magasin pièces d'usure", "A2-03", "pièce", 6, 3, 3, 180, 60),
     ("TIG-P", "Tige taille P", "usure", "Magasin pièces d'usure", "A3-01", "pièce", 22, 12, 24, 90, 95),
     ("TIG-M", "Tige taille M", "usure", "Magasin pièces d'usure", "A3-02", "pièce", 18, 12, 24, 90, 20),
     ("TIG-G", "Tige taille G", "usure", "Magasin pièces d'usure", "A3-03", "pièce", 9, 10, 20, 90, 20),
-    ("PEI-P", "Peigne taille P", "usure", "Magasin pièces d'usure", "A4-01", "pièce", 7, 4, 6, 120, 40),
-    ("PEI-M", "Peigne taille M", "usure", "Magasin pièces d'usure", "A4-02", "pièce", 8, 4, 6, 120, 130),
-    ("PEI-G", "Peigne taille G", "usure", "Magasin pièces d'usure", "A4-03", "pièce", 2, 3, 6, 120, 40),
+    *[(f"PL-{p}", f"Porte-lame spécifique {p}", "usure", "Magasin pièces d'usure", f"A2-{p}", "pièce", stock, 2, 2, 180, 60)
+      for p, stock in (("N10", 3), ("N11", 2), ("N12", 1))],
+    *[(f"PEI-{p}", f"Peigne spécifique {p}", "usure", "Magasin pièces d'usure", f"A4-{p}", "pièce", stock, 2, 4, 120, il_y_a)
+      for p, stock, il_y_a in (("N2", 5, 40), ("N3", 4, 40), ("N4", 6, 130), ("N5", 3, 40), ("N6", 2, 40), ("N7", 5, 130),
+                               ("N8", 4, 40), ("N9", 6, 40), ("N10", 3, 40), ("N11", 1, 40), ("N12", 4, 130))],
     ("HUI-01", "Bidon d'huile de coupe 20 L", "conso", "Huiles", "C1", "bidon", 3, 4, 6, 30, 35),
     ("BAN-40", "Bande abrasive grain 40", "conso", "Abrasifs", "B1-01", "bande", 35, 20, 50, 30, 10),
     ("BAN-80", "Bande abrasive grain 80", "conso", "Abrasifs", "B1-02", "bande", 18, 20, 50, 30, 10),
@@ -71,10 +76,11 @@ PRIX = [
     # référence article, fournisseur, référence fournisseur, prix (€), délai (jours), préféré
     *[(f"PAT-{t}", "Mécanique Précision Sud", f"MPS-PAT{t}", 18.0, 10, True) for t in "PMG"],
     *[(f"PAT-{t}", "Usinage Martin", f"UM-P{t}", 21.0, 6, False) for t in "PMG"],
-    *[(f"PL-{t}", "Usinage Martin", f"UM-PL{t}", 145.0, 15, True) for t in "PMG"],
+    *[(f"PL-{t}", "Usinage Martin", f"UM-PL{t}", 145.0, 15, True) for t in "PM"],
+    *[(f"PL-{p}", "Usinage Martin", f"UM-PL{p}", 180.0, 20, True) for p in ("N10", "N11", "N12")],
     *[(f"TIG-{t}", "Mécanique Précision Sud", f"MPS-TG{t}", 9.5, 10, True) for t in "PMG"],
-    *[(f"PEI-{t}", "Usinage Martin", f"UM-PE{t}", 62.0, 15, True) for t in "PMG"],
-    *[(f"PEI-{t}", "Mécanique Précision Sud", f"MPS-PE{t}", 58.0, 25, False) for t in "PMG"],
+    *[(f"PEI-N{i}", "Usinage Martin", f"UM-PE{i}", 62.0, 15, True) for i in range(2, 13)],
+    *[(f"PEI-N{i}", "Mécanique Précision Sud", f"MPS-PE{i}", 58.0, 25, False) for i in range(2, 13)],
     ("HUI-01", "Lubrifiants de l'Ouest", "LO-HC20", 92.0, 4, True),
     *[(f"BAN-{g}", "Abrasifs Industriels", f"AI-B{g}", 6.8, 5, True) for g in (40, 80, 120, 240)],
     *[(f"BAN-{g}", "Meules et Bandes Diffusion", f"MBD-{g}", 7.4, 3, False) for g in (40, 80, 120, 240)],
@@ -85,9 +91,9 @@ PRIX = [
 
 MACHINES = [
     # code, nom, description
-    *[(f"S{i}", f"Ligne S{i}", "Ligne de production à bandes") for i in range(1, 9)],
-    ("MAD1", "Machine à meule 1", "Rectification à la meule"),
-    ("MAD2", "Machine à meule 2", "Rectification à la meule"),
+    *[(f"S{i}", f"Machine S{i}", "Machine à meule") for i in range(1, 9)],
+    ("MAD1", "Machine à bandes 1", "Machine à bandes"),
+    ("MAD2", "Machine à bandes 2", "Machine à bandes"),
 ]
 
 # Chaque produit a son jeu d'outils : un outil principal et quatre sous-ensembles.
@@ -98,6 +104,13 @@ SOUS_ENSEMBLES = [
     ("3", "Pince", [("PAT", 2)]),
     ("4", "Outillage dos", [("PL", 1), ("PEI", 1), ("TIG", 1)]),
 ]
+
+def _piece(prefixe, produit):
+    """Référence de la pièce d'usure montée sur le jeu d'outils d'un produit."""
+    if prefixe == "PEI" or (prefixe == "PL" and TAILLES[produit] == "G"):
+        return f"{prefixe}-{produit}"
+    return f"{prefixe}-{TAILLES[produit]}"
+
 
 OUTILS = [
     # code, nom, code de l'outil parent (vide si outil principal), description
@@ -110,7 +123,7 @@ for _p in PRODUITS_LISTE:
     for _suffixe, _nom, _pieces in SOUS_ENSEMBLES:
         OUTILS.append((f"OUT-{_p}-{_suffixe}", f"{_nom} {_p}", f"OUT-{_p}", ""))
         for _prefixe, _qte in _pieces:
-            PIECES_OUTILS.append((f"OUT-{_p}-{_suffixe}", f"{_prefixe}-{TAILLES[_p]}", _qte))
+            PIECES_OUTILS.append((f"OUT-{_p}-{_suffixe}", _piece(_prefixe, _p), _qte))
 
 PRODUITS = [
     # référence, désignation, client, notes générales
@@ -136,13 +149,13 @@ CONSOMMATIONS = [
 for _p, _machines, _cadence in _AFFECTATIONS:
     _t = TAILLES[_p]
     for _m in _machines:
-        if _m.startswith("MAD"):
-            FABRICATIONS.append((_p, _m, round(_cadence * 0.8), [f"OUT-{_p}"],
+        if _m.startswith("S"):
+            FABRICATIONS.append((_p, _m, _cadence, [f"OUT-{_p}"],
                                  f"Meule {_MEULE[_t]}, dresser la meule toutes les 2 h.\nVérifier le serrage de la pince à chaque prise de poste."))
             CONSOMMATIONS += [(_p, _m, _MEULE[_t], "1 meule / semaine"), (_p, _m, "MEU-CBN", "finition, selon usure"),
                               (_p, _m, "HUI-01", "1 bidon / semaine")]
         else:
-            FABRICATIONS.append((_p, _m, _cadence, [f"OUT-{_p}"],
+            FABRICATIONS.append((_p, _m, round(_cadence * 1.2), [f"OUT-{_p}"],
                                  f"Bande {_BANDE[_t]} en ébauche, BAN-240 en finition.\nRégler la hauteur du peigne avant démarrage.\nVérifier le serrage de la pince à chaque prise de poste."))
             CONSOMMATIONS += [(_p, _m, _BANDE[_t], "1 bande / poste"), (_p, _m, "BAN-240", "1 bande / 2 postes"),
                               (_p, _m, "HUI-01", "1 bidon / 2 semaines")]
@@ -150,8 +163,9 @@ for _p, _machines, _cadence in _AFFECTATIONS:
 MOUVEMENTS = [
     # référence article, type (entree / sortie), quantité, identifiant, commentaire
     ("PAT-M", "sortie", 4, "regleur", "Changement patins chargeur N7"),
-    ("BAN-80", "sortie", 6, "operateur", "S5 poste du matin"),
-    ("PEI-G", "sortie", 1, "regleur", "Peigne cassé outillage face N11"),
+    ("BAN-80", "sortie", 6, "operateur", "MAD1 poste du matin"),
+    ("PEI-N11", "sortie", 1, "regleur", "Peigne cassé outillage face N11"),
     ("BAN-120", "entree", 50, "intendante", "Réception commande"),
     ("HUI-01", "sortie", 1, "operateur", "S2"),
+    ("MEU-300", "sortie", 1, "regleur", "S7 changement de meule"),
 ]

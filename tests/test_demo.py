@@ -59,3 +59,16 @@ class DemoTests(TestCase):
         art.refresh_from_db()
         self.assertEqual(art.stock, Decimal("5"))
         self.assertFalse(art.inventaire_du)
+
+    def test_export_statique(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as dossier:
+            call_command("exporter_statique", sortie=dossier, stdout=open("/dev/null", "w"))
+            racine = Path(dossier)
+            self.assertTrue((racine / "index.html").exists())
+            accueil = (racine / "operateur" / "index.html").read_text()
+            self.assertNotIn("Paramétrage", accueil)
+            self.assertIn('href="../static/atelier.css"', accueil)
+            self.assertIn("Paramétrage", (racine / "methode" / "index.html").read_text())

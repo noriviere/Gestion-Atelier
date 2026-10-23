@@ -21,6 +21,16 @@ Cette version est une **démo** avec des données fictives, destinée à présen
 Comptes de démonstration, tous avec le mot de passe `demo` :
 `admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.
 
+## Démo en ligne
+
+Une version statique de la démo est publiée sur GitHub Pages :
+https://noriviere.github.io/Gestion-Atelier/
+
+On y choisit un profil (Admin, Méthode et management, Régleur et opérateur) pour voir l'application
+avec ses droits. Les sorties de stock, comptages et filtres sont simulés dans le navigateur :
+rien n'est enregistré. Le site est régénéré automatiquement à chaque modification de `main`
+(workflow `.github/workflows/pages.yml`, commande `python manage.py exporter_statique`).
+
 ## Lancer la démo sur un PC (Python 3.11 ou plus)
 
 ```bash

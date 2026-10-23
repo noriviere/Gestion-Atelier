@@ -94,3 +94,6 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Rendu destiné à l'export statique (GitHub Pages) : bandeau de démo et saisies simulées.
+DEMO_STATIQUE = os.environ.get("DEMO_STATIQUE") == "1"

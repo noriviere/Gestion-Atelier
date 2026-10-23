@@ -77,8 +77,9 @@ class Command(BaseCommand):
         for ref, type_mvt, qte, identifiant, commentaire in d.MOUVEMENTS:
             art = articles[ref]
             stock_final = art.stock
-            Mouvement.enregistrer(art, type_mvt, Decimal(qte), utilisateur=comptes.get(identifiant), commentaire=commentaire)
+            mvt = Mouvement.enregistrer(art, type_mvt, Decimal(qte), utilisateur=comptes.get(identifiant), commentaire=commentaire)
             Article.objects.filter(pk=art.pk).update(stock=stock_final)
+            Mouvement.objects.filter(pk=mvt.pk).update(stock_apres=stock_final)
 
         self.stdout.write(self.style.SUCCESS(
             f"Démo chargée : {len(articles)} articles, {len(outils)} outils, {len(produits)} produits, "

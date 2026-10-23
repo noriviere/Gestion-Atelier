@@ -1,7 +1,12 @@
-"""Données fictives de la démo.
+"""Données fictives de la démo, sur la base décrite par Noel.
 
-Tout est décrit ici sous forme de listes simples : modifier ce fichier puis relancer
-`python manage.py charger_demo` suffit pour changer le contenu de la démo.
+Machines S1 à S8, MAD1 et MAD2 ; produits N2 à N12 ; pour chaque produit un jeu d'outils
+(chargeur, outillage face, pince, outillage dos) qui porte des pièces d'usure
+(patin, porte-lame, tige, peigne) ; consommables : huile, bandes et meules.
+
+Les pièces d'usure existent en trois tailles (P, M, G) partagées entre produits voisins :
+une même pièce apparaît donc dans plusieurs outils, comme dans la réalité.
+Modifier ce fichier puis relancer `python manage.py charger_demo` suffit pour changer la démo.
 Les dates de dernier inventaire sont exprimées en « il y a N jours ».
 """
 
@@ -17,124 +22,136 @@ COMPTES = [
 
 FOURNISSEURS = [
     # nom, contact, téléphone
-    ("Outillage Durand", "M. Durand", "04 72 00 00 01"),
-    ("Mécaprécis", "Service commercial", "04 72 00 00 02"),
-    ("Ressorts du Rhône", "Mme Martin", "04 72 00 00 03"),
-    ("Fournitures Industrielles Lyonnaises", "Comptoir", "04 72 00 00 04"),
+    ("Mécanique Précision Sud", "Service commercial", "04 00 00 00 01"),
+    ("Usinage Martin", "M. Martin", "04 00 00 00 02"),
+    ("Abrasifs Industriels", "Comptoir", "04 00 00 00 03"),
+    ("Meules et Bandes Diffusion", "Mme Petit", "04 00 00 00 04"),
+    ("Lubrifiants de l'Ouest", "Service client", "04 00 00 00 05"),
 ]
 
 TYPES_INVENTAIRE = [
     # nom, description
-    ("Magasin outillage", "Pièces d'usure rangées au magasin"),
-    ("Consommables atelier", "Armoire consommables en bord de ligne"),
-    ("EPI", "Équipements de protection individuelle"),
+    ("Magasin pièces d'usure", "Patins, porte-lames, tiges et peignes"),
+    ("Abrasifs", "Bandes et meules"),
+    ("Huiles", "Bidons en zone de stockage"),
 ]
+
+# Taille de pièce d'usure utilisée par chaque produit.
+TAILLES = {"N2": "P", "N3": "P", "N4": "P", "N5": "P",
+           "N6": "M", "N7": "M", "N8": "M", "N9": "M",
+           "N10": "G", "N11": "G", "N12": "G"}
+PRODUITS_LISTE = list(TAILLES)
 
 ARTICLES = [
     # référence, désignation, catégorie (usure / conso), type d'inventaire, emplacement, unité,
     # stock, stock mini, mini de commande, fréquence d'inventaire (jours), dernier inventaire (il y a N jours)
-    ("PU-0001", "Poinçon Ø6 carbure", "usure", "Magasin outillage", "A1-01", "pièce", 4, 6, 10, 90, 20),
-    ("PU-0002", "Poinçon Ø10 carbure", "usure", "Magasin outillage", "A1-02", "pièce", 12, 4, 6, 90, 20),
-    ("PU-0003", "Matrice Ø6", "usure", "Magasin outillage", "A1-03", "pièce", 3, 2, 2, 90, 120),
-    ("PU-0004", "Ressort de dévêtisseur 20x60", "usure", "Magasin outillage", "A2-01", "pièce", 30, 20, 50, 60, 70),
-    ("PU-0005", "Colonne de guidage Ø25", "usure", "Magasin outillage", "A2-02", "pièce", 2, 2, 4, 180, 30),
-    ("PU-0006", "Bague de guidage Ø25", "usure", "Magasin outillage", "A2-03", "pièce", 8, 4, 4, 180, 30),
-    ("PU-0007", "Lame de cisaille 300 mm", "usure", "Magasin outillage", "A3-01", "pièce", 1, 2, 2, 90, 100),
-    ("PU-0008", "Pilote de centrage Ø8", "usure", "Magasin outillage", "A3-02", "pièce", 15, 5, 10, 90, 10),
-    ("PU-0009", "Vérin azote 750 daN", "usure", "Magasin outillage", "A3-03", "pièce", 3, 2, 2, 180, 200),
-    ("CO-0001", "Huile de frappe (bidon 20 L)", "conso", "Consommables atelier", "B1", "bidon", 2, 3, 4, 30, 40),
-    ("CO-0002", "Graisse de guidage (cartouche)", "conso", "Consommables atelier", "B1", "cartouche", 18, 6, 12, 30, 5),
-    ("CO-0003", "Chiffons d'essuyage (sac 10 kg)", "conso", "Consommables atelier", "B2", "sac", 4, 2, 5, 30, 5),
-    ("CO-0004", "Bombe dégrippant", "conso", "Consommables atelier", "B2", "bombe", 5, 6, 12, 30, 35),
-    ("CO-0005", "Gants anti-coupure T9", "conso", "EPI", "C1", "paire", 40, 30, 50, 30, 10),
-    ("CO-0006", "Bouchons d'oreille (boîte 200)", "conso", "EPI", "C1", "boîte", 1, 2, 4, 60, 65),
+    ("PAT-P", "Patin taille P", "usure", "Magasin pièces d'usure", "A1-01", "pièce", 14, 10, 20, 90, 30),
+    ("PAT-M", "Patin taille M", "usure", "Magasin pièces d'usure", "A1-02", "pièce", 6, 10, 20, 90, 100),
+    ("PAT-G", "Patin taille G", "usure", "Magasin pièces d'usure", "A1-03", "pièce", 12, 8, 16, 90, 30),
+    ("PL-P", "Porte-lame taille P", "usure", "Magasin pièces d'usure", "A2-01", "pièce", 5, 4, 4, 180, 60),
+    ("PL-M", "Porte-lame taille M", "usure", "Magasin pièces d'usure", "A2-02", "pièce", 3, 4, 4, 180, 200),
+    ("PL-G", "Porte-lame taille G", "usure", "Magasin pièces d'usure", "A2-03", "pièce", 6, 3, 3, 180, 60),
+    ("TIG-P", "Tige taille P", "usure", "Magasin pièces d'usure", "A3-01", "pièce", 22, 12, 24, 90, 95),
+    ("TIG-M", "Tige taille M", "usure", "Magasin pièces d'usure", "A3-02", "pièce", 18, 12, 24, 90, 20),
+    ("TIG-G", "Tige taille G", "usure", "Magasin pièces d'usure", "A3-03", "pièce", 9, 10, 20, 90, 20),
+    ("PEI-P", "Peigne taille P", "usure", "Magasin pièces d'usure", "A4-01", "pièce", 7, 4, 6, 120, 40),
+    ("PEI-M", "Peigne taille M", "usure", "Magasin pièces d'usure", "A4-02", "pièce", 8, 4, 6, 120, 130),
+    ("PEI-G", "Peigne taille G", "usure", "Magasin pièces d'usure", "A4-03", "pièce", 2, 3, 6, 120, 40),
+    ("HUI-01", "Bidon d'huile de coupe 20 L", "conso", "Huiles", "C1", "bidon", 3, 4, 6, 30, 35),
+    ("BAN-40", "Bande abrasive grain 40", "conso", "Abrasifs", "B1-01", "bande", 35, 20, 50, 30, 10),
+    ("BAN-80", "Bande abrasive grain 80", "conso", "Abrasifs", "B1-02", "bande", 18, 20, 50, 30, 10),
+    ("BAN-120", "Bande abrasive grain 120", "conso", "Abrasifs", "B1-03", "bande", 42, 20, 50, 30, 40),
+    ("BAN-240", "Bande abrasive grain 240 finition", "conso", "Abrasifs", "B1-04", "bande", 25, 10, 25, 30, 10),
+    ("MEU-200", "Meule Ø200 corindon", "conso", "Abrasifs", "B2-01", "meule", 6, 4, 6, 60, 20),
+    ("MEU-300", "Meule Ø300 corindon", "conso", "Abrasifs", "B2-02", "meule", 2, 3, 4, 60, 70),
+    ("MEU-CBN", "Meule CBN de finition", "conso", "Abrasifs", "B2-03", "meule", 3, 2, 2, 60, 20),
 ]
 
 PRIX = [
     # référence article, fournisseur, référence fournisseur, prix (€), délai (jours), préféré
-    ("PU-0001", "Outillage Durand", "OD-P6C", 48.00, 10, True),
-    ("PU-0001", "Mécaprécis", "MP-6-CARB", 52.50, 5, False),
-    ("PU-0002", "Outillage Durand", "OD-P10C", 61.00, 10, True),
-    ("PU-0003", "Outillage Durand", "OD-M6", 95.00, 15, True),
-    ("PU-0004", "Ressorts du Rhône", "RR-20-60", 3.20, 7, True),
-    ("PU-0005", "Mécaprécis", "MP-COL25", 74.00, 12, True),
-    ("PU-0006", "Mécaprécis", "MP-BAG25", 38.00, 12, True),
-    ("PU-0007", "Outillage Durand", "OD-L300", 210.00, 20, True),
-    ("PU-0008", "Mécaprécis", "MP-PIL8", 12.40, 5, True),
-    ("PU-0009", "Mécaprécis", "MP-AZ750", 320.00, 21, True),
-    ("CO-0001", "Fournitures Industrielles Lyonnaises", "FIL-HF20", 89.00, 3, True),
-    ("CO-0002", "Fournitures Industrielles Lyonnaises", "FIL-GR400", 7.90, 3, True),
-    ("CO-0003", "Fournitures Industrielles Lyonnaises", "FIL-CH10", 24.00, 3, True),
-    ("CO-0004", "Fournitures Industrielles Lyonnaises", "FIL-DEG", 6.50, 3, True),
-    ("CO-0005", "Fournitures Industrielles Lyonnaises", "FIL-GAC9", 4.80, 3, True),
-    ("CO-0006", "Fournitures Industrielles Lyonnaises", "FIL-BO200", 29.00, 3, True),
+    *[(f"PAT-{t}", "Mécanique Précision Sud", f"MPS-PAT{t}", 18.0, 10, True) for t in "PMG"],
+    *[(f"PAT-{t}", "Usinage Martin", f"UM-P{t}", 21.0, 6, False) for t in "PMG"],
+    *[(f"PL-{t}", "Usinage Martin", f"UM-PL{t}", 145.0, 15, True) for t in "PMG"],
+    *[(f"TIG-{t}", "Mécanique Précision Sud", f"MPS-TG{t}", 9.5, 10, True) for t in "PMG"],
+    *[(f"PEI-{t}", "Usinage Martin", f"UM-PE{t}", 62.0, 15, True) for t in "PMG"],
+    *[(f"PEI-{t}", "Mécanique Précision Sud", f"MPS-PE{t}", 58.0, 25, False) for t in "PMG"],
+    ("HUI-01", "Lubrifiants de l'Ouest", "LO-HC20", 92.0, 4, True),
+    *[(f"BAN-{g}", "Abrasifs Industriels", f"AI-B{g}", 6.8, 5, True) for g in (40, 80, 120, 240)],
+    *[(f"BAN-{g}", "Meules et Bandes Diffusion", f"MBD-{g}", 7.4, 3, False) for g in (40, 80, 120, 240)],
+    ("MEU-200", "Meules et Bandes Diffusion", "MBD-M200", 85.0, 10, True),
+    ("MEU-300", "Meules et Bandes Diffusion", "MBD-M300", 140.0, 10, True),
+    ("MEU-CBN", "Meules et Bandes Diffusion", "MBD-CBN", 690.0, 30, True),
 ]
 
 MACHINES = [
     # code, nom, description
-    ("PR-01", "Presse 250 t", "Presse mécanique, ligne 1"),
-    ("PR-02", "Presse 400 t", "Presse hydraulique, ligne 2"),
-    ("CI-01", "Cisaille guillotine", "Débit des flans"),
+    *[(f"S{i}", f"Ligne S{i}", "Ligne de production à bandes") for i in range(1, 9)],
+    ("MAD1", "Machine à meule 1", "Rectification à la meule"),
+    ("MAD2", "Machine à meule 2", "Rectification à la meule"),
+]
+
+# Chaque produit a son jeu d'outils : un outil principal et quatre sous-ensembles.
+SOUS_ENSEMBLES = [
+    # numéro (ordre d'affichage), nom, pièces d'usure montées (préfixe de référence, quantité)
+    ("1", "Chargeur", [("PAT", 2), ("TIG", 2)]),
+    ("2", "Outillage face", [("PL", 1), ("PEI", 1)]),
+    ("3", "Pince", [("PAT", 2)]),
+    ("4", "Outillage dos", [("PL", 1), ("PEI", 1), ("TIG", 1)]),
 ]
 
 OUTILS = [
     # code, nom, code de l'outil parent (vide si outil principal), description
-    ("OUT-101", "Outil à suivre support moteur", "", "Outil 6 postes. Changement de bande : voir notice dans l'armoire."),
-    ("OUT-101-A", "Bloc poinçons", "OUT-101", ""),
-    ("OUT-101-B", "Bloc matrice", "OUT-101", ""),
-    ("OUT-101-C", "Guidage", "OUT-101", ""),
-    ("OUT-205", "Outil de découpe flasque", "", "Outil simple, découpe et poinçonnage."),
-    ("OUT-205-A", "Ensemble poinçon central", "OUT-205", ""),
-    ("OUT-301", "Jeu de lames cisaille", "", ""),
 ]
-
 PIECES_OUTILS = [
     # code outil, référence article, quantité montée
-    ("OUT-101-A", "PU-0001", 4),
-    ("OUT-101-A", "PU-0002", 2),
-    ("OUT-101-A", "PU-0008", 2),
-    ("OUT-101-B", "PU-0003", 4),
-    ("OUT-101-B", "PU-0004", 8),
-    ("OUT-101-C", "PU-0005", 4),
-    ("OUT-101-C", "PU-0006", 4),
-    ("OUT-205", "PU-0009", 4),
-    ("OUT-205-A", "PU-0002", 1),
-    ("OUT-205-A", "PU-0004", 6),
-    ("OUT-301", "PU-0007", 2),
 ]
+for _p in PRODUITS_LISTE:
+    OUTILS.append((f"OUT-{_p}", f"Jeu d'outils {_p}", "", f"Jeu complet pour le produit {_p} (taille {TAILLES[_p]})."))
+    for _suffixe, _nom, _pieces in SOUS_ENSEMBLES:
+        OUTILS.append((f"OUT-{_p}-{_suffixe}", f"{_nom} {_p}", f"OUT-{_p}", ""))
+        for _prefixe, _qte in _pieces:
+            PIECES_OUTILS.append((f"OUT-{_p}-{_suffixe}", f"{_prefixe}-{TAILLES[_p]}", _qte))
 
 PRODUITS = [
     # référence, désignation, client, notes générales
-    ("P-1001", "Support moteur gauche", "Client A", "Pièce de sécurité : contrôle visuel 100 %."),
-    ("P-1002", "Support moteur droit", "Client A", "Pièce de sécurité : contrôle visuel 100 %."),
-    ("P-2001", "Flasque Ø120", "Client B", ""),
-    ("F-0001", "Flan 300 x 150 ép. 3", "Interne", "Flan pour P-1001 et P-1002."),
+    (p, f"Produit {p}", "", "Contrôle visuel en début de série et toutes les 2 heures.")
+    for p in PRODUITS_LISTE
 ]
+
+# Produit, machines, cadence (pièces/h)
+_AFFECTATIONS = [
+    ("N2", ["S1", "S2"], 480), ("N3", ["S1", "S2"], 460), ("N4", ["S3"], 450), ("N5", ["S3", "S4"], 420),
+    ("N6", ["S4"], 380), ("N7", ["S5", "MAD1"], 360), ("N8", ["S5", "S6"], 340), ("N9", ["S6", "MAD1"], 320),
+    ("N10", ["S7", "MAD2"], 280), ("N11", ["S7", "S8"], 260), ("N12", ["S8", "MAD2"], 240),
+]
+_BANDE = {"P": "BAN-120", "M": "BAN-80", "G": "BAN-40"}
+_MEULE = {"P": "MEU-200", "M": "MEU-200", "G": "MEU-300"}
 
 FABRICATIONS = [
     # référence produit, code machine, cadence (pièces/h), codes outils, notes de réglage
-    ("P-1001", "PR-01", 900, ["OUT-101"], "Hauteur de fermeture 312 mm.\nAvance bande 85 mm.\nGraisser les colonnes à chaque prise de poste."),
-    ("P-1002", "PR-01", 900, ["OUT-101"], "Même outil que P-1001, retourner l'insert du poste 4."),
-    ("P-1001", "PR-02", 600, ["OUT-101"], "Secours uniquement. Hauteur de fermeture 318 mm."),
-    ("P-2001", "PR-02", 1200, ["OUT-205"], "Vérifier la pression des vérins azote au démarrage."),
-    ("F-0001", "CI-01", 400, ["OUT-301"], "Jeu de lames 0,3 mm pour ép. 3."),
 ]
-
 CONSOMMATIONS = [
     # référence produit, code machine, référence article, quantité / fréquence
-    ("P-1001", "PR-01", "CO-0001", "1 bidon / semaine"),
-    ("P-1001", "PR-01", "CO-0002", "1 cartouche / poste"),
-    ("P-1002", "PR-01", "CO-0001", "1 bidon / semaine"),
-    ("P-1002", "PR-01", "CO-0002", "1 cartouche / poste"),
-    ("P-2001", "PR-02", "CO-0001", "2 bidons / semaine"),
-    ("P-2001", "PR-02", "CO-0004", "selon besoin"),
-    ("F-0001", "CI-01", "CO-0003", "1 sac / semaine"),
 ]
+for _p, _machines, _cadence in _AFFECTATIONS:
+    _t = TAILLES[_p]
+    for _m in _machines:
+        if _m.startswith("MAD"):
+            FABRICATIONS.append((_p, _m, round(_cadence * 0.8), [f"OUT-{_p}"],
+                                 f"Meule {_MEULE[_t]}, dresser la meule toutes les 2 h.\nVérifier le serrage de la pince à chaque prise de poste."))
+            CONSOMMATIONS += [(_p, _m, _MEULE[_t], "1 meule / semaine"), (_p, _m, "MEU-CBN", "finition, selon usure"),
+                              (_p, _m, "HUI-01", "1 bidon / semaine")]
+        else:
+            FABRICATIONS.append((_p, _m, _cadence, [f"OUT-{_p}"],
+                                 f"Bande {_BANDE[_t]} en ébauche, BAN-240 en finition.\nRégler la hauteur du peigne avant démarrage.\nVérifier le serrage de la pince à chaque prise de poste."))
+            CONSOMMATIONS += [(_p, _m, _BANDE[_t], "1 bande / poste"), (_p, _m, "BAN-240", "1 bande / 2 postes"),
+                              (_p, _m, "HUI-01", "1 bidon / 2 semaines")]
 
 MOUVEMENTS = [
     # référence article, type (entree / sortie), quantité, identifiant, commentaire
-    ("PU-0001", "sortie", 4, "regleur", "Changement poinçons OUT-101 poste 2"),
-    ("CO-0001", "sortie", 1, "operateur", ""),
-    ("PU-0004", "entree", 50, "intendante", "Réception commande"),
-    ("PU-0007", "sortie", 1, "regleur", "Lame ébréchée"),
+    ("PAT-M", "sortie", 4, "regleur", "Changement patins chargeur N7"),
+    ("BAN-80", "sortie", 6, "operateur", "S5 poste du matin"),
+    ("PEI-G", "sortie", 1, "regleur", "Peigne cassé outillage face N11"),
+    ("BAN-120", "entree", 50, "intendante", "Réception commande"),
+    ("HUI-01", "sortie", 1, "operateur", "S2"),
 ]

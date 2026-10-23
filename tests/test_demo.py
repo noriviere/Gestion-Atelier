@@ -12,16 +12,16 @@ class DemoTests(TestCase):
         call_command("charger_demo", stdout=open("/dev/null", "w"))
 
     def test_seuil_et_quantite_a_commander(self):
-        art = Article.objects.get(reference="PU-0001")  # stock 4, mini 6, mini commande 10
+        art = Article.objects.get(reference="PAT-M")  # stock 6, mini 10, mini commande 20
         self.assertTrue(art.a_commander)
-        self.assertEqual(art.quantite_a_commander, Decimal("12"))
-        self.assertFalse(Article.objects.get(reference="PU-0002").a_commander)
+        self.assertEqual(art.quantite_a_commander, Decimal("24"))
+        self.assertFalse(Article.objects.get(reference="PAT-P").a_commander)
 
     def test_mouvements_mettent_a_jour_le_stock(self):
-        art = Article.objects.get(reference="PU-0002")
+        art = Article.objects.get(reference="PAT-P")
         Mouvement.enregistrer(art, Mouvement.SORTIE, Decimal("2"))
         art.refresh_from_db()
-        self.assertEqual(art.stock, Decimal("10"))
+        self.assertEqual(art.stock, Decimal("12"))
         Mouvement.enregistrer(art, Mouvement.INVENTAIRE, Decimal("7"))
         art.refresh_from_db()
         self.assertEqual(art.stock, Decimal("7"))
@@ -39,10 +39,10 @@ class DemoTests(TestCase):
 
     def test_operateur_saisit_une_sortie_mais_ne_parametre_pas(self):
         self.client.login(username="operateur", password="demo")
-        art = Article.objects.get(reference="PU-0002")
+        art = Article.objects.get(reference="PAT-P")
         self.client.post(f"/articles/{art.pk}/", {"type": "sortie", "quantite": "1"})
         art.refresh_from_db()
-        self.assertEqual(art.stock, Decimal("11"))
+        self.assertEqual(art.stock, Decimal("13"))
         self.assertNotContains(self.client.get("/"), "Paramétrage")
         self.assertEqual(self.client.get("/admin/inventaire/article/").status_code, 302)
 
@@ -53,7 +53,7 @@ class DemoTests(TestCase):
 
     def test_comptage_inventaire(self):
         self.client.login(username="intendante", password="demo")
-        art = Article.objects.get(reference="PU-0003")  # dernier inventaire il y a 120 j, fréquence 90 j
+        art = Article.objects.get(reference="PL-M")  # dernier inventaire il y a 200 j, fréquence 180 j
         self.assertTrue(art.inventaire_du)
         self.client.post(f"/inventaires/{art.type_inventaire_id}/", {f"compte_{art.pk}": "5"})
         art.refresh_from_db()

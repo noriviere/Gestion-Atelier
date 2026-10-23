@@ -18,7 +18,7 @@
 <div class="tableau"><table>
   <tr><th>Référence</th><th>Désignation</th><th>Catégorie</th><th>Type d'inventaire</th><th>Emplacement</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th class="nombre">Mini cde</th></tr>
   {% for a in articles %}
-  <tr>
+  <tr data-categorie="{{ a.categorie }}" data-type="{{ a.type_inventaire_id }}" data-alerte="{% if a.a_commander %}1{% endif %}">
     <td><a href="{{ a.get_absolute_url }}">{{ a.reference }}</a></td>
     <td>{{ a.designation }}</td>
     <td><span class="etiquette">{{ a.get_categorie_display }}</span></td>

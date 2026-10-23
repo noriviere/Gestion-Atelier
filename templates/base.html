@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{% static 'atelier.css' %}">
 </head>
 <body>
+{% if demo_statique %}<div class="bandeau-demo">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré. <a href="/__profils__">Changer de profil</a></div>{% endif %}
 {% if user.is_authenticated %}
 <header class="barre">
   <a class="logo" href="{% url 'accueil' %}">Gestion Atelier</a>
@@ -19,13 +20,13 @@
     <a href="{% url 'outils' %}" class="{% if nom == 'outils' or nom == 'outil' %}actif{% endif %}">Outillage</a>
     <a href="{% url 'produits' %}" class="{% if nom == 'produits' or nom == 'produit' or nom == 'fiche' %}actif{% endif %}">Produits</a>
     <a href="{% url 'machines' %}" class="{% if nom == 'machines' or nom == 'machine' %}actif{% endif %}">Machines</a>
-    {% if peut_modifier %}<a href="{% url 'admin:index' %}">Paramétrage</a>{% endif %}
+    {% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
   </nav>
   {% endwith %}
   <div class="utilisateur">
     <span>{{ user.get_full_name|default:user.username }}</span>
     <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>
-    <form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit">Déconnexion</button></form>
+    {% if demo_statique %}<a class="bouton-sortie" href="/__profils__">Profils</a>{% else %}<form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit">Déconnexion</button></form>{% endif %}
   </div>
 </header>
 {% endif %}
@@ -33,5 +34,6 @@
   {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
   {% block contenu %}{% endblock %}
 </main>
+{% if demo_statique %}<script src="{% static 'demo.js' %}"></script>{% endif %}
 </body>
 </html>

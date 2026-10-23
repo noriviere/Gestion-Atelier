@@ -5,7 +5,7 @@
 <h1>Feuille de comptage : {{ type_inventaire }}</h1>
 <p class="sous-titre">{% now "d/m/Y" %} · {{ articles|length }} article{{ articles|pluralize }} {% if not tous %}à compter{% endif %} · Compté par : ____________________</p>
 <div class="actions"><button class="bouton" onclick="window.print()">Imprimer</button>
-  {% if tous %}<a class="bouton secondaire" href="?">Seulement les articles dus</a>{% else %}<a class="bouton secondaire" href="?tous=1">Tous les articles</a>{% endif %}</div>
+  {% if tous %}<a class="bouton secondaire" href="{% url 'feuille_comptage' type_inventaire.pk %}">Seulement les articles dus</a>{% else %}<a class="bouton secondaire" href="{% url 'feuille_comptage' type_inventaire.pk %}?tous=1">Tous les articles</a>{% endif %}</div>
 <div class="tableau"><table>
   <tr><th>Emplacement</th><th>Référence</th><th>Désignation</th><th>Unité</th><th>Quantité comptée</th></tr>
   {% for a in articles %}

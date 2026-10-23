@@ -82,3 +82,10 @@ ul.arbre li { margin: 6px 0; }
   a { color: inherit; }
   .notes { background: none; }
 }
+.bandeau-demo { background: #fff4e0; color: #6b4300; text-align: center; padding: 8px 16px; font-size: 14px; border-bottom: 1px solid #f0d9a8; }
+.bandeau-demo a { color: #6b4300; font-weight: 600; text-decoration: underline; }
+header.barre .utilisateur a.bouton-sortie { border: 1px solid #56607a; color: #fff; border-radius: 6px; padding: 4px 10px; }
+.profils { max-width: 760px; margin: 48px auto; }
+.profils .grille a { padding: 22px; }
+.profils h2 { margin-top: 0; }
+@media print { .bandeau-demo { display: none; } }

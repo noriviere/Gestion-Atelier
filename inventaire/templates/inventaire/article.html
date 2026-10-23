@@ -10,7 +10,7 @@
   <div>
     <div class="carte">
       <dl class="infos">
-        <dt>Stock actuel</dt><dd>{% if article.a_commander %}<span class="etiquette alerte">{{ article.stock|floatformat:"-2" }} {{ article.unite }} – à commander</span>{% else %}<span class="etiquette ok">{{ article.stock|floatformat:"-2" }} {{ article.unite }}</span>{% endif %}</dd>
+        <dt>Stock actuel</dt><dd id="stock-actuel" data-stock="{{ article.stock|stringformat:'s' }}" data-mini="{{ article.stock_mini|stringformat:'s' }}" data-unite="{{ article.unite }}">{% if article.a_commander %}<span class="etiquette alerte">{{ article.stock|floatformat:"-2" }} {{ article.unite }} – à commander</span>{% else %}<span class="etiquette ok">{{ article.stock|floatformat:"-2" }} {{ article.unite }}</span>{% endif %}</dd>
         <dt>Stock mini</dt><dd>{{ article.stock_mini|floatformat:"-2" }}</dd>
         <dt>Mini de commande</dt><dd>{{ article.mini_commande|floatformat:"-2" }}</dd>
         {% if article.a_commander %}<dt>Quantité suggérée</dt><dd>{{ article.quantite_a_commander|floatformat:"-2" }}</dd>{% endif %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block titre %}{{ machine.code }} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'machines' %}">Machines</a> › {{ machine.code }}</div>
+<h1>{{ machine.code }} – {{ machine.nom }}</h1>
+<p class="sous-titre">{{ machine.description }}</p>
+<div class="tableau"><table>
+  <tr><th>Produit</th><th class="nombre">Cadence</th><th></th></tr>
+  {% for fabrication in fabrications %}
+  <tr><td>{{ fabrication.produit }}</td><td class="nombre">{{ fabrication.cadence|floatformat:"-1"|default:"—" }} pièces/h</td><td><a href="{{ fabrication.get_absolute_url }}">Fiche</a></td></tr>
+  {% empty %}<tr><td colspan="3">Aucun produit sur cette machine.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

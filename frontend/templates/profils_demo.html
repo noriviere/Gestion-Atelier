@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion Atelier – démo</title>
+  <link rel="stylesheet" href="static/css/atelier.css">
+  <script src="static/js/theme.js"></script>
+  <script src="static/js/atelier.js" defer></script>
+</head>
+<body>
+<div class="bandeau-demo">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré.</div>
+<main class="profils">
+  <div class="entete-connexion"><h1>Gestion Atelier</h1>{% include "_bouton_theme.html" %}</div>
+  <p class="sous-titre">Stock de pièces d'usure et de consommables, arborescence d'outillage et fiches produit.
+    Choisissez un profil pour voir l'application avec ses droits.</p>
+  <div class="grille">{{ cartes|safe }}</div>
+  <p class="discret note-profils">Sur la version installée, chaque personne se connecte avec son propre compte.
+    Le profil Régleur et opérateur ne voit pas le menu Paramétrage.</p>
+</main>
+</body>
+</html>

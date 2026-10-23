@@ -3,6 +3,10 @@
 
 import os
 import sys
+from pathlib import Path
+
+# Le code Python de l'application est dans backend/.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "backend"))
 
 
 def main():

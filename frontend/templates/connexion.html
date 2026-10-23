@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titre %}Connexion – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="carte connexion">
+  <div class="entete-connexion"><h1>Gestion Atelier</h1>{% include "_bouton_theme.html" %}</div>
+  <p class="sous-titre">Connectez-vous pour continuer.</p>
+  {% if form.errors %}<ul class="messages"><li class="error">Identifiant ou mot de passe incorrect.</li></ul>{% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <label for="id_username">Identifiant</label>
+    <input type="text" name="username" id="id_username" autofocus required>
+    <label for="id_password">Mot de passe</label>
+    <input type="password" name="password" id="id_password" required>
+    <input type="hidden" name="next" value="{{ next }}">
+    <p><button class="bouton" type="submit">Se connecter</button></p>
+  </form>
+  <div class="comptes-demo">
+    Comptes de démonstration (mot de passe <code>demo</code>) :<br>
+    <code>admin</code> · <code>methode</code> · <code>chef</code> · <code>regleur</code> · <code>intendante</code> · <code>operateur</code>
+  </div>
+</div>
+{% endblock %}

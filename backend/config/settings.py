@@ -104,3 +104,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DEMO_STATIQUE = os.environ.get("DEMO_STATIQUE") == "1"
 
 TEST_RUNNER = "config.test_runner.LanceurTests"
+
+# Documents et photos déposés sur les fiches. Sur la VM, ce dossier est un volume Docker (voir docker-compose.yml).
+MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", BASE_DIR / "media"))
+MEDIA_URL = "media/"
+DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024

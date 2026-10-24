@@ -81,11 +81,62 @@
     afficherMessage(champsRemplis.length + " comptage(s) simulé(s), stocks corrigés à l'écran." + MENTION_DEMO);
   }
 
+  // Dépôt d'une photo ou d'un document sur une fiche : le fichier choisi s'affiche, sans être envoyé.
+  function simulerDepotDocument(formulaire) {
+    var champFichier = formulaire.querySelector("input[type=file]");
+    var fichier = champFichier.files[0];
+    if (!fichier) {
+      afficherMessage("Choisissez d'abord un fichier.", true);
+      return;
+    }
+    var titre = formulaire.querySelector("[name=titre]").value.trim() || fichier.name;
+    var adresse = URL.createObjectURL(fichier);
+    if (/^image\//.test(fichier.type)) {
+      var section = document.querySelector(".section-photos");
+      var figure = document.createElement("figure");
+      var image = document.createElement("img");
+      var legende = document.createElement("figcaption");
+      image.src = adresse;
+      image.alt = titre;
+      legende.textContent = titre;
+      figure.appendChild(image);
+      figure.appendChild(legende);
+      section.querySelector("[data-galerie]").appendChild(figure);
+      section.hidden = false;
+      mettreEnEvidence(figure);
+    } else {
+      var liste = document.querySelector("[data-liste-documents]");
+      var aucun = liste.querySelector(".aucun-document");
+      if (aucun) aucun.remove();
+      var element = document.createElement("li");
+      var lien = document.createElement("a");
+      lien.href = adresse;
+      lien.target = "_blank";
+      lien.textContent = titre;
+      element.appendChild(lien);
+      liste.appendChild(element);
+      mettreEnEvidence(element);
+    }
+    formulaire.reset();
+    formulaire.querySelector(".zone-depot").classList.remove("fichier-choisi");
+    champFichier.dispatchEvent(new Event("change"));
+    afficherMessage("« " + titre + " » ajouté à la fiche." + MENTION_DEMO);
+  }
+
+  // Lien « Créer la fiche » de la matrice : la machine choisie arrive dans l'adresse.
+  var machineDemandee = new URLSearchParams(window.location.search).get("machine");
+  var listeMachines = document.querySelector("form select[name=machine]");
+  if (machineDemandee && listeMachines && !listeMachines.disabled) listeMachines.value = machineDemandee;
+
   var zoneStock = document.getElementById("stock-actuel");
   document.querySelectorAll("form[method=post]").forEach(function (formulaire) {
     formulaire.addEventListener("submit", function (evenement) {
       evenement.preventDefault();
-      if (formulaire.dataset.demoMessage) {
+      if (formulaire.classList.contains("depot-document")) {
+        simulerDepotDocument(formulaire);
+      } else if (formulaire.hasAttribute("data-simulation-locale")) {
+        // Formulaire simulé par le script de sa page (matrice.js).
+      } else if (formulaire.dataset.demoMessage) {
         // Commandes : le changement d'état est seulement annoncé.
         afficherMessage(formulaire.dataset.demoMessage + MENTION_DEMO);
       } else if (zoneStock && formulaire.querySelector("[name=quantite]")) {

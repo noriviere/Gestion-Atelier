@@ -8,9 +8,10 @@
   {# Chargé avant l'affichage pour appliquer le thème choisi sans clignotement. #}
   <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/atelier.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
   {% if demo_statique %}<script src="{% static 'js/demo.js' %}" defer></script>{% endif %}
 </head>
-<body>
+<body{% if demo_statique %} data-demo{% endif %}>
 {% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré.</span><span class="texte-ecran-etroit">Démo : données fictives, rien n'est enregistré.</span> <a href="/__profils__">Changer de profil</a></div>{% endif %}
 {% if user.is_authenticated %}
 <header class="barre">
@@ -30,8 +31,7 @@
     <a href="{% url 'commandes' %}" class="{% if page_courante == 'commandes' or page_courante == 'commande' %}actif{% endif %}">Commandes</a>
     <a href="{% url 'inventaires' %}" class="{% if page_courante == 'inventaires' or page_courante == 'comptage' %}actif{% endif %}">Inventaires</a>
     <a href="{% url 'outils' %}" class="{% if page_courante == 'outils' or page_courante == 'outil' %}actif{% endif %}">Outillage</a>
-    <a href="{% url 'produits' %}" class="{% if page_courante == 'produits' or page_courante == 'produit' or page_courante == 'fiche' %}actif{% endif %}">Produits</a>
-    <a href="{% url 'machines' %}" class="{% if page_courante == 'machines' or page_courante == 'machine' %}actif{% endif %}">Machines</a>
+    <a href="{% url 'produits' %}" class="{% if request.resolver_match.route|slice:":9" == "produits/" %}actif{% endif %}">Produits et machines</a>
     {% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
   </nav>
   {% endwith %}

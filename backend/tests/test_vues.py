@@ -9,6 +9,7 @@ from django.test import TestCase
 from comptes.management.commands.exporter_statique import chemin_statique
 from commandes.models import Commande
 from inventaire.models import Article, TypeInventaire
+from produits.models import Document, Machine, Produit, ProduitMachine
 
 SORTIE_MUETTE = open("/dev/null", "w")
 
@@ -25,7 +26,10 @@ class PagesDemoTests(TestCase):
         for adresse in ["/", "/articles/", f"/articles/{article.pk}/", "/a-commander/", "/inventaires/",
                         f"/inventaires/{type_inventaire.pk}/", f"/inventaires/{type_inventaire.pk}/?tous=1",
                         f"/inventaires/{type_inventaire.pk}/feuille/", "/outils/", "/produits/",
-                        "/produits/machines/", "/commandes/", "/commandes/?etat=&retard=1",
+                        "/produits/?vue=non_securise&q=N1", *[f"/produits/machines/{machine.pk}/" for machine in Machine.objects.all()],
+                        *[f"/produits/{produit.pk}/" for produit in Produit.objects.all()],
+                        *[fabrication.get_absolute_url() for fabrication in ProduitMachine.objects.filter(etat__in=ProduitMachine.ETATS_AVEC_FICHE)],
+                        *[document.get_absolute_url() for document in Document.objects.all()[:3]], "/commandes/", "/commandes/?etat=&retard=1",
                         *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
 
@@ -93,6 +97,7 @@ class ExportStatiqueTests(TestCase):
         self.assertEqual(chemin_statique("/"), "index.html")
         self.assertEqual(chemin_statique("/articles/12/"), "articles/12/index.html")
         self.assertEqual(chemin_statique("/inventaires/3/?tous=1"), "inventaires/3/tous-1/index.html")
+        self.assertEqual(chemin_statique("/produits/documents/4/plan-N2.pdf"), "produits/documents/4/plan-N2.pdf")
 
     def test_export_un_jeu_de_pages_par_profil(self):
         with tempfile.TemporaryDirectory() as dossier:
@@ -105,3 +110,18 @@ class ExportStatiqueTests(TestCase):
             self.assertIn('href="../static/css/atelier.css"', accueil_operateur)
             self.assertNotIn('href="/', accueil_operateur)
             self.assertIn("Paramétrage", (racine / "methode" / "index.html").read_text())
+
+    def test_export_des_fiches_avec_photos_formulaires_et_matrice(self):
+        with tempfile.TemporaryDirectory() as dossier:
+            call_command("exporter_statique", sortie=dossier, stdout=SORTIE_MUETTE)
+            racine = Path(dossier)
+            fiche = ProduitMachine.objects.get(produit__reference="N2", machine__code="S1")
+            page_fiche = (racine / "methode" / chemin_statique(fiche.get_absolute_url())).read_text()
+            photo = fiche.documents.get()
+            self.assertTrue((racine / "methode" / chemin_statique(photo.get_absolute_url())).read_bytes().startswith(b"<svg"))
+            self.assertIn(f'src="../../documents/{photo.pk}/{photo.nom_fichier}"', page_fiche)
+            formulaire = racine / "methode" / chemin_statique(f"/produits/fiche/{fiche.pk}/modifier/")
+            self.assertIn("Paramètres de réglage", formulaire.read_text())
+            matrice = (racine / "methode" / "produits" / "index.html").read_text()
+            self.assertNotIn('data-url-fiche="/', matrice)
+            self.assertFalse((racine / "operateur" / chemin_statique(f"/produits/fiche/{fiche.pk}/modifier/")).exists())

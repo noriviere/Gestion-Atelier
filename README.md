@@ -18,8 +18,14 @@ Cette version est une **démo** avec des données fictives, destinée à présen
 - **Inventaires tournants** : fréquence de comptage par article, feuille de comptage imprimable
   par type d'inventaire, saisie des quantités comptées qui corrige le stock.
 - **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
-- **Produits** : un produit par machine avec cadence, outillages, consommables et notes,
-  affiché sous forme de fiche imprimable.
+- **Produits et machines** : une matrice avec une ligne par produit et une colonne par machine.
+  Chaque case a un état : programmé, à faire (affiché « à sécuriser » quand le produit tourne déjà
+  sur une autre machine), non faisable, ou vide (rien de prévu mais possible). Un clic sur une case
+  change son état, ouvre la fiche, la crée ou la copie depuis une autre machine.
+- **Fiches production** : cadence, paramètres de réglage structurés (libellé, valeur, unité), outillages,
+  consommables, notes, photos et documents (plan PDF, tableur…), imprimable. Création et modification
+  dans l'application ; une nouvelle fiche reprend les libellés de paramètres de la machine. Une fiche
+  se copie vers une autre machine, un produit se duplique avec toutes ses fiches.
 - **Profils** : `Admin`, `Méthode et management` (paramétrage via le menu Paramétrage),
   `Régleur et opérateur` (consultation, mouvements de stock, comptages).
 
@@ -56,7 +62,8 @@ docker compose up -d --build
 docker compose exec web python manage.py charger_demo
 ```
 
-L'application répond sur le port 8000, avec une base PostgreSQL.
+L'application répond sur le port 8000, avec une base PostgreSQL. Les photos et documents des fiches
+sont stockés dans le volume Docker `documents` (à inclure dans la sauvegarde avec la base).
 
 ## Modifier les données fictives
 

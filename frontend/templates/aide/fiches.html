@@ -1,0 +1,68 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Fiches de production</h1>
+<p class="sous-titre">Une fiche décrit un produit sur une machine : tout ce qu'il faut pour régler et produire, sur une page qui s'imprime.</p>
+
+<section class="point-aide" id="contenu">
+<h2>Ce que contient une fiche</h2>
+{% droit_requis "produits_consulter" %}
+<dl class="champs-aide">
+  <dt>État</dt><dd>Programmé, à faire ou à sécuriser : voir <a href="{% url 'aide_sujet' 'produits' %}#etats">les états</a>.</dd>
+  <dt id="cadence">Cadence</dt><dd>En pièces par heure.</dd>
+  <dt>Paramètres de réglage</dt><dd>Une liste de libellés, valeurs et unités : « Vitesse meule 35 m/s ».</dd>
+  <dt>Notes de production</dt><dd>Les notes de la fiche, puis celles du produit, communes à toutes ses machines.</dd>
+  <dt>Photos</dt><dd>Photos de réglage, en vignettes ; un clic les ouvre en grand.</dd>
+  <dt>Outillages</dt><dd>L'arbre de chaque outil utilisé, avec ses pièces d'usure et leur stock.</dd>
+  <dt>Consommables</dt><dd>Article, quantité ou fréquence (« 1 bande par poste »), stock et emplacement.</dd>
+  <dt>Documents</dt><dd>Plans, consignes, tableurs… Ceux marqués « produit, toutes machines » sont communs à toutes les fiches du produit.</dd>
+</dl>
+</section>
+
+<section class="point-aide" id="imprimer">
+<h2>Imprimer la fiche</h2>
+<p><strong>Imprimer la fiche</strong> donne une page propre pour le poste, sans menu ni boutons, avec la date d'impression en bas.</p>
+</section>
+
+<section class="point-aide" id="copier">
+<h2>Copier vers une autre machine</h2>
+{% droit_requis "produits_modifier" %}
+<p>Choisissez la machine dans <strong>Copier cette fiche vers</strong> puis <strong>Copier</strong> : la nouvelle fiche reprend outils, consommables, paramètres et notes, et s'ouvre pour ajuster la cadence et les valeurs.</p>
+</section>
+
+<section class="point-aide" id="modifier">
+<h2>Modifier la fiche</h2>
+{% droit_requis "produits_modifier" %}
+<dl class="champs-aide">
+  <dt>Machine et cadence</dt><dd>La machine de la fiche et la cadence en pièces par heure.</dd>
+  <dt>État</dt><dd>« À faire » s'affiche « à sécuriser » dans la matrice quand le produit est déjà programmé sur une autre machine.</dd>
+  <dt>Notes</dt><dd>Les consignes propres à cette machine.</dd>
+  <dt id="outillages">Outillages</dt><dd>Cochez l'outil principal : ses sous-ensembles et ses pièces d'usure suivent automatiquement dans la fiche. Le champ « Filtrer les outils » raccourcit la liste.</dd>
+  <dt id="parametres">Paramètres de réglage</dt><dd>Une ligne par paramètre : libellé, valeur, unité. « Ajouter un paramètre » ajoute une ligne. Une nouvelle fiche reprend les libellés de la dernière fiche de la même machine : il ne reste qu'à saisir les valeurs.</dd>
+  <dt>Consommables</dt><dd>L'article du stock et la quantité ou fréquence, en texte libre.</dd>
+</dl>
+</section>
+
+<section class="point-aide" id="reglages">
+<h2>Modifier les réglages</h2>
+{% droit_requis "produits_reglages" %}
+<p>Pour un profil qui peut ajuster les réglages sans modifier toute la fiche (par défaut le régleur) : le bouton <strong>Modifier les réglages</strong> ne propose que les notes de réglage et les paramètres. Machine, état, outils et consommables restent tels quels.</p>
+</section>
+
+<section class="point-aide" id="documents">
+<h2>Ajouter une photo ou un document</h2>
+{% droit_requis "produits_documents_gerer" %}
+<ul>
+  <li>Glissez le fichier dans la zone, ou cliquez pour le choisir : photo (JPG, PNG…), PDF, plan, document ou tableur, 20 Mo au plus.</li>
+  <li>Donnez-lui un <strong>titre</strong> clair : « Photo du réglage pince ».</li>
+  <li><strong>Concerne</strong> : « cette machine seulement », ou « le produit sur toutes ses machines » pour un plan du produit par exemple.</li>
+</ul>
+<p>Les photos s'affichent en vignettes, les autres fichiers dans la liste Documents. <strong>Retirer</strong> supprime le fichier.</p>
+</section>
+
+<section class="point-aide" id="voir-documents">
+<h2>Qui voit les photos et documents</h2>
+{% droit_requis "produits_documents_voir" %}
+<p>Sans ce droit, la fiche s'affiche sans ses photos ni ses documents.</p>
+</section>
+{% endblock %}

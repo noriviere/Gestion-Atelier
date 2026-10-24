@@ -1,0 +1,43 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Profils et droits</h1>
+<p class="sous-titre">Chaque compte a un profil. Le profil décide des pages que l'on voit et des boutons qui s'affichent.</p>
+
+<section class="point-aide" id="profils">
+<h2>Les cinq profils</h2>
+<p>Votre profil est affiché dans la barre du haut{% if profil %} : vous êtes <strong>{{ profil }}</strong>{% endif %}. Voici les droits de départ de chaque profil, avant tout réglage sur la page Droits :</p>
+<div class="tableau"><table>
+  <tr><th>Profil</th><th>Ce qu'il fait</th></tr>
+  <tr><td><strong>Admin</strong></td><td>Tout, y compris la page Droits qui règle les autres profils. Ses droits ne se retirent pas.</td></tr>
+  <tr><td><strong>Méthode et management</strong></td><td>Tout sauf la page Droits : articles, seuils, fournisseurs, commandes, outils, produits, fiches et matrice.</td></tr>
+  <tr><td><strong>Intendant</strong></td><td>Le stock complet (articles, fournisseurs, sorties et entrées, comptages d'inventaire) et les commandes de bout en bout. Consulte l'outillage et les produits.</td></tr>
+  <tr><td><strong>Régleur</strong></td><td>Consulte tout, sort des pièces du stock, marque et réceptionne les livraisons. Sur les fiches, voit et ajoute photos et documents, et modifie les paramètres et notes de réglage.</td></tr>
+  <tr><td><strong>Opérateur</strong></td><td>Consulte tout, sort des pièces du stock, marque et réceptionne les livraisons. Voit les fiches sans leurs photos et documents.</td></tr>
+</table></div>
+<p>Quand un bouton décrit dans ce mode d'emploi n'apparaît pas chez vous, c'est qu'il demande un droit que votre profil n'a pas. Chaque explication indique le droit nécessaire.</p>
+</section>
+
+<section class="point-aide" id="page-droits">
+<h2>La page Droits</h2>
+{% droit_requis "admin_droits" %}
+<p>Les droits sont rangés en cinq blocs : Stock et inventaires, Commandes fournisseurs, Outillage, Produits machines et fiches, Administration. Chaque bloc est découpé en fonctions, par exemple « Saisir des sorties et des entrées de stock ».</p>
+<ul>
+  <li>Une colonne par profil. Cochez une fonction pour la donner au profil, décochez-la pour la retirer.</li>
+  <li>La case de la ligne du bloc coche ou décoche toutes ses fonctions d'un coup. Elle apparaît à moitié cochée quand le bloc n'est donné qu'en partie.</li>
+  <li><strong>Enregistrer les droits</strong> applique les changements à tous les comptes du profil, dès leur page suivante.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="profil-des-comptes">
+<h2>Le profil des comptes</h2>
+{% droit_requis "admin_droits" %}
+<p>Sous les droits, le tableau <strong>Profil des comptes</strong> donne un profil à chaque compte. Choisissez-le dans la liste puis <strong>Enregistrer les profils</strong>. Un compte « Sans profil » peut se connecter mais ne voit presque rien.</p>
+<p>Pour créer un compte, le désactiver ou changer son mot de passe : menu <strong>Paramétrage</strong>, rubrique Utilisateurs.</p>
+</section>
+
+<section class="point-aide" id="parametrage">
+<h2>Le menu Paramétrage</h2>
+<p>Il ouvre l'interface d'administration, qui donne accès à toutes les listes de référence : comptes, types d'inventaire, machines, et aussi la modification détaillée d'une commande. N'y apparaissent que les rubriques que votre profil a le droit de modifier. La plupart des saisies courantes se font directement dans l'application, sans passer par le paramétrage.</p>
+</section>
+{% endblock %}

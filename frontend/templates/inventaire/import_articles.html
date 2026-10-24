@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}Importer des articles – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'articles' %}">Stock</a> › import Excel</div>
-<h1>Importer des articles depuis Excel</h1>
+<h1>Importer des articles depuis Excel{% info "stock" "import" "Importer depuis Excel" %}</h1>
 {% if analyse is None %}
 <p class="sous-titre">Pour la reprise de vos fichiers existants ou une mise à jour en masse. Rien n'est enregistré avant d'avoir vu l'aperçu.</p>
 <div class="deux-colonnes">

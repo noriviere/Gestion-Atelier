@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static aide %}
 {% block titre %}Droits – Gestion Atelier{% endblock %}
 {% block contenu %}
-<h1>Droits des profils</h1>
+<h1>Droits des profils{% info "profils" "page-droits" "La page Droits" %}</h1>
 <p class="sous-titre">Cochez un bloc pour donner toutes ses fonctions, ou détaillez fonction par fonction. Le profil Admin a toujours tous les droits.</p>
 
 <form method="post" class="tableau-droits" data-demo-message="Droits enregistrés.">
@@ -32,7 +32,7 @@
   <button class="bouton" type="submit">Enregistrer les droits</button>
 </form>
 
-<h2>Profil des comptes</h2>
+<h2>Profil des comptes{% info "profils" "profil-des-comptes" "Le profil des comptes" %}</h2>
 <form method="post" data-demo-message="Profils des comptes enregistrés.">
   {% csrf_token %}
   <input type="hidden" name="formulaire" value="comptes">

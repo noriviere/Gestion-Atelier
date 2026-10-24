@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}{% if produit.pk %}Modifier {{ produit.reference }}{% else %}Nouveau produit{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'produits' %}">Produits et machines</a> › {% if produit.pk %}<a href="{{ produit.get_absolute_url }}">{{ produit.reference }}</a> › Modifier{% else %}Nouveau produit{% endif %}</div>
-<h1>{% if produit.pk %}Modifier {{ produit.reference }}{% else %}Nouveau produit{% endif %}</h1>
+<h1>{% if produit.pk %}Modifier {{ produit.reference }}{% else %}Nouveau produit{% endif %}{% info "produits" "formulaire-produit" "Créer ou modifier un produit" %}</h1>
 <p class="sous-titre">Les cadences, outils et consommables se saisissent ensuite dans la fiche de chaque machine.</p>
 <form method="post" class="carte formulaire-produit" data-demo-message="Produit enregistré.">{% csrf_token %}
   <div class="champs-en-ligne">

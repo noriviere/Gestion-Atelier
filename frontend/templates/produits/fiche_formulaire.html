@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}{% if fabrication.pk %}Modifier la fiche {{ fabrication }}{% else %}Nouvelle fiche {{ fabrication.produit.reference }}{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'produits' %}">Produits et machines</a> › <a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a> › {% if fabrication.pk %}<a href="{{ fabrication.get_absolute_url }}">{{ fabrication.machine.code }}</a> › Modifier{% else %}Nouvelle fiche{% endif %}</div>
@@ -15,12 +16,12 @@
         {% include "_champ.html" with champ=formulaire.machine %}
         {% include "_champ.html" with champ=formulaire.cadence %}
       </div>
-      <fieldset class="sans-cadre"><legend>{{ formulaire.etat.label }}</legend>{{ formulaire.etat }}
+      <fieldset class="sans-cadre"><legend>{{ formulaire.etat.label }}{% info "produits" "etats" "Les états d'une case" %}</legend>{{ formulaire.etat }}
         <div class="discret">« À faire » s'affiche « à sécuriser » dans la matrice quand le produit est déjà programmé sur une autre machine.</div></fieldset>
       {% include "_champ.html" with champ=formulaire.notes %}
     </div>
     <div class="carte">
-      <h2 class="titre-carte">Outillages</h2>
+      <h2 class="titre-carte">Outillages{% info "fiches" "outillages" "Choisir les outillages" %}</h2>
       <input type="search" class="filtre-choix" data-filtre-choix="#{{ formulaire.outils.auto_id }}" placeholder="Filtrer les outils" aria-label="Filtrer les outils">
       <div class="liste-choix">{{ formulaire.outils }}</div>
       {% for erreur in formulaire.outils.errors %}<div class="erreur-champ">{{ erreur }}</div>{% endfor %}
@@ -29,13 +30,13 @@
   </div>
   {% else %}
   <div class="carte">
-    <h2 class="titre-carte">Notes de réglage</h2>
+    <h2 class="titre-carte">Notes de réglage{% info "fiches" "reglages" "Modifier les réglages" %}</h2>
     {% include "_champ.html" with champ=formulaire.notes %}
   </div>
   {% endif %}
 
   <div class="carte">
-    <h2 class="titre-carte">Paramètres de réglage</h2>
+    <h2 class="titre-carte">Paramètres de réglage{% info "fiches" "parametres" "Paramètres de réglage" %}</h2>
     {% include "produits/_lignes_formset.html" with formset=parametres titres=titres_parametres ajouter="Ajouter un paramètre" %}
   </div>
 

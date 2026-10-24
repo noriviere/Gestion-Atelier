@@ -104,7 +104,10 @@ header.barre .utilisateur form { margin: 0; }
 header.barre .utilisateur button[type="submit"], header.barre .utilisateur a.bouton-sortie { background: none; border: 1px solid var(--barre-bord); color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; transition: border-color var(--duree) ease, background-color var(--duree) ease; }
 header.barre .utilisateur button[type="submit"]:hover, header.barre .utilisateur a.bouton-sortie:hover { border-color: #8fa0c0; background: rgba(255, 255, 255, 0.06); text-decoration: none; }
 .badge-profil { background: var(--badge); padding: 3px 8px; border-radius: 10px; }
-@media (max-width: 1600px) { header.barre .nom-utilisateur { display: none; } }
+/* Sous 1760 px, le nom puis le profil laissent la place au menu ; ils restent dans l'infobulle du bouton de sortie.
+   Sous 1360 px, le menu replié a de nouveau la place d'afficher le profil. */
+@media (max-width: 1760px) { header.barre .nom-utilisateur { display: none; } }
+@media (min-width: 1361px) and (max-width: 1760px) { header.barre .badge-profil { display: none; } }
 header.barre .recherche-barre { margin: 0; }
 header.barre .recherche-barre input { width: 150px; padding: 5px 10px; font-size: 13px; color: #fff; background: rgba(255, 255, 255, 0.08); border-color: var(--barre-bord); transition: width 250ms var(--courbe), background-color var(--duree) ease; }
 header.barre .recherche-barre input::placeholder { color: var(--barre-texte); }
@@ -122,6 +125,9 @@ header.barre .recherche-barre input:focus { width: 220px; background: rgba(255, 
 /* Bouton de thème : affiche la lune en clair, le soleil en sombre. */
 .bouton-theme { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--barre-bord); background: transparent; color: #fff; cursor: pointer; padding: 0; transition: transform 300ms var(--courbe), border-color var(--duree) ease; }
 .bouton-theme:hover { border-color: #8fa0c0; transform: rotate(-15deg); }
+.theme-ecran-large { display: inline-flex; align-items: center; gap: 8px; }
+.bouton-aide { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--barre-bord); color: #fff; font-weight: 700; font-size: 15px; transition: border-color var(--duree) ease, background-color var(--duree) ease; }
+.bouton-aide:hover { border-color: #8fa0c0; background: rgba(255, 255, 255, 0.08); text-decoration: none; }
 .bouton-theme svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; grid-area: 1 / 1; transition: opacity 250ms ease, transform 400ms var(--courbe); }
 .bouton-theme .icone-lune { fill: currentColor; stroke: none; }
 .bouton-theme .icone-soleil { opacity: 0; transform: rotate(-90deg) scale(0.5); }
@@ -492,3 +498,55 @@ header.menu-ouvert .bouton-menu span:nth-child(3) { transform: translateY(-6px) 
   .galerie figure { break-inside: avoid; }
   .zone-depot, .depot-document, .barre-enregistrer { display: none !important; }
 }
+
+/* 11. Mode d'emploi : pages d'aide et petits « i » -------------------------- */
+.info { display: inline-grid; place-items: center; width: 17px; height: 17px; margin-left: 5px; border: 1px solid var(--accent); border-radius: 50%; color: var(--accent); font: italic 700 11px/1 Georgia, serif; vertical-align: 2px; text-decoration: none; opacity: 0.75; transition: opacity var(--duree) ease, background-color var(--duree) ease, color var(--duree) ease; }
+.info:hover, .info:focus-visible { opacity: 1; background: var(--accent); color: var(--carte); text-decoration: none; }
+th .info { vertical-align: 1px; }
+.exemple-bouton-aide { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--barre); color: #fff; font-weight: 700; font-size: 13px; vertical-align: 1px; }
+
+.mode-emploi { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 32px; align-items: start; }
+.sommaire-aide { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.sommaire-aide a { padding: 6px 10px; border-left: 3px solid transparent; color: var(--discret); border-radius: 0 6px 6px 0; }
+.sommaire-aide a:hover { color: var(--texte); background: var(--carte-survol); text-decoration: none; }
+.sommaire-aide a[aria-current] { color: var(--accent); border-left-color: var(--accent); background: var(--accent-doux); font-weight: 600; }
+.texte-aide { max-width: 800px; }
+.texte-aide h2 { margin-top: 0; }
+.texte-aide li { margin-bottom: 4px; }
+.haut-aide { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.haut-aide .lien-bouton { color: var(--accent); text-decoration: none; font-size: 14px; }
+.point-aide { padding: 14px 18px; margin: 0 -18px 10px; border-left: 3px solid transparent; border-radius: 0 var(--rayon) var(--rayon) 0; scroll-margin-top: 80px; }
+.point-aide:target { border-left-color: var(--accent); background: var(--accent-doux); animation: point-aide-cible 1.6s var(--courbe); }
+@keyframes point-aide-cible { from { box-shadow: 0 0 0 4px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
+.droit-requis { font-size: 13px; color: var(--discret); margin: 0 0 8px; }
+.droit-requis .etiquette { margin-left: 4px; }
+.grille-aide { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+a.carte-aide { display: block; margin: 0; color: var(--texte); transition: border-color var(--duree) ease, transform var(--duree) var(--courbe); }
+a.carte-aide:hover { border-color: var(--accent); text-decoration: none; transform: translateY(-2px); }
+.carte-aide h3 { margin: 0 0 6px; font-size: 15px; color: var(--accent); }
+.carte-aide p { margin: 0; font-size: 14px; color: var(--discret); }
+.etapes-aide { padding-left: 22px; }
+.etapes-aide li { margin-bottom: 8px; }
+dl.champs-aide dt { font-weight: 600; margin-top: 10px; }
+dl.champs-aide dd { margin: 2px 0 0; }
+dl.liste-sujets dt { font-weight: 600; margin-top: 10px; }
+dl.liste-sujets dd { margin: 2px 0 0; color: var(--discret); }
+.formule { font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; background: var(--entete-tableau); border-radius: 6px; padding: 8px 12px; }
+ul.legende-aide { list-style: none; padding: 0; }
+ul.legende-aide .pastille { margin-right: 6px; }
+.pied-aide { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--bord); margin-top: 24px; padding-top: 14px; }
+
+@media (max-width: 900px) {
+  .mode-emploi { grid-template-columns: 1fr; gap: 16px; }
+  .sommaire-aide { position: static; order: 2; border-top: 1px solid var(--bord); padding-top: 12px; }
+  .point-aide { margin-left: -12px; margin-right: -12px; padding: 12px; }
+}
+
+@media print {
+  .info, .sommaire-aide { display: none !important; }
+  .mode-emploi { display: block; }
+}
+.libelle-avec-aide { display: flex; align-items: baseline; }
+.libelle-avec-aide label { margin-bottom: 0; }
+form.filtres > .info, .actions > .info { margin-left: -6px; }
+th:has(> .info) { white-space: nowrap; }

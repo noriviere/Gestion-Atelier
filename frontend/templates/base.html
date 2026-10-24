@@ -18,6 +18,7 @@
 <header class="barre">
   <a class="logo" href="{% url 'accueil' %}">Gestion Atelier</a>
   <div class="commandes-mobile">
+    {% include "_bouton_aide.html" %}
     {% include "_bouton_theme.html" %}
     <button type="button" class="bouton-menu" data-action="ouvrir-menu" aria-expanded="false" aria-controls="menu-principal" aria-label="Ouvrir le menu">
       <span></span><span></span><span></span>
@@ -35,8 +36,8 @@
   <div class="utilisateur">
     <span class="nom-utilisateur">{{ user.get_full_name|default:user.username }}</span>
     <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>
-    <span class="theme-ecran-large">{% include "_bouton_theme.html" %}</span>
-    {% if demo_statique %}<a class="bouton-sortie" href="/__profils__">Profils</a>{% else %}<form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit">Déconnexion</button></form>{% endif %}
+    <span class="theme-ecran-large">{% include "_bouton_aide.html" %}{% include "_bouton_theme.html" %}</span>
+    {% if demo_statique %}<a class="bouton-sortie" href="/__profils__" title="Connecté : {{ user.get_full_name|default:user.username }} – {{ profil|default:'sans profil' }}">Profils</a>{% else %}<form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit" title="Connecté : {{ user.get_full_name|default:user.username }} – {{ profil|default:'sans profil' }}">Déconnexion</button></form>{% endif %}
   </div>
   </div>
 </header>

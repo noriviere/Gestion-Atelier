@@ -1,6 +1,6 @@
-<div class="champ{% if champ.errors %} en-erreur{% endif %}{% if classe %} {{ classe }}{% endif %}">
-  {% if champ.field.widget.input_type == "radio" %}<span class="libelle-champ">{{ champ.label }}{% if champ.field.required %} *{% endif %}</span>{{ champ }}{% else %}<label for="{{ champ.id_for_label }}">{{ champ.label }}{% if champ.field.required %} *{% endif %}</label>
-  {{ champ }}{% endif %}
+{% load aide %}<div class="champ{% if champ.errors %} en-erreur{% endif %}{% if classe %} {{ classe }}{% endif %}">
+  {% if aide_ancre %}<span class="libelle-avec-aide">{% endif %}{% if champ.field.widget.input_type == "radio" %}<span class="libelle-champ">{{ champ.label }}{% if champ.field.required %} *{% endif %}</span>{% else %}<label for="{{ champ.id_for_label }}">{{ champ.label }}{% if champ.field.required %} *{% endif %}</label>{% endif %}{% if aide_ancre %}{% info aide_sujet aide_ancre champ.label %}</span>{% endif %}
+  {{ champ }}
   {% if champ.help_text %}<span class="aide">{{ champ.help_text }}</span>{% endif %}
   {% for erreur in champ.errors %}<span class="erreur erreur-champ">{{ erreur }}</span>{% endfor %}
 </div>

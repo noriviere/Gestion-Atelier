@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block contenu %}
 <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
-<p class="sous-titre">Vue d'ensemble de l'atelier.</p>
+<p class="sous-titre">Vue d'ensemble de l'atelier. {% info "navigation" "accueil" "La page d'accueil" %}</p>
 <div class="grille">
   {% if droits.commandes_consulter %}<a class="tuile {% if nombre_a_commander %}alerte{% endif %}" href="{% url 'a_commander' %}"><div class="valeur">{{ nombre_a_commander }}</div><div class="libelle">articles sous le mini{% if nombre_a_commander != nombre_non_couverts %}, dont {{ nombre_non_couverts }} sans commande{% endif %}</div></a>{% endif %}
   {% if droits.commandes_consulter %}<a class="tuile {% if nombre_commandes_en_retard %}alerte{% endif %}" href="{% url 'commandes' %}"><div class="valeur">{{ nombre_commandes_en_cours }}</div><div class="libelle">commandes en cours{% if nombre_commandes_en_retard %}, dont {{ nombre_commandes_en_retard }} en retard{% endif %}</div></a>{% endif %}
@@ -14,7 +15,7 @@
 {% if droits.stock_consulter %}
 <div class="deux-colonnes">
   <div>
-    <h2>Sous le stock mini</h2>
+    <h2>Sous le stock mini{% info "stock" "stock-mini" "Stock mini" %}</h2>
     {% if articles_a_commander %}
     <div class="tableau"><table>
       <tr><th>Article</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>Fournisseur préféré</th><th>Commande</th></tr>

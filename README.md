@@ -41,6 +41,13 @@ Cette version est une **démo** avec des données fictives, destinée à présen
   `backend/comptes/droits.py` : l'intendant gère commandes, articles, fournisseurs et comptages ;
   le régleur a en plus de l'opérateur les photos et documents et les réglages des fiches.
 
+- **Mode d'emploi intégré** (`/aide/`) : une vue d'ensemble des fonctions puis une page par sujet.
+  Le bouton **?** de la barre du haut ouvre l'aide de la page affichée, et les petits **i** à côté
+  des cases, colonnes et boutons ouvrent l'explication précise. Chaque explication indique le droit
+  nécessaire et si le profil de la personne qui lit l'a. Les textes sont dans `frontend/templates/aide/`,
+  le sommaire et la correspondance page → sujet dans `backend/aide/sujets.py` ; un test vérifie que
+  chaque petit i mène à une explication existante.
+
 Comptes de démonstration, tous avec le mot de passe `demo` :
 `admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.
 
@@ -111,6 +118,7 @@ profils et droits, pages et export statique.
 ```
 backend/                 Code Python (Django)
   config/                Réglages, adresses, lanceur de tests
+  aide/                  Mode d'emploi : sommaire, sujet de chaque page, balises {% info %} et {% droit_requis %}
   comptes/               Profils d'accès, connexion obligatoire, commandes charger_demo et exporter_statique
   inventaire/            Fournisseurs, articles, mouvements, inventaires
   outillage/             Outils, sous-ensembles et pièces montées

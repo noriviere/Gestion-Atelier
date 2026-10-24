@@ -1,0 +1,48 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Outillage</h1>
+<p class="sous-titre">Chaque outil est décrit comme un arbre : l'outil principal, ses sous-ensembles, et les pièces d'usure montées sur chacun. Les pièces d'usure sont des articles du stock.</p>
+
+<section class="point-aide" id="arborescence">
+<h2>L'arborescence</h2>
+{% droit_requis "outillage_consulter" %}
+<p>Le menu <strong>Outillage</strong> montre tous les outils principaux, dépliés. Dans l'arbre :</p>
+<ul>
+  <li>les lignes en gras sont des <strong>outils ou sous-ensembles</strong> ; un clic ouvre leur fiche ;</li>
+  <li>les lignes « 2 × PAT-G Patin taille G » sont les <strong>pièces d'usure</strong> : quantité montée, référence et désignation, avec le stock actuel (en rouge sous le mini) ;</li>
+  <li><strong>Utilisé pour</strong> liste les produits dont la fiche utilise l'outil.</li>
+</ul>
+<p>Une même pièce peut être montée sur plusieurs outils : par exemple un patin commun à plusieurs produits. Sa fiche article indique tous les outils qui l'utilisent.</p>
+</section>
+
+<section class="point-aide" id="fiche-outil">
+<h2>La fiche d'un outil</h2>
+<p>Elle montre la composition de l'outil (ses sous-ensembles et pièces avec leur stock), sa description, et les produits fabriqués avec lui, avec un lien vers chaque fiche de production. Le fil d'Ariane remonte jusqu'à l'outil principal.</p>
+</section>
+
+<section class="point-aide" id="sortie-piece">
+<h2>Sortir une pièce remplacée</h2>
+{% droit_requis "stock_mouvements" %}
+<p>Sur la fiche d'un outil, chaque pièce d'usure a un champ de quantité et un bouton <strong>Sortir</strong>. Quand vous changez une pièce usée, saisissez la quantité prise en magasin (préremplie avec la quantité montée) puis <strong>Sortir</strong> : une sortie de stock est enregistrée sur l'article, avec l'outil en commentaire.</p>
+<p>C'est la façon la plus rapide de tenir le stock à jour : pas besoin de chercher l'article.</p>
+</section>
+
+<section class="point-aide" id="modifier">
+<h2>Créer ou modifier un outil</h2>
+{% droit_requis "outillage_modifier" %}
+<p>Boutons <strong>Nouvel outil</strong>, <strong>Modifier l'outil et ses pièces</strong> et <strong>Ajouter un sous-ensemble</strong>.</p>
+<dl class="champs-aide">
+  <dt>Code et nom</dt><dd>Obligatoires. Le code est unique : « OUT-N10-1 ».</dd>
+  <dt>Sous-ensemble de</dt><dd>Laissez « aucun » pour un outil principal ; choisissez l'outil parent pour un sous-ensemble. Un outil ne peut pas être rangé sous l'un de ses propres sous-ensembles.</dd>
+  <dt>Description</dt><dd>Texte libre affiché sur la fiche de l'outil.</dd>
+  <dt>Pièces d'usure montées</dt><dd>Choisissez l'article dans le stock et la quantité montée. Cochez <strong>retirer</strong> pour enlever une pièce de l'outil (l'article reste dans le stock). Trois lignes vides sont proposées ; enregistrez pour en obtenir d'autres.</dd>
+</dl>
+</section>
+
+<section class="point-aide" id="supprimer">
+<h2>Supprimer un outil</h2>
+{% droit_requis "outillage_modifier" %}
+<p>En bas du formulaire de modification. La suppression emporte les sous-ensembles de l'outil ; une confirmation est demandée. Les articles restent dans le stock, et les fiches de production n'utilisent simplement plus cet outil.</p>
+</section>
+{% endblock %}

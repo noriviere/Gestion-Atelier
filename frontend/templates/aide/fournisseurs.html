@@ -1,0 +1,33 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Fournisseurs</h1>
+<p class="sous-titre">Les fournisseurs des pièces d'usure et des consommables, avec leurs coordonnées et ce qu'ils fournissent.</p>
+
+<section class="point-aide" id="liste">
+<h2>La liste des fournisseurs</h2>
+{% droit_requis "stock_consulter" %}
+<p>Le menu <strong>Fournisseurs</strong> les liste avec leur contact, leur téléphone et leur e-mail (un clic sur l'adresse ouvre un nouveau message). La recherche porte sur le nom et le contact.</p>
+<ul>
+  <li><strong>Articles</strong> : le nombre d'articles que le fournisseur peut livrer.</li>
+  <li><strong>Dont préféré</strong> : ceux pour lesquels il est le fournisseur préféré, donc ceux qui apparaîtront chez lui dans « À commander ».</li>
+</ul>
+</section>
+
+<section class="point-aide" id="fiche-fournisseur">
+<h2>La fiche d'un fournisseur</h2>
+<p>Elle montre ses articles avec la référence à commander (ou le numéro de plan pour un design interne), le prix, le délai et le stock actuel, en rouge s'il est sous le mini. À droite : ses coordonnées et ses commandes en cours.</p>
+</section>
+
+<section class="point-aide" id="formulaire">
+<h2>Créer ou modifier un fournisseur</h2>
+{% droit_requis "stock_fournisseurs" %}
+<p>Boutons <strong>Nouveau fournisseur</strong> et <strong>Modifier le fournisseur</strong>. On y saisit le nom (obligatoire et unique), le contact, le téléphone et l'e-mail.</p>
+<p>Les prix, délais et références se saisissent article par article, dans le formulaire de l'article : voir <a href="{% url 'aide_sujet' 'stock' %}#fournisseurs-article">les fournisseurs d'un article</a>.</p>
+</section>
+
+<section class="point-aide" id="prefere">
+<h2>Le fournisseur préféré</h2>
+<p>Chaque article peut avoir plusieurs fournisseurs, mais un seul préféré. C'est lui qui reçoit la commande quand l'article passe sous le mini, et son prix sert à chiffrer les écarts d'inventaire. Un article sans fournisseur préféré apparaît dans « À commander » sous « Sans fournisseur préféré ».</p>
+</section>
+{% endblock %}

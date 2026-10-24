@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}{{ commande.numero }} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'commandes' %}">Commandes</a> › {{ commande.numero }}</div>
@@ -6,14 +7,14 @@
 <p class="sous-titre">{% include "commandes/_etat.html" %}{% if commande.fournisseur.telephone %} · {{ commande.fournisseur.contact }} {{ commande.fournisseur.telephone }}{% endif %}</p>
 <div class="actions">
   <button class="bouton secondaire" type="button" data-action="imprimer">Imprimer</button>
-  {% if droits.commandes_preparer %}<a class="bouton secondaire" href="{% url 'admin:commandes_commande_change' commande.pk %}">Modifier la commande</a>{% endif %}
+  {% if droits.commandes_preparer %}<a class="bouton secondaire" href="{% url 'admin:commandes_commande_change' commande.pk %}">Modifier la commande</a>{% info "commandes" "modifier" "Modifier une commande" %}{% endif %}
 </div>
 
 <div class="deux-colonnes">
   <div>
     <div class="carte">
       <dl class="infos">
-        <dt>État</dt><dd>{{ commande.get_etat_display }}</dd>
+        <dt>État{% info "commandes" "etats" "États des commandes" %}</dt><dd>{{ commande.get_etat_display }}</dd>
         <dt>N° fournisseur</dt><dd>{{ commande.numero_fournisseur|default:"—" }}</dd>
         <dt>Créée le</dt><dd>{{ commande.date_creation|date:"d/m/Y" }}{% if commande.cree_par %} par {{ commande.cree_par.get_full_name|default:commande.cree_par.username }}{% endif %}</dd>
         <dt>Passée le</dt><dd>{{ commande.date_passage|date:"d/m/Y"|default:"—" }}</dd>
@@ -30,7 +31,7 @@
   <div>
     {% if peut_passer %}
     <div class="carte">
-      <h2 class="titre-carte">Passer la commande</h2>
+      <h2 class="titre-carte">Passer la commande{% info "commandes" "passer" "Passer la commande" %}</h2>
       <form method="post" data-demo-message="Commande passée : la livraison prévue est calculée avec le délai du fournisseur.">{% csrf_token %}
         <input type="hidden" name="action" value="passee">
         <p><label for="numero_fournisseur">N° de confirmation du fournisseur</label><br><input id="numero_fournisseur" name="numero_fournisseur" value="{{ commande.numero_fournisseur }}"></p>
@@ -41,7 +42,7 @@
     {% endif %}
     {% if peut_marquer_recue %}
     <div class="carte">
-      <h2 class="titre-carte">Livraison arrivée</h2>
+      <h2 class="titre-carte">Livraison arrivée{% info "commandes" "recue" "Marquer comme reçue" %}</h2>
       <form method="post" data-demo-message="Commande marquée reçue : elle reste à contrôler et à entrer en stock.">{% csrf_token %}
         <input type="hidden" name="action" value="recue">
         <p class="discret">Le colis est arrivé mais n'est pas encore contrôlé ni rangé.</p>
@@ -52,7 +53,7 @@
     {% if peut_annuler %}
     <form method="post" class="actions" data-demo-message="Commande annulée.">{% csrf_token %}
       <input type="hidden" name="action" value="annulee">
-      <button class="bouton secondaire" type="submit">Annuler la commande</button>
+      <button class="bouton secondaire" type="submit">Annuler la commande</button>{% info "commandes" "annuler" "Annuler une commande" %}
     </form>
     {% endif %}
   </div>
@@ -62,7 +63,7 @@
 <form method="post" data-demo-message="Commande réceptionnée : les quantités livrées sont entrées en stock.">{% csrf_token %}
 <input type="hidden" name="action" value="receptionnee">
 <div class="tableau"><table>
-  <tr><th>Article</th><th class="nombre">Stock actuel</th><th class="nombre">Quantité</th><th class="nombre">Prix unit.</th><th class="nombre">Montant</th><th class="nombre">{% if peut_receptionner %}Quantité livrée{% else %}Reçu{% endif %}</th></tr>
+  <tr><th>Article</th><th class="nombre">Stock actuel</th><th class="nombre">Quantité</th><th class="nombre">Prix unit.</th><th class="nombre">Montant</th><th class="nombre">{% if peut_receptionner %}Quantité livrée{% info "commandes" "receptionner" "Quantité livrée" %}{% else %}Reçu{% endif %}</th></tr>
   {% for ligne in lignes %}
   <tr><td><a href="{{ ligne.article.get_absolute_url }}">{{ ligne.article.reference }}</a> {{ ligne.article.designation }}{% with reference_a_commander=ligne.lien_fournisseur.reference_a_commander %}{% if reference_a_commander %}<br><span class="discret">{{ reference_a_commander }}</span>{% endif %}{% endwith %}</td>
     <td class="nombre">{{ ligne.article.stock|floatformat:"-2" }}</td>

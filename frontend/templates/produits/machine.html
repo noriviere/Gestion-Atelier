@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}{{ machine.code }} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'produits' %}">Produits et machines</a></li><li aria-current="page">{{ machine.code }}</li></ol></nav>
-<h1>{{ machine.code }} – {{ machine.nom }}</h1>
+<h1>{{ machine.code }} – {{ machine.nom }}{% info "produits" "page-machine" "La page d'une machine" %}</h1>
 <p class="sous-titre">{{ machine.description }}</p>
 <div class="tableau"><table>
   <tr><th>Produit</th><th>État</th><th class="nombre">Cadence</th><th></th></tr>

@@ -1,0 +1,54 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Mode d'emploi</h1>
+<p class="sous-titre">Gestion Atelier rassemble les données de l'atelier dans une seule application : le stock des pièces d'usure et des consommables, les commandes aux fournisseurs, les inventaires, l'arborescence de l'outillage et les fiches de production de chaque produit sur chaque machine.</p>
+
+<section class="point-aide" id="fonctions">
+<h2>Les grandes fonctions</h2>
+<div class="grille-aide">
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'stock' %}"><h3>Stock et articles</h3>
+    <p>Chaque pièce d'usure ou consommable a son stock, son stock mini et sa quantité mini de commande. On sort une pièce du stock quand on la prend en magasin.</p></a>
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'commandes' %}"><h3>À commander et commandes</h3>
+    <p>Dès qu'un article atteint son stock mini, il apparaît dans « À commander ». La commande se prépare en un clic, puis se suit jusqu'à l'entrée en stock.</p></a>
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'fournisseurs' %}"><h3>Fournisseurs</h3>
+    <p>Un article peut avoir plusieurs fournisseurs, avec leur référence, leur prix et leur délai ; l'un d'eux est le fournisseur préféré.</p></a>
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'inventaires' %}"><h3>Inventaires</h3>
+    <p>Inventaire tournant : chaque article est recompté selon sa propre fréquence. Le comptage corrige le stock et l'écart est gardé.</p></a>
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'outillage' %}"><h3>Outillage</h3>
+    <p>Chaque outil est décomposé en sous-ensembles et en pièces d'usure, qui sont les articles du stock.</p></a>
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'produits' %}"><h3>Produits et machines</h3>
+    <p>Une matrice montre, pour chaque produit, les machines où il est programmé, à faire, à sécuriser ou non faisable.</p></a>
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'fiches' %}"><h3>Fiches de production</h3>
+    <p>Pour chaque produit sur une machine : cadence, paramètres de réglage, outillages, consommables, notes, photos et documents.</p></a>
+  <a class="carte carte-aide" href="{% url 'aide_sujet' 'profils' %}"><h3>Profils et droits</h3>
+    <p>Admin, Méthode et management, Intendant, Régleur et Opérateur. Chacun voit et fait ce que son profil permet.</p></a>
+</div>
+</section>
+
+<section class="point-aide" id="enchainement">
+<h2>Comment tout s'enchaîne</h2>
+<ol class="etapes-aide">
+  <li>Un <strong>article</strong> du stock (un patin, une bande…) est monté sur un ou plusieurs <strong>outils</strong>, ou consommé par une fiche de production.</li>
+  <li>Une <strong>fiche de production</strong> réunit pour un produit sur une machine ses outils, ses consommables et ses réglages. La fiche affiche le stock de chaque pièce.</li>
+  <li>Quand une pièce est remplacée, le régleur ou l'opérateur fait une <strong>sortie de stock</strong>, depuis l'article ou directement depuis la fiche de l'outil.</li>
+  <li>Le stock descend au <strong>stock mini</strong> : l'article passe dans <strong>À commander</strong>, avec la quantité à commander chez son fournisseur préféré.</li>
+  <li>La <strong>commande</strong> est préparée, passée, reçue, puis réceptionnée : les quantités livrées entrent en stock.</li>
+  <li>L'<strong>inventaire tournant</strong> vérifie régulièrement chaque article ; le comptage corrige le stock si besoin.</li>
+</ol>
+</section>
+
+<section class="point-aide" id="trouver-aide">
+<h2>Trouver de l'aide</h2>
+<p>Le bouton <span class="exemple-bouton-aide" aria-hidden="true">?</span> de la barre du haut ouvre, depuis n'importe quelle page, l'explication de la page où vous êtes. Les petits {% info "navigation" "petits-i" "Les petits i" %} placés à côté d'une case ou d'un bouton mènent directement à l'explication de cette case ou de ce bouton. Le bouton « Revenir à la page précédente », en haut de chaque page du mode d'emploi, vous ramène là où vous étiez.</p>
+<p>Chaque explication indique le droit nécessaire et si votre profil l'a : ce que vous ne voyez pas dans l'application est simplement réservé à un autre profil.</p>
+</section>
+
+<section class="point-aide" id="sommaire">
+<h2>Sommaire</h2>
+<dl class="liste-sujets">
+  {% for sujet_du_sommaire in sujets %}<dt><a href="{% url 'aide_sujet' sujet_du_sommaire.code %}">{{ sujet_du_sommaire.titre }}</a></dt><dd>{{ sujet_du_sommaire.resume }}</dd>
+  {% endfor %}
+</dl>
+</section>
+{% endblock %}

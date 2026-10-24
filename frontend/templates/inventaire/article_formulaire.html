@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}{% if article %}Modifier {{ article.reference }}{% else %}Nouvel article{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'articles' %}">Stock</a> › {% if article %}<a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> › modifier{% else %}nouvel article{% endif %}</div>
@@ -7,29 +8,29 @@
 <form method="post" class="formulaire" data-demo-message="Article enregistré.">{% csrf_token %}
   {% for erreur in form.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
   <div class="carte">
-    <h2 class="titre-carte">Identification</h2>
+    <h2 class="titre-carte">Identification{% info "stock" "formulaire-article" "Créer ou modifier un article" %}</h2>
     <div class="grille-champs">
       {% include "_champ.html" with champ=form.reference %}
       {% include "_champ.html" with champ=form.designation classe="large" %}
       {% include "_champ.html" with champ=form.categorie %}
-      {% include "_champ.html" with champ=form.origine %}
+      {% include "_champ.html" with champ=form.origine aide_sujet="stock" aide_ancre="champ-origine" %}
       {% include "_champ.html" with champ=form.numero_plan classe="champ-plan" %}
     </div>
   </div>
   <div class="carte">
     <h2 class="titre-carte">Stockage et seuils</h2>
     <div class="grille-champs">
-      {% include "_champ.html" with champ=form.type_inventaire %}
+      {% include "_champ.html" with champ=form.type_inventaire aide_sujet="inventaires" aide_ancre="principe" %}
       {% include "_champ.html" with champ=form.emplacement %}
       {% include "_champ.html" with champ=form.unite %}
-      {% if form.stock_initial %}{% include "_champ.html" with champ=form.stock_initial %}{% endif %}
-      {% include "_champ.html" with champ=form.stock_mini %}
-      {% include "_champ.html" with champ=form.mini_commande %}
-      {% include "_champ.html" with champ=form.frequence_inventaire %}
+      {% if form.stock_initial %}{% include "_champ.html" with champ=form.stock_initial aide_sujet="stock" aide_ancre="formulaire-article" %}{% endif %}
+      {% include "_champ.html" with champ=form.stock_mini aide_sujet="stock" aide_ancre="stock-mini" %}
+      {% include "_champ.html" with champ=form.mini_commande aide_sujet="stock" aide_ancre="mini-commande" %}
+      {% include "_champ.html" with champ=form.frequence_inventaire aide_sujet="stock" aide_ancre="frequence" %}
     </div>
   </div>
   <div class="carte">
-    <h2 class="titre-carte">Fournisseurs</h2>
+    <h2 class="titre-carte">Fournisseurs{% info "stock" "fournisseurs-article" "Les fournisseurs d'un article" %}</h2>
     <p class="discret">Un design interne est commandé sur son numéro de plan : la référence fournisseur peut rester vide. <a href="{% url 'fournisseur_nouveau' %}">Créer un fournisseur</a></p>
     {{ liens_fournisseurs.management_form }}
     {% for erreur in liens_fournisseurs.non_form_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}

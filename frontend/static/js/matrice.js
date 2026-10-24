@@ -146,8 +146,9 @@
       credentials: "same-origin"
     })
       .then(function (reponse) {
-        return reponse.json().then(function (donnees) {
-          if (!reponse.ok) throw new Error(donnees.erreur || "Enregistrement refusé.");
+        // Une page d'erreur ou de connexion (session expirée) n'est pas du JSON : on garde un message clair.
+        return reponse.json().catch(function () { return {}; }).then(function (donnees) {
+          if (!reponse.ok || !donnees.etat) throw new Error(donnees.erreur || "Enregistrement refusé, rechargez la page.");
           return donnees;
         });
       })
@@ -164,7 +165,22 @@
     if (bouton) ouvrirCase(bouton.closest("td"));
   });
 
-  formulaireEtat.addEventListener("change", enregistrerEtat);
+  // Au clavier, les flèches parcourent les états sans enregistrer ; Entrée valide l'état choisi.
+  var choixAuClavier = false;
+  formulaireEtat.addEventListener("keydown", function (evenement) {
+    if (evenement.key.indexOf("Arrow") === 0) choixAuClavier = true;
+    if (evenement.key === "Enter" && formulaireEtat.querySelector("[name=etat]:checked")) {
+      evenement.preventDefault();
+      enregistrerEtat();
+    }
+  });
+  formulaireEtat.addEventListener("change", function () {
+    if (choixAuClavier) {
+      choixAuClavier = false;
+      return;
+    }
+    enregistrerEtat();
+  });
   formulaireEtat.addEventListener("submit", function (evenement) {
     evenement.preventDefault();
   });

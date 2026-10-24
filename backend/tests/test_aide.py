@@ -29,7 +29,7 @@ def petits_i_des_gabarits():
 class ModeEmploiTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("charger_demo", stdout=SORTIE_MUETTE)
+        call_command("charger_demo", effacer_tout=True, stdout=SORTIE_MUETTE)
 
     def setUp(self):
         self.client.login(username="methode", password="demo")

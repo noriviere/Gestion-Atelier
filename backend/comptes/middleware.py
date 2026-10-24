@@ -1,6 +1,6 @@
 from django.conf import settings
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import redirect
 from django.urls import reverse
 
 from . import roles
@@ -17,7 +17,8 @@ class ConnexionObligatoireMiddleware:
         page_connexion = reverse(settings.LOGIN_URL)
         chemins_publics = (page_connexion, "/admin/", "/" + settings.STATIC_URL.lstrip("/"))
         if not request.user.is_authenticated and not request.path.startswith(chemins_publics):
-            return redirect(f"{page_connexion}?next={request.path}")
+            # Adresse complète et encodée : on revient sur la page demandée avec ses filtres.
+            return redirect_to_login(request.get_full_path(), page_connexion)
         return self.get_response(request)
 
 

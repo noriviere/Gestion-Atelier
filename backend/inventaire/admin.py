@@ -14,6 +14,8 @@ class ArticleAdmin(admin.ModelAdmin):
                     "mini_commande"]
     list_filter = ["categorie", "origine", "type_inventaire"]
     search_fields = ["reference", "designation", "numero_plan"]
+    # Le stock ne change que par les mouvements et les comptages, qui gardent la trace de chaque changement.
+    readonly_fields = ["stock", "dernier_inventaire"]
     inlines = [ArticleFournisseurInline]
 
 
@@ -30,4 +32,13 @@ admin.site.register(TypeInventaire)
 class MouvementAdmin(admin.ModelAdmin):
     list_display = ["date", "article", "type", "quantite", "stock_apres", "utilisateur"]
     list_filter = ["type"]
-    readonly_fields = ["stock_apres"]
+
+    # Journal en lecture seule : les mouvements se saisissent dans l'application, qui met le stock à jour.
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.models import Group, User
+from django.db import transaction
 from django.shortcuts import redirect, render
 
 from . import roles
@@ -38,6 +39,7 @@ def droits(request):
     })
 
 
+@transaction.atomic
 def enregistrer_profils_des_comptes(donnees):
     """Un seul profil par compte ; les super-utilisateurs restent Admin quoi qu'il arrive."""
     groupes = {str(groupe.pk): groupe for groupe in Group.objects.filter(name__in=roles.GROUPES)}

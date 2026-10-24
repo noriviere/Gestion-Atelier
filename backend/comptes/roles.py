@@ -1,4 +1,6 @@
 """Les profils de l'application, portés par des groupes Django, et leurs droits."""
+from django.db import transaction
+
 from .droits import BLOCS, DEFAUTS, FONCTIONS, TOUS_LES_CODES
 
 ADMIN = "Admin"
@@ -64,6 +66,7 @@ def tableau_des_droits():
     return BLOCS, [(groupe, {droit.code for droit in groupe.droits.all()}) for groupe in profils]
 
 
+@transaction.atomic
 def enregistrer_droits(codes_par_profil):
     """Remplace les droits des profils donnés ({Group: codes}) et met à jour leurs permissions Django."""
     from .models import Droit

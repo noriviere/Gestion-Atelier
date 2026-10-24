@@ -43,7 +43,8 @@
 </header>
 {% endif %}
 <main id="contenu" tabindex="-1">
-  {% if messages %}<ul class="messages">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>{% endif %}
+  {# Toujours présente : les lecteurs d'écran annoncent aussi les messages ajoutés par le JavaScript. #}
+  <ul class="messages" role="status" aria-live="polite">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>
   {% block contenu %}{% endblock %}
 </main>
 </body>

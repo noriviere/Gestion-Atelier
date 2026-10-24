@@ -13,10 +13,10 @@
 </div>
 
 <form class="filtres" method="get" data-filtrer-au-chargement>
-  <select name="periode">
+  <select name="periode" aria-label="Période">
     {% for jours, nom_periode in periodes %}<option value="{{ jours }}" {% if periode == jours %}selected{% endif %}>{{ nom_periode }}</option>{% endfor %}
   </select>
-  <select name="type"><option value="">Tous types d'inventaire</option>
+  <select name="type" aria-label="Type d'inventaire"><option value="">Tous types d'inventaire</option>
     {% for type_inventaire in types_inventaire %}<option value="{{ type_inventaire.pk }}" {% if type_inventaire_id == type_inventaire.pk|stringformat:"s" %}selected{% endif %}>{{ type_inventaire.nom }}</option>{% endfor %}
   </select>
   <label><input type="checkbox" name="ecart" value="1" {% if seulement_les_ecarts %}checked{% endif %}> Écarts seulement</label>

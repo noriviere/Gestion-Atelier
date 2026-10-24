@@ -10,7 +10,7 @@ class MouvementForm(forms.Form):
         widget=forms.RadioSelect,
         initial=Mouvement.SORTIE,
     )
-    quantite = forms.DecimalField(label="Quantité", min_value=0.01, decimal_places=2)
+    quantite = forms.DecimalField(label="Quantité", min_value=0.01, max_digits=10, decimal_places=2)
     commentaire = forms.CharField(label="Commentaire", required=False, max_length=200)
 
 
@@ -18,7 +18,7 @@ class ArticleForm(forms.ModelForm):
     """Données de référence de l'article. Le stock, lui, ne change que par les mouvements et les comptages."""
 
     stock_initial = forms.DecimalField(
-        label="Stock initial", min_value=0, decimal_places=2, required=False,
+        label="Stock initial", min_value=0, max_digits=10, decimal_places=2, required=False,
         help_text="Quantité en magasin à la création, enregistrée comme une entrée de stock.",
     )
 

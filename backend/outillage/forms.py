@@ -45,4 +45,4 @@ PiecesOutilFormSet = forms.inlineformset_factory(
 
 class SortiePieceForm(forms.Form):
     piece = forms.IntegerField(widget=forms.HiddenInput)
-    quantite = forms.DecimalField(label="Quantité", min_value=0.01, decimal_places=2)
+    quantite = forms.DecimalField(label="Quantité", min_value=0.01, max_digits=10, decimal_places=2)

@@ -8,6 +8,7 @@ from django.test import TestCase
 
 from comptes.management.commands.exporter_statique import chemin_statique
 from inventaire.models import Article, TypeInventaire
+from produits.models import ProduitMachine
 
 SORTIE_MUETTE = open("/dev/null", "w")
 
@@ -74,6 +75,14 @@ class PagesDemoTests(TestCase):
         self.assertContains(reponse, 'aria-current="page"', count=1)
         self.assertContains(reponse, 'href="#contenu"')
         self.assertContains(reponse, '<main id="contenu"')
+
+    def test_fil_d_ariane_de_la_fiche_remonte_au_produit(self):
+        self.client.login(username="operateur", password="demo")
+        fabrication = ProduitMachine.objects.select_related("produit", "machine").first()
+        reponse = self.client.get(fabrication.get_absolute_url())
+        self.assertContains(reponse, '<nav class="fil no-print" aria-label="Fil d\'Ariane">')
+        self.assertContains(reponse, f'<a href="{fabrication.produit.get_absolute_url()}">{fabrication.produit.reference}</a>')
+        self.assertContains(reponse, f'<li aria-current="page">Fiche sur {fabrication.machine.code}</li>')
 
 
 class ExportStatiqueTests(TestCase):

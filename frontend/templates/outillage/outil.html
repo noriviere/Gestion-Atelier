@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}{{ outil.code }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'outils' %}">Outillage</a>{% for ancetre in chemin %} › {% if forloop.last %}{{ ancetre.code }}{% else %}<a href="{{ ancetre.get_absolute_url }}">{{ ancetre.code }}</a>{% endif %}{% endfor %}</div>
+<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'outils' %}">Outillage</a></li>{% for ancetre in chemin %}{% if forloop.last %}<li aria-current="page">{{ ancetre.code }}</li>{% else %}<li><a href="{{ ancetre.get_absolute_url }}">{{ ancetre.code }}</a></li>{% endif %}{% endfor %}</ol></nav>
 <h1>{{ outil.code }} – {{ outil.nom }}</h1>
 <p class="sous-titre">{% if outil.parent %}Sous-ensemble de {{ outil.parent }}{% else %}Outil{% endif %}</p>
 {% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:outillage_outil_change' outil.pk %}">Modifier l'outil</a></div>{% endif %}

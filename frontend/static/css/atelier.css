@@ -84,6 +84,9 @@ h2 { font-size: 18px; margin: 28px 0 10px; }
 .sous-titre { color: var(--discret); margin: 0 0 20px; }
 .discret { color: var(--discret); font-size: 13px; }
 .fil { font-size: 13px; color: var(--discret); margin-bottom: 6px; }
+.fil ol { list-style: none; display: flex; flex-wrap: wrap; margin: 0; padding: 0; }
+.fil li + li::before { content: "›"; margin: 0 7px; color: var(--discret); }
+.fil li[aria-current] { color: var(--texte); }
 .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .deux-colonnes { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
 @media (max-width: 900px) { .deux-colonnes { grid-template-columns: 1fr; } }

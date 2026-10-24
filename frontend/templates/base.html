@@ -12,7 +12,7 @@
 </head>
 <body>
 <a class="lien-evitement" href="#contenu">Aller au contenu</a>
-{% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré.</span><span class="texte-ecran-etroit">Démo : données fictives, rien n'est enregistré.</span> <a href="/__profils__">Changer de profil</a></div>{% endif %}
+{% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les mouvements de stock sont gardés dans votre navigateur, rien n'est envoyé.</span><span class="texte-ecran-etroit">Démo : données fictives, gardées dans votre navigateur.</span> <a href="/__profils__">Changer de profil</a> · <button type="button" class="lien-bouton" data-action="reinitialiser-demo">Remettre à zéro</button></div>{% endif %}
 {% if user.is_authenticated %}
 <header class="barre">
   <a class="logo" href="{% url 'accueil' %}">Gestion Atelier</a>

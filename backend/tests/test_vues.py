@@ -9,6 +9,7 @@ from django.test import TestCase
 from comptes.management.commands.exporter_statique import chemin_statique
 from commandes.models import Commande
 from inventaire.models import Article, TypeInventaire
+from outillage.models import Outil
 from produits.models import ProduitMachine
 
 SORTIE_MUETTE = open("/dev/null", "w")
@@ -122,3 +123,10 @@ class ExportStatiqueTests(TestCase):
             self.assertIn('href="../static/css/atelier.css"', accueil_operateur)
             self.assertNotIn('href="/', accueil_operateur)
             self.assertIn("Paramétrage", (racine / "methode" / "index.html").read_text())
+            outil = Outil.objects.get(code="OUT-N7")
+            self.assertTrue((racine / "methode" / "outils" / str(outil.pk) / "modifier" / "index.html").exists())
+            self.assertTrue((racine / "methode" / "outils" / "nouveau" / f"parent-{outil.pk}" / "index.html").exists())
+            self.assertFalse((racine / "operateur" / "outils" / str(outil.pk) / "modifier").exists())
+            fiche_outil_operateur = (racine / "operateur" / "outils" / str(outil.pk) / "index.html").read_text()
+            self.assertIn('data-demo="sortie-piece"', fiche_outil_operateur)
+            self.assertFalse((racine / "operateur" / "outils" / str(outil.pk) / "sortie").exists())

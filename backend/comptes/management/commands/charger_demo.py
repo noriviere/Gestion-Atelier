@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
+from commandes.models import Commande, LigneCommande
 from comptes.roles import ADMIN, ATELIER, configurer_permissions
 from demo import donnees
 from inventaire.models import Article, ArticleFournisseur, Fournisseur, Mouvement, TypeInventaire
@@ -27,14 +28,15 @@ class Command(BaseCommand):
         outils = self.creer_outillage(articles)
         produits, machines = self.creer_produits(articles, outils)
         self.creer_mouvements(articles, comptes)
+        commandes = self.creer_commandes(articles, comptes)
         self.stdout.write(self.style.SUCCESS(
             f"Démo chargée : {len(articles)} articles, {len(outils)} outils, {len(produits)} produits, "
-            f"{len(machines)} machines, {len(comptes)} comptes (mot de passe : {MOT_DE_PASSE_DEMO})."
+            f"{len(machines)} machines, {len(commandes)} commandes, {len(comptes)} comptes (mot de passe : {MOT_DE_PASSE_DEMO})."
         ))
 
     @staticmethod
     def effacer_donnees_metier():
-        for modele in (Mouvement, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
+        for modele in (LigneCommande, Commande, Mouvement, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
                        ArticleFournisseur, Article, TypeInventaire, Fournisseur):
             modele.objects.all().delete()
 
@@ -129,3 +131,30 @@ class Command(BaseCommand):
             )
             Article.objects.filter(pk=article.pk).update(stock=stock_final)
             Mouvement.objects.filter(pk=mouvement.pk).update(stock_apres=stock_final)
+
+    @staticmethod
+    def creer_commandes(articles, comptes):
+        # Les états et dates sont posés directement : les réceptions passées sont déjà dans les stocks de la démo.
+        aujourdhui = timezone.localdate()
+
+        def il_y_a(jours):
+            return None if jours is None else aujourdhui - timedelta(days=jours)
+
+        commandes = []
+        for (nom_fournisseur, etat, creee_il_y_a, passee_il_y_a, prevue_dans, recue_il_y_a, numero_fournisseur,
+             lignes, notes) in donnees.COMMANDES:
+            commande = Commande.objects.create(
+                fournisseur=Fournisseur.objects.get(nom=nom_fournisseur), etat=etat, numero_fournisseur=numero_fournisseur,
+                date_creation=il_y_a(creee_il_y_a), date_passage=il_y_a(passee_il_y_a),
+                date_prevue=None if prevue_dans is None else aujourdhui + timedelta(days=prevue_dans),
+                date_reception=il_y_a(recue_il_y_a),
+                date_entree_stock=il_y_a(recue_il_y_a) if etat == Commande.RECEPTIONNEE else None,
+                notes=notes, cree_par=comptes["methode"],
+            )
+            for reference, quantite, quantite_recue in lignes:
+                LigneCommande.objects.create(
+                    commande=commande, article=articles[reference], quantite=Decimal(quantite),
+                    quantite_recue=None if quantite_recue is None else Decimal(quantite_recue),
+                )
+            commandes.append(commande)
+        return commandes

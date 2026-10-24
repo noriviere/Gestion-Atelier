@@ -156,6 +156,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 input.compte { width: 90px; text-align: right; }
 form.filtres { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.grille + form.filtres { margin-top: 18px; }
 .bouton, button.bouton { display: inline-block; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font: inherit; cursor: pointer; transition: filter var(--duree) ease, transform 120ms ease, box-shadow var(--duree) ease; }
 html[data-theme="sombre"] .bouton:not(.secondaire) { color: #0b0e13; }
 .bouton:hover { text-decoration: none; filter: brightness(1.08); box-shadow: var(--ombre-survol); }

@@ -16,7 +16,7 @@
   {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'admin:inventaire_article_add' %}">Nouvel article</a>{% endif %}
 </form>
 <div class="tableau"><table>
-  <tr><th>Référence</th><th>Désignation</th><th>Catégorie</th><th>Type d'inventaire</th><th>Emplacement</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th class="nombre">Mini cde</th></tr>
+  <tr><th>Référence</th><th>Désignation</th><th>Catégorie</th><th>Type d'inventaire</th><th>Emplacement</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th class="nombre">Mini cde</th><th>En commande</th></tr>
   {% for article in articles %}
   <tr data-categorie="{{ article.categorie }}" data-type="{{ article.type_inventaire_id }}" data-alerte="{% if article.a_commander %}1{% endif %}">
     <td><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a></td>
@@ -27,7 +27,8 @@
     <td class="nombre">{% if article.a_commander %}<span class="etiquette alerte">{{ article.stock|floatformat:"-2" }}</span>{% else %}{{ article.stock|floatformat:"-2" }}{% endif %}</td>
     <td class="nombre">{{ article.stock_mini|floatformat:"-2" }}</td>
     <td class="nombre">{{ article.mini_commande|floatformat:"-2" }}</td>
+    <td>{% include "inventaire/_en_commande.html" %}</td>
   </tr>
-  {% empty %}<tr><td colspan="8">Aucun article.</td></tr>{% endfor %}
+  {% empty %}<tr><td colspan="9">Aucun article.</td></tr>{% endfor %}
 </table></div>
 {% endblock %}

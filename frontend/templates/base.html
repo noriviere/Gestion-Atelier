@@ -27,6 +27,7 @@
     <a href="{% url 'accueil' %}" class="{% if page_courante == 'accueil' %}actif{% endif %}">Accueil</a>
     <a href="{% url 'articles' %}" class="{% if page_courante == 'articles' or page_courante == 'article' %}actif{% endif %}">Stock</a>
     <a href="{% url 'a_commander' %}" class="{% if page_courante == 'a_commander' %}actif{% endif %}">À commander</a>
+    <a href="{% url 'commandes' %}" class="{% if page_courante == 'commandes' or page_courante == 'commande' %}actif{% endif %}">Commandes</a>
     <a href="{% url 'inventaires' %}" class="{% if page_courante == 'inventaires' or page_courante == 'comptage' %}actif{% endif %}">Inventaires</a>
     <a href="{% url 'outils' %}" class="{% if page_courante == 'outils' or page_courante == 'outil' %}actif{% endif %}">Outillage</a>
     <a href="{% url 'produits' %}" class="{% if page_courante == 'produits' or page_courante == 'produit' or page_courante == 'fiche' %}actif{% endif %}">Produits</a>

@@ -21,6 +21,9 @@ class Fournisseur(models.Model):
     def __str__(self):
         return self.nom
 
+    def get_absolute_url(self):
+        return reverse("fournisseur", args=[self.pk])
+
 
 class TypeInventaire(models.Model):
     """Regroupe les articles comptés ensemble (par zone, par famille...)."""

@@ -30,6 +30,14 @@ class PagesDemoTests(TestCase):
                         *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
 
+    def test_pages_de_saisie_repondent_pour_methode(self):
+        self.client.login(username="methode", password="demo")
+        article = Article.objects.get(reference="PL-M")
+        fournisseur = article.fournisseur_prefere
+        for adresse in ["/articles/nouveau/", f"/articles/{article.pk}/modifier/", "/fournisseurs/", "/fournisseurs/nouveau/",
+                        f"/fournisseurs/{fournisseur.pk}/", f"/fournisseurs/{fournisseur.pk}/modifier/"]:
+            self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
+
     def test_connexion_obligatoire(self):
         self.assertRedirects(self.client.get("/articles/"), "/connexion/?next=/articles/")
 

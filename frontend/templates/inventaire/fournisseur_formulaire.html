@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titre %}{% if fournisseur %}Modifier {{ fournisseur.nom }}{% else %}Nouveau fournisseur{% endif %} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'fournisseurs' %}">Fournisseurs</a> › {% if fournisseur %}<a href="{{ fournisseur.get_absolute_url }}">{{ fournisseur.nom }}</a> › modifier{% else %}nouveau{% endif %}</div>
+<h1>{% if fournisseur %}Modifier {{ fournisseur.nom }}{% else %}Nouveau fournisseur{% endif %}</h1>
+<p class="sous-titre">Les articles se rattachent au fournisseur depuis la fiche de chaque article.</p>
+<form method="post" class="formulaire" data-demo-message="Fournisseur enregistré.">{% csrf_token %}
+  <div class="carte"><div class="grille-champs">
+    {% include "_champ.html" with champ=form.nom classe="large" %}
+    {% include "_champ.html" with champ=form.contact %}
+    {% include "_champ.html" with champ=form.telephone %}
+    {% include "_champ.html" with champ=form.email %}
+  </div></div>
+  <div class="actions"><button class="bouton" type="submit">Enregistrer</button> <a class="bouton secondaire" href="{% if fournisseur %}{{ fournisseur.get_absolute_url }}{% else %}{% url 'fournisseurs' %}{% endif %}">Annuler</a></div>
+</form>
+{% endblock %}

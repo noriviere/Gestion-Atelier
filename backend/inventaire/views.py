@@ -5,17 +5,19 @@ from decimal import Decimal, InvalidOperation
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import F, Q
+from django.db import transaction
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from commandes.models import Commande, renseigner_commandes_en_cours
 from comptes import roles
+from comptes.decorators import modification_requise
 from outillage.models import Outil
 from produits.models import Produit
 
-from .forms import MouvementForm
-from .models import Article, Mouvement, TypeInventaire
+from .forms import ArticleForm, FournisseurForm, LiensFournisseursFormSet, MouvementForm
+from .models import Article, Fournisseur, Mouvement, TypeInventaire
 
 
 def articles_sous_le_mini():
@@ -281,4 +283,66 @@ def ecarts(request):
             "type_inventaire_id": type_inventaire_id,
             "seulement_les_ecarts": seulement_les_ecarts,
         },
+    )
+
+
+@modification_requise
+def article_formulaire(request, pk=None):
+    article = get_object_or_404(Article, pk=pk) if pk else Article()
+    formulaire = ArticleForm(request.POST or None, instance=article)
+    liens_fournisseurs = LiensFournisseursFormSet(request.POST or None, instance=article)
+    if request.method == "POST" and formulaire.is_valid() and liens_fournisseurs.is_valid():
+        with transaction.atomic():
+            article = formulaire.save()
+            liens_fournisseurs.instance = article
+            liens_fournisseurs.save()
+            stock_initial = formulaire.cleaned_data.get("stock_initial")
+            if stock_initial:
+                Mouvement.enregistrer(article, Mouvement.ENTREE, stock_initial, utilisateur=request.user,
+                                      commentaire="Stock initial")
+        messages.success(request, f"Article {article.reference} {'modifié' if pk else 'créé'}.")
+        return redirect(article)
+    return render(
+        request,
+        "inventaire/article_formulaire.html",
+        {"article": article if pk else None, "form": formulaire, "liens_fournisseurs": liens_fournisseurs},
+    )
+
+
+def fournisseurs(request):
+    selection = Fournisseur.objects.annotate(
+        nombre_articles=Count("liens_articles", distinct=True),
+        nombre_preferes=Count("liens_articles", filter=Q(liens_articles__prefere=True), distinct=True),
+    )
+    recherche = request.GET.get("q", "").strip()
+    if recherche:
+        selection = selection.filter(Q(nom__icontains=recherche) | Q(contact__icontains=recherche))
+    return render(request, "inventaire/fournisseurs.html", {"fournisseurs": selection, "recherche": recherche})
+
+
+def fournisseur(request, pk):
+    fournisseur = get_object_or_404(Fournisseur, pk=pk)
+    return render(
+        request,
+        "inventaire/fournisseur.html",
+        {
+            "fournisseur": fournisseur,
+            "liens_articles": fournisseur.liens_articles.select_related("article").order_by("article__reference"),
+            "commandes_en_cours": fournisseur.commandes.filter(etat__in=Commande.ETATS_EN_COURS),
+        },
+    )
+
+
+@modification_requise
+def fournisseur_formulaire(request, pk=None):
+    fournisseur = get_object_or_404(Fournisseur, pk=pk) if pk else Fournisseur()
+    formulaire = FournisseurForm(request.POST or None, instance=fournisseur)
+    if request.method == "POST" and formulaire.is_valid():
+        fournisseur = formulaire.save()
+        messages.success(request, f"Fournisseur {fournisseur.nom} {'modifié' if pk else 'créé'}.")
+        return redirect("fournisseur", pk=fournisseur.pk)
+    return render(
+        request,
+        "inventaire/fournisseur_formulaire.html",
+        {"fournisseur": fournisseur if pk else None, "form": formulaire},
     )

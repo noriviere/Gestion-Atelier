@@ -37,7 +37,7 @@
   document.querySelectorAll("[data-demo-parametrage]").forEach(function (lien) {
     lien.addEventListener("click", function (evenement) {
       evenement.preventDefault();
-      afficherMessage("Démo : le paramétrage (création et modification des articles, outils, produits, comptes) " +
+      afficherMessage("Démo : le paramétrage (création et modification des outils, produits, comptes) " +
         "se fait dans l'interface d'administration, disponible sur la version installée.");
     });
   });

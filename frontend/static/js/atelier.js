@@ -87,3 +87,20 @@
     });
   });
 })();
+
+// Fiche article : le numéro de plan n'est demandé que pour un design interne.
+(function () {
+  var choixOrigine = document.querySelectorAll('input[name="origine"]');
+  var champPlan = document.querySelector(".champ-plan");
+  if (!choixOrigine.length || !champPlan) return;
+
+  function afficherChampPlan() {
+    var origineChoisie = document.querySelector('input[name="origine"]:checked');
+    champPlan.hidden = !origineChoisie || origineChoisie.value !== "interne";
+  }
+
+  choixOrigine.forEach(function (choix) {
+    choix.addEventListener("change", afficherChampPlan);
+  });
+  afficherChampPlan();
+})();

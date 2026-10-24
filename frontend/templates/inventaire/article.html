@@ -5,7 +5,7 @@
 <div class="fil"><a href="{% url 'articles' %}">Stock</a> › {{ article.reference }}</div>
 <h1>{{ article.reference }} – {{ article.designation }}</h1>
 <p class="sous-titre">{{ article.get_categorie_display }} · {% if article.est_design_interne %}design interne, plan {{ article.numero_plan }}{% else %}article acheté{% endif %} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
-{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:inventaire_article_change' article.pk %}">Modifier l'article</a></div>{% endif %}
+{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'article_modifier' article.pk %}">Modifier l'article</a></div>{% endif %}
 
 <div class="deux-colonnes">
   <div>
@@ -37,7 +37,7 @@
     <div class="tableau"><table>
       <tr><th>Fournisseur</th><th>{% if article.est_design_interne %}Commandé sur{% else %}Réf. fournisseur{% endif %}</th><th class="nombre">Prix</th><th class="nombre">Délai</th></tr>
       {% for lien_fournisseur in liens_fournisseurs %}
-      <tr><td>{{ lien_fournisseur.fournisseur }} {% if lien_fournisseur.prefere %}<span class="etiquette prefere">préféré</span>{% endif %}</td>
+      <tr><td><a href="{{ lien_fournisseur.fournisseur.get_absolute_url }}">{{ lien_fournisseur.fournisseur }}</a> {% if lien_fournisseur.prefere %}<span class="etiquette prefere">préféré</span>{% endif %}</td>
         <td>{{ lien_fournisseur.reference_a_commander }}</td><td class="nombre">{% if lien_fournisseur.prix %}{{ lien_fournisseur.prix }} €{% endif %}</td>
         <td class="nombre">{% if lien_fournisseur.delai %}{{ lien_fournisseur.delai }} j{% endif %}</td></tr>
       {% empty %}<tr><td colspan="4">Aucun fournisseur renseigné.</td></tr>{% endfor %}

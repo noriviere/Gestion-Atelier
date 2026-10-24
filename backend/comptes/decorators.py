@@ -24,3 +24,13 @@ def modification_requise(vue):
         return vue(request, *args, **kwargs)
 
     return enveloppe
+
+
+def mouvement_requis(vue):
+    @wraps(vue)
+    def enveloppe(request, *args, **kwargs):
+        if not roles.peut_mouvementer(request.user):
+            raise PermissionDenied
+        return vue(request, *args, **kwargs)
+
+    return enveloppe

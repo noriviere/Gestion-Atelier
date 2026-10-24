@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}Fiche {{ fabrication.produit.reference }} sur {{ fabrication.machine.code }}{% endblock %}
 {% block contenu %}
-<div class="fil no-print"><a href="{% url 'produits' %}">Produits et machines</a> › <a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a> › {{ fabrication.machine.code }}</div>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'produits' %}">Produits et machines</a></li><li><a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a></li><li aria-current="page">Fiche sur {{ fabrication.machine.code }}</li></ol></nav>
 <div class="actions"><button class="bouton" type="button" data-action="imprimer">Imprimer la fiche</button>
   {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier la fiche</a>{% endif %}</div>
 {% if peut_modifier and autres_machines %}
@@ -52,7 +52,7 @@
     <tr><th>Article</th><th>Quantité / fréquence</th><th class="nombre">Stock</th><th>Emplacement</th></tr>
     {% for consommation in consommations %}
     <tr><td><a href="{{ consommation.article.get_absolute_url }}">{{ consommation.article.reference }}</a> {{ consommation.article.designation }}</td><td>{{ consommation.quantite }}</td>
-      <td class="nombre"><span>{% if consommation.article.a_commander %}<span class="etiquette alerte">{{ consommation.article.stock|floatformat:"-2" }}</span>{% else %}{{ consommation.article.stock|floatformat:"-2" }}{% endif %} {{ consommation.article.unite }}</span></td>
+      <td class="nombre">{% include "inventaire/_stock.html" with article=consommation.article unite=True %}</td>
       <td>{{ consommation.article.emplacement }}</td></tr>
     {% empty %}<tr><td colspan="4">Aucun consommable renseigné.</td></tr>{% endfor %}
   </table>

@@ -3,6 +3,7 @@ from django.contrib.auth.models import AnonymousUser, Group
 from django.test import TestCase
 
 from comptes import roles
+from comptes.menu import entrees_menu
 
 from .fabriques import creer_utilisateur
 
@@ -67,3 +68,25 @@ class PermissionsDesGroupesTests(TestCase):
         self.assertTrue(methodiste.has_perm("outillage.change_outil"))
         self.assertTrue(methodiste.has_perm("produits.delete_produitmachine"))
         self.assertFalse(methodiste.has_perm("auth.change_user"))
+
+
+class MenuTests(TestCase):
+    @staticmethod
+    def libelles(entrees):
+        return [entree["libelle"] for entree in entrees]
+
+    def test_atelier_voit_les_fiches_d_abord_et_pas_les_commandes(self):
+        operateur = creer_utilisateur("operateur", roles.ATELIER)
+        self.assertEqual(
+            self.libelles(entrees_menu(operateur, "accueil")),
+            ["Accueil", "Produits et machines", "Outillage", "Stock", "Inventaires", "Commandes"],
+        )
+
+    def test_bureau_voit_toutes_les_entrees(self):
+        methodiste = creer_utilisateur("methode", roles.METHODE)
+        self.assertIn("À commander", self.libelles(entrees_menu(methodiste, "accueil")))
+
+    def test_entree_courante_couvre_les_pages_de_detail(self):
+        methodiste = creer_utilisateur("methode", roles.METHODE)
+        actives = [entree["libelle"] for entree in entrees_menu(methodiste, "fiche") if entree["actif"]]
+        self.assertEqual(actives, ["Produits et machines"])

@@ -9,6 +9,7 @@ from django.test import TestCase
 from comptes.management.commands.exporter_statique import chemin_statique
 from commandes.models import Commande
 from inventaire.models import Article, TypeInventaire
+from outillage.models import Outil
 from produits.models import Document, Machine, Produit, ProduitMachine
 
 SORTIE_MUETTE = open("/dev/null", "w")
@@ -73,6 +74,22 @@ class PagesDemoTests(TestCase):
         self.assertEqual(porte_lame.stock, Decimal("5"))
         self.assertFalse(porte_lame.inventaire_du)
 
+    def test_menu_signale_la_page_courante_aux_lecteurs_d_ecran(self):
+        self.client.login(username="operateur", password="demo")
+        reponse = self.client.get("/outils/")
+        self.assertContains(reponse, 'href="/outils/" class="actif" aria-current="page"', html=False)
+        self.assertContains(reponse, 'aria-current="page"', count=1)
+        self.assertContains(reponse, 'href="#contenu"')
+        self.assertContains(reponse, '<main id="contenu"')
+
+    def test_fil_d_ariane_de_la_fiche_remonte_au_produit(self):
+        self.client.login(username="operateur", password="demo")
+        fabrication = ProduitMachine.objects.select_related("produit", "machine").first()
+        reponse = self.client.get(fabrication.get_absolute_url())
+        self.assertContains(reponse, '<nav class="fil no-print" aria-label="Fil d\'Ariane">')
+        self.assertContains(reponse, f'<a href="{fabrication.produit.get_absolute_url()}">{fabrication.produit.reference}</a>')
+        self.assertContains(reponse, f'<li aria-current="page">Fiche sur {fabrication.machine.code}</li>')
+
 
     def test_stock_bas_avec_commande_en_cours_est_signale(self):
         self.client.login(username="operateur", password="demo")
@@ -110,6 +127,13 @@ class ExportStatiqueTests(TestCase):
             self.assertIn('href="../static/css/atelier.css"', accueil_operateur)
             self.assertNotIn('href="/', accueil_operateur)
             self.assertIn("Paramétrage", (racine / "methode" / "index.html").read_text())
+            outil = Outil.objects.get(code="OUT-N7")
+            self.assertTrue((racine / "methode" / "outils" / str(outil.pk) / "modifier" / "index.html").exists())
+            self.assertTrue((racine / "methode" / "outils" / "nouveau" / f"parent-{outil.pk}" / "index.html").exists())
+            self.assertFalse((racine / "operateur" / "outils" / str(outil.pk) / "modifier").exists())
+            fiche_outil_operateur = (racine / "operateur" / "outils" / str(outil.pk) / "index.html").read_text()
+            self.assertIn('data-demo="sortie-piece"', fiche_outil_operateur)
+            self.assertFalse((racine / "operateur" / "outils" / str(outil.pk) / "sortie").exists())
 
     def test_export_des_fiches_avec_photos_formulaires_et_matrice(self):
         with tempfile.TemporaryDirectory() as dossier:

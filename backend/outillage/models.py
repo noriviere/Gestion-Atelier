@@ -37,6 +37,14 @@ class Outil(models.Model):
             chemin.insert(0, chemin[0].parent)
         return chemin
 
+    def descendants(self):
+        """Tous les sous-ensembles, à tous les niveaux."""
+        resultat = []
+        for sous_ensemble in self.sous_ensembles.all():
+            resultat.append(sous_ensemble)
+            resultat.extend(sous_ensemble.descendants())
+        return resultat
+
 
 class PieceOutil(models.Model):
     outil = models.ForeignKey(Outil, on_delete=models.CASCADE, related_name="liens_pieces")

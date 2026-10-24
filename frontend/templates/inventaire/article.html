@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}{{ article.reference }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'articles' %}">Stock</a> › {{ article.reference }}</div>
+<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'articles' %}">Stock</a></li><li aria-current="page">{{ article.reference }}</li></ol></nav>
 <h1>{{ article.reference }} – {{ article.designation }}</h1>
 <p class="sous-titre">{{ article.get_categorie_display }} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
 {% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:inventaire_article_change' article.pk %}">Modifier l'article</a></div>{% endif %}
@@ -10,7 +10,7 @@
   <div>
     <div class="carte">
       <dl class="infos">
-        <dt>Stock actuel</dt><dd id="stock-actuel" data-stock="{{ article.stock|stringformat:'s' }}" data-mini="{{ article.stock_mini|stringformat:'s' }}" data-unite="{{ article.unite }}">{% if article.a_commander %}<span class="etiquette alerte">{{ article.stock|floatformat:"-2" }} {{ article.unite }} – à commander</span>{% else %}<span class="etiquette ok">{{ article.stock|floatformat:"-2" }} {{ article.unite }}</span>{% endif %}</dd>
+        <dt>Stock actuel</dt><dd>{% include "inventaire/_stock.html" with unite=True mention=True etiquette_ok=True %}</dd>
         <dt>Stock mini</dt><dd>{{ article.stock_mini|floatformat:"-2" }}</dd>
         <dt>Mini de commande</dt><dd>{{ article.mini_commande|floatformat:"-2" }}</dd>
         <dt>En commande</dt><dd>{% if lignes_en_cours %}{{ article.quantite_en_commande|floatformat:"-2" }} {{ article.unite }} · stock prévisionnel {{ article.stock_previsionnel|floatformat:"-2" }}{% else %}—{% endif %}</dd>
@@ -54,7 +54,7 @@
     {% if peut_mouvementer %}
     <div class="carte">
       <h2 class="titre-carte">Sortie / entrée de stock</h2>
-      <form method="post">{% csrf_token %}
+      <form method="post" data-demo="mouvement" data-article="{{ article.pk }}">{% csrf_token %}
         {% for choix_type in form.type %}<div>{{ choix_type }}</div>{% endfor %}
         <p>{{ form.quantite.label_tag }}<br>{{ form.quantite }} {{ form.quantite.errors }}</p>
         <p>{{ form.commentaire.label_tag }}<br>{{ form.commentaire }}</p>
@@ -63,7 +63,7 @@
     </div>
     {% endif %}
     <h2>Mouvements</h2>
-    <div class="carte">
+    <div class="carte" data-liste-mouvements="{{ article.pk }}">
       {% for mouvement in mouvements %}
       <div class="ligne-mouvement"><strong>{{ mouvement.get_type_display }}</strong> {{ mouvement.quantite|floatformat:"-2" }} → stock {{ mouvement.stock_apres|floatformat:"-2" }}<br>
         <span class="discret">{{ mouvement.date|date:"d/m/Y H:i" }} · {{ mouvement.utilisateur|default:"—" }}{% if mouvement.commentaire %} · {{ mouvement.commentaire }}{% endif %}</span></div>

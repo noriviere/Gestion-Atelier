@@ -30,6 +30,9 @@ PROFILS = [
      "Consulte les fiches, saisit les sorties de stock et les comptages d'inventaire."),
 ]
 
+# Formulaires de consultation (méthode GET) : leur page est exportée et le formulaire y mène.
+# Les autres formulaires envoient des saisies, simulées par demo.js.
+FORMULAIRES_DE_CONSULTATION = ("/recherche/",)
 # data-url-… : adresses lues par le JavaScript des pages (matrice produits × machines), réécrites mais pas parcourues.
 LIEN = re.compile(r'(href|src|action|data-url-[a-z-]+)="(/[^"]*)"')
 
@@ -91,8 +94,10 @@ class Command(BaseCommand):
                 continue
             html = reponse.content.decode()
             for attribut, lien in LIEN.findall(html):
-                # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter.
-                if attribut in ("href", "src") and self.est_page(lien) and lien not in vues:
+                # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter,
+                # sauf pour les formulaires de consultation.
+                a_parcourir = attribut in ("href", "src") or (attribut == "action" and lien in FORMULAIRES_DE_CONSULTATION)
+                if a_parcourir and self.est_page(lien) and lien not in vues:
                     a_voir.append(lien)
             cible.write_text(self.reecrire(html, fichier, dossier), encoding="utf-8")
         return len(vues)
@@ -115,7 +120,7 @@ class Command(BaseCommand):
                 return f'{attribut}="{relatif("index.html")}"'
             if lien.startswith(settings.STATIC_URL if settings.STATIC_URL.startswith("/") else "/" + settings.STATIC_URL):
                 return f'{attribut}="{relatif(lien.lstrip("/"))}"'
-            if attribut == "action" or not self.est_page(lien):
+            if not self.est_page(lien) or (attribut == "action" and lien not in FORMULAIRES_DE_CONSULTATION):
                 return f'{attribut}="#"'
             return f'{attribut}="{relatif(posixpath.join(dossier, chemin_statique(lien)))}"'
 

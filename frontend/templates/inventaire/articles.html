@@ -24,7 +24,7 @@
     <td><span class="etiquette">{{ article.get_categorie_display }}</span></td>
     <td>{{ article.type_inventaire }}</td>
     <td>{{ article.emplacement }}</td>
-    <td class="nombre">{% if article.a_commander %}<span class="etiquette alerte">{{ article.stock|floatformat:"-2" }}</span>{% else %}{{ article.stock|floatformat:"-2" }}{% endif %}</td>
+    <td class="nombre">{% include "inventaire/_stock.html" %}</td>
     <td class="nombre">{{ article.stock_mini|floatformat:"-2" }}</td>
     <td class="nombre">{{ article.mini_commande|floatformat:"-2" }}</td>
     <td>{% include "inventaire/_en_commande.html" %}</td>

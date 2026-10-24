@@ -177,6 +177,14 @@ MOUVEMENTS = [
     ("MEU-300", "sortie", 1, "regleur", "S7 changement de meule"),
 ]
 
+COMPTAGES = [
+    # référence article, stock théorique, quantité comptée, compté il y a N jours (les mêmes que le dernier inventaire)
+    ("BAN-40", 37, 35, 10), ("BAN-80", 24, 24, 10), ("BAN-240", 25, 25, 10), ("TIG-M", 20, 18, 20),
+    ("TIG-G", 9, 9, 20), ("MEU-200", 6, 6, 20), ("MEU-CBN", 3, 3, 20), ("PAT-P", 13, 14, 30), ("PAT-G", 12, 12, 30),
+    ("HUI-01", 4, 3, 35), ("PEI-N2", 5, 5, 40), ("PEI-N3", 5, 4, 40), ("PEI-N5", 3, 3, 40), ("BAN-120", 45, 42, 40),
+    ("PL-P", 5, 5, 60), ("PL-N10", 3, 3, 60), ("MEU-300", 3, 3, 70),
+]
+
 COMMANDES = [
     # fournisseur, état (attente / passee / recue / receptionnee / annulee), créée il y a N jours,
     # passée il y a N jours, livraison prévue dans N jours (négatif : date dépassée), reçue il y a N jours,

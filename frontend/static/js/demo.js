@@ -69,16 +69,26 @@
       return;
     }
     var aujourdhui = new Date().toLocaleDateString("fr-FR");
+    var ecarts = [];
     champsRemplis.forEach(function (champ) {
       var ligne = champ.closest("tr");
       var celluleStock = ligne.cells[2];
       var unite = celluleStock.textContent.trim().split(" ").slice(1).join(" ");
-      celluleStock.textContent = champ.value.trim() + " " + unite;
+      var quantiteComptee = lireNombre(champ.value);
+      var ecart = Math.round((quantiteComptee - lireNombre(champ.dataset.stockTheorique)) * 100) / 100;
+      if (ecart) {
+        var reference = ligne.cells[1].querySelector("a").textContent.trim();
+        ecarts.push(reference + " " + (ecart > 0 ? "+" : "−") + formaterNombre(Math.abs(ecart)));
+      }
+      champ.dataset.stockTheorique = quantiteComptee;
+      celluleStock.textContent = formaterNombre(quantiteComptee) + " " + unite;
       ligne.cells[3].textContent = aujourdhui;
       mettreEnEvidence(celluleStock);
       champ.value = "";
+      champ.dispatchEvent(new Event("input"));
     });
-    afficherMessage(champsRemplis.length + " comptage(s) simulé(s), stocks corrigés à l'écran." + MENTION_DEMO);
+    var bilanEcarts = ecarts.length ? " " + ecarts.length + " écart(s) : " + ecarts.join(", ") + "." : " Aucun écart.";
+    afficherMessage(champsRemplis.length + " comptage(s) simulé(s), stocks corrigés à l'écran." + bilanEcarts + MENTION_DEMO);
   }
 
   var zoneStock = document.getElementById("stock-actuel");

@@ -1,0 +1,1 @@
+{% load inventaire %}<span class="etiquette {% if ecart < 0 %}alerte{% elif ecart > 0 %}attention{% else %}ok{% endif %}">{{ ecart|signe }}</span>

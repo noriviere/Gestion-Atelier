@@ -133,6 +133,14 @@ class Article(models.Model):
         lien = self.liens_fournisseurs.filter(prefere=True).select_related("fournisseur").first()
         return lien.fournisseur if lien else None
 
+    @property
+    def prix_de_reference(self):
+        """Prix du fournisseur préféré, à défaut le plus bas connu ; sert à chiffrer les écarts d'inventaire."""
+        liens = list(self.liens_fournisseurs.all())
+        prix_connus = [lien.prix for lien in liens if lien.prix is not None]
+        prix_prefere = next((lien.prix for lien in liens if lien.prefere and lien.prix is not None), None)
+        return prix_prefere if prix_prefere is not None else min(prix_connus, default=None)
+
 
 class ArticleFournisseur(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="liens_fournisseurs")
@@ -178,6 +186,10 @@ class Mouvement(models.Model):
         max_digits=10, decimal_places=2, help_text="Pour un comptage : la quantité comptée."
     )
     stock_apres = models.DecimalField(max_digits=10, decimal_places=2)
+    ecart = models.DecimalField(
+        "écart", max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Pour un comptage : quantité comptée moins stock théorique (négatif = manquant).",
+    )
     date = models.DateTimeField(default=timezone.now)
     utilisateur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     commentaire = models.CharField(max_length=200, blank=True)
@@ -188,16 +200,32 @@ class Mouvement(models.Model):
     def __str__(self):
         return f"{self.get_type_display()} {self.quantite} {self.article.reference}"
 
+    @property
+    def stock_theorique(self):
+        """Pour un comptage : le stock enregistré juste avant."""
+        if self.ecart is None:
+            return None
+        return self.quantite - self.ecart
+
+    @property
+    def valeur_ecart(self):
+        prix = self.article.prix_de_reference
+        if self.ecart is None or prix is None:
+            return None
+        return self.ecart * prix
+
     @classmethod
     @transaction.atomic
     def enregistrer(cls, article, type, quantite, utilisateur=None, commentaire=""):
         """Crée le mouvement et met à jour le stock de l'article."""
         article = Article.objects.select_for_update().get(pk=article.pk)
+        ecart = None
         if type == cls.ENTREE:
             article.stock += quantite
         elif type == cls.SORTIE:
             article.stock -= quantite
         else:
+            ecart = quantite - article.stock
             article.stock = quantite
             article.dernier_inventaire = timezone.localdate()
         article.save()
@@ -206,6 +234,7 @@ class Mouvement(models.Model):
             type=type,
             quantite=quantite,
             stock_apres=article.stock,
+            ecart=ecart,
             utilisateur=utilisateur,
             commentaire=commentaire,
         )

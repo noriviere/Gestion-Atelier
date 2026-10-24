@@ -24,7 +24,8 @@ class PagesDemoTests(TestCase):
         type_inventaire = TypeInventaire.objects.first()
         for adresse in ["/", "/articles/", f"/articles/{article.pk}/", "/a-commander/", "/inventaires/",
                         f"/inventaires/{type_inventaire.pk}/", f"/inventaires/{type_inventaire.pk}/?tous=1",
-                        f"/inventaires/{type_inventaire.pk}/feuille/", "/outils/", "/produits/",
+                        f"/inventaires/{type_inventaire.pk}/feuille/", "/inventaires/ecarts/",
+                        f"/inventaires/ecarts/?type={type_inventaire.pk}", "/outils/", "/produits/",
                         "/produits/machines/", "/commandes/", "/commandes/?etat=&retard=1",
                         *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
@@ -68,6 +69,24 @@ class PagesDemoTests(TestCase):
         porte_lame.refresh_from_db()
         self.assertEqual(porte_lame.stock, Decimal("5"))
         self.assertFalse(porte_lame.inventaire_du)
+
+    def test_comptage_annonce_les_ecarts(self):
+        self.client.login(username="intendante", password="demo")
+        porte_lame = Article.objects.get(reference="PL-M")
+        reponse = self.client.post(f"/inventaires/{porte_lame.type_inventaire_id}/", {f"compte_{porte_lame.pk}": "1"},
+                                   follow=True)
+        self.assertContains(reponse, "1 écart(s) : PL-M −2.")
+        rapport = self.client.get("/inventaires/ecarts/")
+        self.assertIn(porte_lame, [comptage.article for comptage in rapport.context["comptages"]])
+
+    def test_rapport_des_ecarts_filtre_la_periode_et_les_ecarts(self):
+        self.client.login(username="operateur", password="demo")
+        sur_un_mois = self.client.get("/inventaires/ecarts/", {"periode": "30", "ecart": "1"}).context
+        self.assertTrue(all(comptage.ecart for comptage in sur_un_mois["comptages"]))
+        self.assertEqual({comptage.article.reference for comptage in sur_un_mois["comptages"]}, {"BAN-40", "TIG-M", "PAT-P"})
+        tous_sur_trois_mois = self.client.get("/inventaires/ecarts/", {"periode": "90"}).context
+        self.assertEqual(len(tous_sur_trois_mois["comptages"]), tous_sur_trois_mois["resume"]["nombre_comptages"])
+        self.assertGreater(tous_sur_trois_mois["resume"]["nombre_comptages"], tous_sur_trois_mois["resume"]["nombre_ecarts"])
 
     def test_operateur_ne_saisit_pas_de_comptage(self):
         self.client.login(username="operateur", password="demo")

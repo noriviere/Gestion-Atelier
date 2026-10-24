@@ -3,6 +3,7 @@
 {% block contenu %}
 <h1>Inventaires tournants</h1>
 <p class="sous-titre">Chaque article a un type d'inventaire et sa propre fréquence de comptage.</p>
+<div class="actions"><a class="bouton secondaire" href="{% url 'ecarts' %}">Écarts d'inventaire</a></div>
 <div class="tableau"><table>
   <tr><th>Type d'inventaire</th><th class="nombre">Articles</th><th class="nombre">À compter</th><th></th></tr>
   {% for resume in resumes_par_type %}

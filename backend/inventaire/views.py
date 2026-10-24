@@ -1,10 +1,13 @@
 from collections import defaultdict
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from commandes.models import Commande, renseigner_commandes_en_cours
 from comptes import roles
@@ -43,6 +46,31 @@ def regrouper_par_fournisseur_prefere(articles):
     if None in commandes:
         resultat.append((None, commandes[None]))
     return resultat
+
+
+PERIODES_ECARTS = [(30, "30 derniers jours"), (90, "3 derniers mois"), (365, "12 derniers mois")]
+PERIODE_ECARTS_PAR_DEFAUT = 90
+
+
+def formater_ecart(ecart):
+    """+2, −1,5 : l'écart avec son signe, en notation française."""
+    texte = f"{abs(ecart).normalize():f}".replace(".", ",")
+    return f"+{texte}" if ecart > 0 else f"−{texte}" if ecart < 0 else "0"
+
+
+def resumer_ecarts(comptages):
+    """Chiffres clés d'une liste de comptages : nombre, écarts, part des comptages justes et valeur des écarts."""
+    comptages = list(comptages)
+    avec_ecart = [comptage for comptage in comptages if comptage.ecart]
+    valeurs = [comptage.valeur_ecart for comptage in avec_ecart if comptage.valeur_ecart is not None]
+    return {
+        "nombre_comptages": len(comptages),
+        "nombre_ecarts": len(avec_ecart),
+        "taux_exactitude": round(100 * (len(comptages) - len(avec_ecart)) / len(comptages)) if comptages else None,
+        "valeur_manquants": sum((valeur for valeur in valeurs if valeur < 0), Decimal(0)),
+        "valeur_surplus": sum((valeur for valeur in valeurs if valeur > 0), Decimal(0)),
+        "valeur_nette": sum(valeurs, Decimal(0)),
+    }
 
 
 def lire_quantite(texte):
@@ -168,7 +196,7 @@ def comptage(request, pk):
     if request.method == "POST":
         if not roles.peut_compter(request.user):
             raise PermissionDenied
-        nombre_comptages = 0
+        comptages = []
         for article in type_inventaire.articles.all():
             try:
                 quantite_comptee = lire_quantite(request.POST.get(f"compte_{article.pk}", ""))
@@ -177,9 +205,16 @@ def comptage(request, pk):
                 continue
             if quantite_comptee is None:
                 continue
-            Mouvement.enregistrer(article, Mouvement.INVENTAIRE, quantite_comptee, utilisateur=request.user)
-            nombre_comptages += 1
-        messages.success(request, f"{nombre_comptages} comptage(s) enregistré(s), stocks corrigés.")
+            comptages.append(
+                Mouvement.enregistrer(article, Mouvement.INVENTAIRE, quantite_comptee, utilisateur=request.user)
+            )
+        ecarts = [f"{comptage.article.reference} {formater_ecart(comptage.ecart)}" for comptage in comptages if comptage.ecart]
+        bilan = f"{len(comptages)} comptage(s) enregistré(s), stocks corrigés."
+        if ecarts:
+            bilan += f" {len(ecarts)} écart(s) : {', '.join(ecarts)}."
+        elif comptages:
+            bilan += " Aucun écart."
+        messages.success(request, bilan)
         return redirect("comptage", pk=pk)
     return render(
         request,
@@ -202,5 +237,48 @@ def feuille_comptage(request, pk):
             "type_inventaire": type_inventaire,
             "articles": articles_a_compter(type_inventaire, tous_les_articles),
             "tous_les_articles": tous_les_articles,
+        },
+    )
+
+
+def ecarts(request):
+    filtres_envoyes = "periode" in request.GET
+    periodes_possibles = {str(jours): jours for jours, _ in PERIODES_ECARTS}
+    periode = periodes_possibles.get(request.GET.get("periode", ""), PERIODE_ECARTS_PAR_DEFAUT)
+    type_inventaire_id = request.GET.get("type", "")
+    seulement_les_ecarts = bool(request.GET.get("ecart")) if filtres_envoyes else True
+
+    aujourdhui = timezone.localdate()
+    plus_longue_periode = max(jours for jours, _ in PERIODES_ECARTS)
+    comptages = list(
+        Mouvement.objects.filter(type=Mouvement.INVENTAIRE, ecart__isnull=False,
+                                 date__date__gte=aujourdhui - timedelta(days=plus_longue_periode))
+        .select_related("article__type_inventaire", "utilisateur")
+        .prefetch_related("article__liens_fournisseurs")
+    )
+    if type_inventaire_id:
+        comptages = [comptage for comptage in comptages if str(comptage.article.type_inventaire_id) == type_inventaire_id]
+    for comptage in comptages:
+        jour_du_comptage = timezone.localtime(comptage.date).date()
+        # Périodes dans lesquelles tombe le comptage : sert au filtre de la démo statique.
+        comptage.periodes = " ".join(str(jours) for jours, _ in PERIODES_ECARTS
+                                     if jour_du_comptage >= aujourdhui - timedelta(days=jours))
+    comptages_de_la_periode = [comptage for comptage in comptages if str(periode) in comptage.periodes.split()]
+    if settings.DEMO_STATIQUE:
+        # Démo statique : toutes les lignes sont dans la page, demo.js masque celles hors filtre.
+        comptages_affiches = comptages
+    else:
+        comptages_affiches = [comptage for comptage in comptages_de_la_periode if comptage.ecart or not seulement_les_ecarts]
+    return render(
+        request,
+        "inventaire/ecarts.html",
+        {
+            "comptages": comptages_affiches,
+            "resume": resumer_ecarts(comptages_de_la_periode),
+            "periodes": PERIODES_ECARTS,
+            "periode": periode,
+            "types_inventaire": TypeInventaire.objects.all(),
+            "type_inventaire_id": type_inventaire_id,
+            "seulement_les_ecarts": seulement_les_ecarts,
         },
     )

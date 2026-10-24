@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load inventaire %}
+{% block titre %}Écarts d'inventaire – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'inventaires' %}">Inventaires</a> › écarts</div>
+<h1>Écarts d'inventaire</h1>
+<p class="sous-titre">Différence entre la quantité comptée et le stock théorique à chaque comptage. Un écart négatif est un manquant. Les valeurs sont chiffrées au prix du fournisseur préféré.</p>
+<div class="grille">
+  <div class="tuile"><div class="valeur">{{ resume.nombre_comptages }}</div><div class="libelle">comptages</div></div>
+  <div class="tuile {% if resume.nombre_ecarts %}attention{% endif %}"><div class="valeur">{{ resume.nombre_ecarts }}</div><div class="libelle">avec un écart</div></div>
+  <div class="tuile"><div class="valeur">{% if resume.taux_exactitude is not None %}{{ resume.taux_exactitude }} %{% else %}—{% endif %}</div><div class="libelle">de comptages justes</div></div>
+  <div class="tuile {% if resume.valeur_manquants %}alerte{% endif %}"><div class="valeur">{{ resume.valeur_manquants|floatformat:"0g" }} €</div><div class="libelle">de manquants · surplus {{ resume.valeur_surplus|floatformat:"0g" }} €</div></div>
+</div>
+
+<form class="filtres" method="get" data-filtrer-au-chargement>
+  <select name="periode">
+    {% for jours, nom_periode in periodes %}<option value="{{ jours }}" {% if periode == jours %}selected{% endif %}>{{ nom_periode }}</option>{% endfor %}
+  </select>
+  <select name="type"><option value="">Tous types d'inventaire</option>
+    {% for type_inventaire in types_inventaire %}<option value="{{ type_inventaire.pk }}" {% if type_inventaire_id == type_inventaire.pk|stringformat:"s" %}selected{% endif %}>{{ type_inventaire.nom }}</option>{% endfor %}
+  </select>
+  <label><input type="checkbox" name="ecart" value="1" {% if seulement_les_ecarts %}checked{% endif %}> Écarts seulement</label>
+  <button class="bouton" type="submit">Filtrer</button>
+  <button class="bouton secondaire" type="button" data-action="imprimer">Imprimer</button>
+</form>
+<div class="tableau"><table>
+  <tr><th>Date</th><th>Article</th><th>Type d'inventaire</th><th class="nombre">Stock théorique</th><th class="nombre">Compté</th><th class="nombre">Écart</th><th class="nombre">Valeur</th><th>Compté par</th></tr>
+  {% for comptage in comptages %}
+  <tr data-periode="{{ comptage.periodes }}" data-type="{{ comptage.article.type_inventaire_id }}" data-ecart="{% if comptage.ecart %}1{% endif %}">
+    <td>{{ comptage.date|date:"d/m/Y" }}</td>
+    <td><a href="{{ comptage.article.get_absolute_url }}">{{ comptage.article.reference }}</a> {{ comptage.article.designation }}</td>
+    <td>{{ comptage.article.type_inventaire }}</td>
+    <td class="nombre">{{ comptage.stock_theorique|floatformat:"-2" }} {{ comptage.article.unite }}</td>
+    <td class="nombre">{{ comptage.quantite|floatformat:"-2" }}</td>
+    <td class="nombre">{% include "inventaire/_ecart.html" with ecart=comptage.ecart %}</td>
+    <td class="nombre">{{ comptage.valeur_ecart|euros_signes }}</td>
+    <td>{{ comptage.utilisateur|default:"—" }}</td>
+  </tr>
+  {% empty %}<tr><td colspan="8">Aucun écart sur la période.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

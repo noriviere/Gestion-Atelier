@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load inventaire %}
 {% block titre %}{{ article.reference }} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'articles' %}">Stock</a> › {{ article.reference }}</div>
@@ -65,7 +66,7 @@
     <h2>Mouvements</h2>
     <div class="carte">
       {% for mouvement in mouvements %}
-      <div class="ligne-mouvement"><strong>{{ mouvement.get_type_display }}</strong> {{ mouvement.quantite|floatformat:"-2" }} → stock {{ mouvement.stock_apres|floatformat:"-2" }}<br>
+      <div class="ligne-mouvement"><strong>{{ mouvement.get_type_display }}</strong> {{ mouvement.quantite|floatformat:"-2" }} → stock {{ mouvement.stock_apres|floatformat:"-2" }}{% if mouvement.ecart is not None %} · écart {% include "inventaire/_ecart.html" with ecart=mouvement.ecart %}{% endif %}<br>
         <span class="discret">{{ mouvement.date|date:"d/m/Y H:i" }} · {{ mouvement.utilisateur|default:"—" }}{% if mouvement.commentaire %} · {{ mouvement.commentaire }}{% endif %}</span></div>
       {% empty %}<span class="discret">Aucun mouvement.</span>{% endfor %}
     </div>

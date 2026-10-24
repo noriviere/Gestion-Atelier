@@ -8,9 +8,10 @@
   {# Chargé avant l'affichage pour appliquer le thème choisi sans clignotement. #}
   <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/atelier.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
   {% if demo_statique %}<script src="{% static 'js/demo.js' %}" defer></script>{% endif %}
 </head>
-<body>
+<body{% if demo_statique %} data-demo{% endif %}>
 <a class="lien-evitement" href="#contenu">Aller au contenu</a>
 {% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les mouvements de stock sont gardés dans votre navigateur, rien n'est envoyé.</span><span class="texte-ecran-etroit">Démo : données fictives, gardées dans votre navigateur.</span> <a href="/__profils__">Changer de profil</a> · <button type="button" class="lien-bouton" data-action="reinitialiser-demo">Remettre à zéro</button></div>{% endif %}
 {% if user.is_authenticated %}

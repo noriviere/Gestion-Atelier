@@ -19,9 +19,9 @@ COMPTES = [
     ("admin", "Admin", "", "Admin"),
     ("methode", "Noël", "Méthodes", "Méthode et management"),
     ("chef", "Chef", "d'équipe", "Méthode et management"),
-    ("regleur", "Régleur", "Équipe A", "Régleur et opérateur"),
-    ("intendante", "Intendante", "", "Régleur et opérateur"),
-    ("operateur", "Opérateur", "(compte partagé)", "Régleur et opérateur"),
+    ("regleur", "Régleur", "Équipe A", "Régleur"),
+    ("intendante", "Intendante", "", "Opérateur"),
+    ("operateur", "Opérateur", "(compte partagé)", "Opérateur"),
 ]
 
 FOURNISSEURS = [
@@ -129,7 +129,7 @@ PRODUITS = [
     # référence, désignation, client, notes générales
     (produit, f"Produit {produit}", "", "Contrôle visuel en début de série et toutes les 2 heures.")
     for produit in PRODUITS_LISTE
-]
+] + [("N13", "Produit N13", "", "Nouveau produit en industrialisation : outillage à l'étude.")]
 
 # Produit, machines, cadence (pièces/h)
 _AFFECTATIONS = [
@@ -146,9 +146,35 @@ FABRICATIONS = [
 CONSOMMATIONS = [
     # référence produit, code machine, référence article, quantité / fréquence
 ]
+PARAMETRES = [
+    # référence produit, code machine, paramètre, valeur, unité (dans l'ordre d'affichage)
+]
+DOCUMENTS = [
+    # référence produit, code machine (vide : document du produit), titre, nom du fichier, nature (plan / photo)
+]
+_DIAMETRE_MEULE = {"MEU-200": "200", "MEU-300": "300"}
+_PARAMETRES_PAR_TAILLE = {
+    # taille : (vitesse meule m/s, avance mm/min, prise de passe mm, vitesse bande m/s, pression bar, hauteur peigne mm)
+    "P": ("35", "140", "0,03", "28", "2,5", "8"),
+    "M": ("32", "120", "0,05", "25", "3", "12"),
+    "G": ("30", "90", "0,08", "22", "3,5", "16"),
+}
 for _produit, _machines, _cadence in _AFFECTATIONS:
     _taille = TAILLES[_produit]
+    _vitesse_meule, _avance, _passe, _vitesse_bande, _pression, _peigne = _PARAMETRES_PAR_TAILLE[_taille]
+    DOCUMENTS.append((_produit, "", f"Plan {_produit} indice A", f"plan-{_produit}.pdf", "plan"))
     for _machine in _machines:
+        DOCUMENTS.append((_produit, _machine, f"Réglage {_produit} sur {_machine}", f"reglage-{_produit}-{_machine}.svg", "photo"))
+        if _machine.startswith("S"):
+            PARAMETRES += [(_produit, _machine, "Vitesse meule", _vitesse_meule, "m/s"),
+                           (_produit, _machine, "Avance", _avance, "mm/min"),
+                           (_produit, _machine, "Prise de passe", _passe, "mm"),
+                           (_produit, _machine, "Diamètre meule", _DIAMETRE_MEULE[_MEULE_PAR_TAILLE[_taille]], "mm")]
+        else:
+            PARAMETRES += [(_produit, _machine, "Vitesse bande", _vitesse_bande, "m/s"),
+                           (_produit, _machine, "Pression de contact", _pression, "bar"),
+                           (_produit, _machine, "Grain ébauche", _BANDE_PAR_TAILLE[_taille].split("-")[1], ""),
+                           (_produit, _machine, "Hauteur du peigne", _peigne, "mm")]
         if _machine.startswith("S"):
             FABRICATIONS.append((_produit, _machine, _cadence, [f"OUT-{_produit}"],
                                  f"Meule {_MEULE_PAR_TAILLE[_taille]}, dresser la meule toutes les 2 h.\nVérifier le serrage de la pince à chaque prise de poste."))
@@ -159,6 +185,19 @@ for _produit, _machines, _cadence in _AFFECTATIONS:
                                  f"Bande {_BANDE_PAR_TAILLE[_taille]} en ébauche, BAN-240 en finition.\nRégler la hauteur du peigne avant démarrage.\nVérifier le serrage de la pince à chaque prise de poste."))
             CONSOMMATIONS += [(_produit, _machine, _BANDE_PAR_TAILLE[_taille], "1 bande / poste"), (_produit, _machine, "BAN-240", "1 bande / 2 postes"),
                               (_produit, _machine, "HUI-01", "1 bidon / 2 semaines")]
+
+# Cases de la matrice produits × machines en plus des fabrications programmées ci-dessus.
+# « À faire » s'affiche « à sécuriser » quand le produit tourne déjà sur une autre machine.
+_PETITS = [produit for produit, taille in TAILLES.items() if taille == "P"]
+_GRANDS = [produit for produit, taille in TAILLES.items() if taille == "G"] + ["N13"]
+ETATS_MATRICE = [
+    # référence produit, code machine, état (a_faire / non_faisable)
+    ("N4", "S4", "a_faire"), ("N6", "S3", "a_faire"), ("N10", "S8", "a_faire"),
+    ("N13", "S8", "a_faire"), ("N13", "MAD2", "a_faire"),
+    # Les petites meules de S1 et S2 ne prennent pas la taille G ; MAD2 n'a pas de pince pour la taille P.
+    *[(produit, machine, "non_faisable") for produit in _GRANDS for machine in ("S1", "S2")],
+    *[(produit, "MAD2", "non_faisable") for produit in _PETITS],
+]
 
 MOUVEMENTS = [
     # référence article, type (entree / sortie), quantité, identifiant, commentaire

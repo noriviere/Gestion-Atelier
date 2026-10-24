@@ -20,10 +20,17 @@ Cette version est une **démo** avec des données fictives, destinée à présen
 - **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
   Le profil Méthode crée et modifie les outils et leurs pièces directement dans l'application ;
   depuis la fiche d'un outil, tous les profils sortent du stock une pièce remplacée.
-- **Produits** : un produit par machine avec cadence, outillages, consommables et notes,
-  affiché sous forme de fiche imprimable.
+- **Produits et machines** : une matrice avec une ligne par produit et une colonne par machine.
+  Chaque case a un état : programmé, à faire (affiché « à sécuriser » quand le produit tourne déjà
+  sur une autre machine), non faisable, ou vide (rien de prévu mais possible). Un clic sur une case
+  change son état, ouvre la fiche, la crée ou la copie depuis une autre machine.
+- **Fiches production** : cadence, paramètres de réglage structurés (libellé, valeur, unité), outillages,
+  consommables, notes, photos et documents (plan PDF, tableur…), imprimable. Création et modification
+  dans l'application ; une nouvelle fiche reprend les libellés de paramètres de la machine. Une fiche
+  se copie vers une autre machine, un produit se duplique avec toutes ses fiches.
 - **Profils** : `Admin`, `Méthode et management` (paramétrage via le menu Paramétrage),
-  `Régleur et opérateur` (consultation, mouvements de stock, comptages).
+  `Régleur` (consultation, mouvements de stock, comptages, photos et documents des fiches),
+  `Opérateur` (consultation, mouvements de stock, comptages).
 
 Comptes de démonstration, tous avec le mot de passe `demo` :
 `admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.
@@ -33,7 +40,7 @@ Comptes de démonstration, tous avec le mot de passe `demo` :
 Une version statique de la démo est publiée sur GitHub Pages :
 https://noriviere.github.io/Gestion-Atelier/
 
-On y choisit un profil (Admin, Méthode et management, Régleur et opérateur) pour voir l'application
+On y choisit un profil (Admin, Méthode et management, Régleur, Opérateur) pour voir l'application
 avec ses droits. Les sorties de stock (depuis un article ou une fiche outil), entrées, comptages
 et filtres sont simulés dans le navigateur : les stocks et mouvements saisis sont gardés dans ce
 navigateur et repris sur toutes les pages, jusqu'au bouton « Remettre à zéro ». La création et la
@@ -60,7 +67,8 @@ docker compose up -d --build
 docker compose exec web python manage.py charger_demo
 ```
 
-L'application répond sur le port 8000, avec une base PostgreSQL.
+L'application répond sur le port 8000, avec une base PostgreSQL. Les photos et documents des fiches
+sont stockés dans le volume Docker `documents` (à inclure dans la sauvegarde avec la base).
 
 ## Modifier les données fictives
 

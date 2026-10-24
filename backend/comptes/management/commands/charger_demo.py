@@ -2,16 +2,17 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
 from commandes.models import Commande, LigneCommande
-from comptes.roles import ADMIN, ATELIER, configurer_permissions
-from demo import donnees
+from comptes.roles import ADMIN, METHODE, configurer_permissions
+from demo import donnees, fichiers
 from inventaire.models import Article, ArticleFournisseur, Fournisseur, Mouvement, TypeInventaire
 from outillage.models import Outil, PieceOutil
-from produits.models import Consommation, Machine, Produit, ProduitMachine
+from produits.models import Consommation, Document, Machine, Parametre, Produit, ProduitMachine
 
 MOT_DE_PASSE_DEMO = "demo"
 
@@ -36,7 +37,9 @@ class Command(BaseCommand):
 
     @staticmethod
     def effacer_donnees_metier():
-        for modele in (LigneCommande, Commande, Mouvement, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
+        for document in Document.objects.all():
+            document.fichier.delete(save=False)
+        for modele in (LigneCommande, Commande, Mouvement, Document, Parametre, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
                        ArticleFournisseur, Article, TypeInventaire, Fournisseur):
             modele.objects.all().delete()
 
@@ -47,8 +50,8 @@ class Command(BaseCommand):
             utilisateur, _ = User.objects.get_or_create(username=identifiant)
             utilisateur.first_name, utilisateur.last_name = prenom, nom
             utilisateur.is_superuser = profil == ADMIN
-            # L'accès à l'interface d'administration sert au paramétrage : pas pour l'atelier.
-            utilisateur.is_staff = profil != ATELIER
+            # L'accès à l'interface d'administration sert au paramétrage : réservé à Admin et Méthode.
+            utilisateur.is_staff = profil in (ADMIN, METHODE)
             utilisateur.set_password(MOT_DE_PASSE_DEMO)
             utilisateur.save()
             utilisateur.groups.set([Group.objects.get(name=profil)])
@@ -117,6 +120,20 @@ class Command(BaseCommand):
                 fabrication=fabrications[(reference, code_machine)], article=articles[reference_article],
                 quantite=quantite,
             )
+        for ordre, (reference, code_machine, libelle, valeur, unite) in enumerate(donnees.PARAMETRES):
+            Parametre.objects.create(fabrication=fabrications[(reference, code_machine)], libelle=libelle,
+                                     valeur=valeur, unite=unite, ordre=ordre)
+        for reference, code_machine, etat in donnees.ETATS_MATRICE:
+            ProduitMachine.objects.create(produit=produits[reference], machine=machines[code_machine], etat=etat)
+        tailles = dict(donnees.TAILLES)
+        for reference, code_machine, titre, nom_fichier, nature in donnees.DOCUMENTS:
+            produit = produits[reference]
+            if nature == "plan":
+                contenu = fichiers.plan_pdf(reference, produit.designation, tailles.get(reference, "M"))
+            else:
+                contenu = fichiers.photo_reglage_svg(reference, code_machine, a_bandes=code_machine.startswith("MAD"))
+            document = Document(produit=produit, fabrication=fabrications.get((reference, code_machine)), titre=titre)
+            document.fichier.save(nom_fichier, ContentFile(contenu), save=True)
         return produits, machines
 
     @staticmethod

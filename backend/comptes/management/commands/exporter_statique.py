@@ -3,7 +3,8 @@
 Le site est parcouru avec chaque compte de démonstration ; chaque profil obtient
 son propre jeu de pages, et une page d'accueil permet de choisir le profil.
 Les liens sont rendus relatifs, les liens vers l'administration ouvrent un message
-de démo, et les saisies sont simulées par static/demo.js.
+de démo, et les saisies sont simulées par static/demo.js. Les documents et photos des fiches
+sont copiés tels quels à côté des pages.
 """
 import posixpath
 import re
@@ -23,21 +24,28 @@ PROFILS = [
     ("admin", "admin", "Admin", "Tous les droits, dont la gestion des comptes et des listes de référence."),
     ("methode", "methode", "Méthode et management",
      "Crée et modifie articles, outils, produits et seuils ; consulte tout."),
-    ("operateur", "operateur", "Régleur et opérateur",
+    ("regleur", "regleur", "Régleur",
+     "Consulte les fiches, ajoute photos et documents, saisit les sorties de stock et les comptages."),
+    ("operateur", "operateur", "Opérateur",
      "Consulte les fiches, saisit les sorties de stock et les comptages d'inventaire."),
 ]
 
 # Formulaires de consultation (méthode GET) : leur page est exportée et le formulaire y mène.
 # Les autres formulaires envoient des saisies, simulées par demo.js.
 FORMULAIRES_DE_CONSULTATION = ("/recherche/",)
-
-LIEN = re.compile(r'(href|src|action)="(/[^"]*)"')
+# data-url-… : adresses lues par le JavaScript des pages (matrice produits × machines), réécrites mais pas parcourues.
+LIEN = re.compile(r'(href|src|action|data-url-[a-z-]+)="(/[^"]*)"')
 
 
 def chemin_statique(url):
-    """/articles/?alerte=1 -> articles/alerte-1/index.html (chemin relatif au dossier du profil)."""
+    """/articles/?alerte=1 -> articles/alerte-1/index.html (chemin relatif au dossier du profil).
+
+    Un fichier (dernier segment avec une extension, ex. /produits/documents/3/plan.pdf) garde son chemin.
+    """
     parties = urlsplit(url)
     chemin = parties.path.strip("/")
+    if "." in posixpath.basename(chemin):
+        return chemin
     for cle, valeur in parse_qsl(parties.query):
         chemin = posixpath.join(chemin, re.sub(r"[^\w-]", "_", f"{cle}-{valeur}"))
     return posixpath.join(chemin, "index.html") if chemin else "index.html"
@@ -78,15 +86,19 @@ class Command(BaseCommand):
             if reponse.status_code != 200:
                 self.stderr.write(f"{dossier}{url} : {reponse.status_code}")
                 continue
-            html = reponse.content.decode()
             fichier = posixpath.join(dossier, chemin_statique(url))
-            for attribut, lien in LIEN.findall(html):
-                # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter.
-                envoie_une_saisie = attribut == "action" and lien not in FORMULAIRES_DE_CONSULTATION
-                if not envoie_une_saisie and self.est_page(lien) and lien not in vues:
-                    a_voir.append(lien)
             cible = sortie / fichier
             cible.parent.mkdir(parents=True, exist_ok=True)
+            if not reponse.get("Content-Type", "").startswith("text/html"):
+                cible.write_bytes(b"".join(reponse.streaming_content) if reponse.streaming else reponse.content)
+                continue
+            html = reponse.content.decode()
+            for attribut, lien in LIEN.findall(html):
+                # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter,
+                # sauf pour les formulaires de consultation.
+                a_parcourir = attribut in ("href", "src") or (attribut == "action" and lien in FORMULAIRES_DE_CONSULTATION)
+                if a_parcourir and self.est_page(lien) and lien not in vues:
+                    a_voir.append(lien)
             cible.write_text(self.reecrire(html, fichier, dossier), encoding="utf-8")
         return len(vues)
 

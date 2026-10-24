@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 {% block titre %}{{ machine.code }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'machines' %}">Machines</a></li><li aria-current="page">{{ machine.code }}</li></ol></nav>
+<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'produits' %}">Produits et machines</a></li><li aria-current="page">{{ machine.code }}</li></ol></nav>
 <h1>{{ machine.code }} – {{ machine.nom }}</h1>
 <p class="sous-titre">{{ machine.description }}</p>
 <div class="tableau"><table>
-  <tr><th>Produit</th><th class="nombre">Cadence</th><th></th></tr>
+  <tr><th>Produit</th><th>État</th><th class="nombre">Cadence</th><th></th></tr>
   {% for fabrication in fabrications %}
-  <tr><td>{{ fabrication.produit }}</td><td class="nombre">{{ fabrication.cadence|floatformat:"-1"|default:"—" }} pièces/h</td><td><a href="{{ fabrication.get_absolute_url }}">Fiche</a></td></tr>
-  {% empty %}<tr><td colspan="3">Aucun produit sur cette machine.</td></tr>{% endfor %}
+  <tr><td>{{ fabrication.produit }}</td><td><span class="pastille etat-{{ fabrication.etat_affiche }}">{{ fabrication.libelle_etat }}</span></td><td class="nombre">{{ fabrication.cadence|floatformat:"-1"|default:"—" }} pièces/h</td><td><a href="{{ fabrication.get_absolute_url }}">Fiche</a></td></tr>
+  {% empty %}<tr><td colspan="4">Aucun produit sur cette machine.</td></tr>{% endfor %}
 </table></div>
+{% if non_faisables %}<p class="discret">Non faisable pour : {% for produit in non_faisables %}{{ produit.reference }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
 {% endblock %}

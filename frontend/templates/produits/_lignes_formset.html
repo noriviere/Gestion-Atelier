@@ -1,0 +1,13 @@
+{# Lignes modifiables d'un formset : colonnes = liste de (nom du champ, titre) ; « + Ajouter » clone le modèle vide. #}
+<div class="lignes-formset" data-formset="{{ formset.prefix }}">
+  {{ formset.management_form }}
+  {% for erreur in formset.non_form_errors %}<div class="erreur-champ">{{ erreur }}</div>{% endfor %}
+  <table class="tableau-saisie">
+    <thead><tr>{% for titre in titres %}<th>{{ titre }}</th>{% endfor %}<th>Retirer</th></tr></thead>
+    <tbody data-lignes>
+      {% for ligne in formset %}{% include "produits/_ligne_formset.html" with ligne=ligne %}{% endfor %}
+    </tbody>
+  </table>
+  <template data-modele>{% include "produits/_ligne_formset.html" with ligne=formset.empty_form %}</template>
+  <button type="button" class="bouton secondaire" data-action="ajouter-ligne">+ {{ ajouter }}</button>
+</div>

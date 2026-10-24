@@ -25,6 +25,24 @@ class ProfilsTests(TestCase):
         self.assertFalse(roles.peut_modifier(operateur))
         self.assertTrue(roles.peut_mouvementer(operateur))
 
+    def test_regleur_au_dessus_de_l_operateur_pour_les_documents(self):
+        regleur = creer_utilisateur("regleur", roles.REGLEUR)
+        operateur = creer_utilisateur("operateur", roles.OPERATEUR)
+        self.assertEqual(roles.profil(regleur), roles.REGLEUR)
+        self.assertTrue(roles.peut_documenter(regleur))
+        self.assertFalse(roles.peut_modifier(regleur))
+        self.assertFalse(roles.peut_documenter(operateur))
+        self.assertTrue(roles.peut_documenter(creer_utilisateur("methode", roles.METHODE)))
+        operateur.groups.add(Group.objects.get(name=roles.REGLEUR))
+        self.assertEqual(roles.profil(operateur), roles.REGLEUR)
+
+    def test_l_ancien_groupe_commun_devient_operateur_avec_ses_membres(self):
+        Group.objects.filter(name=roles.OPERATEUR).update(name=roles.ANCIEN_NOM_ATELIER)
+        ancien = creer_utilisateur("ancien", roles.ANCIEN_NOM_ATELIER)
+        roles.configurer_permissions()
+        self.assertEqual(roles.profil(ancien), roles.OPERATEUR)
+        self.assertFalse(Group.objects.filter(name=roles.ANCIEN_NOM_ATELIER).exists())
+
     def test_le_profil_le_plus_eleve_l_emporte(self):
         chef = creer_utilisateur("chef", roles.ATELIER)
         chef.groups.add(Group.objects.get(name=roles.METHODE))
@@ -61,7 +79,7 @@ class MenuTests(TestCase):
         operateur = creer_utilisateur("operateur", roles.ATELIER)
         self.assertEqual(
             self.libelles(entrees_menu(operateur, "accueil")),
-            ["Accueil", "Produits", "Machines", "Outillage", "Stock", "Inventaires", "Commandes"],
+            ["Accueil", "Produits et machines", "Outillage", "Stock", "Inventaires", "Commandes"],
         )
 
     def test_bureau_voit_toutes_les_entrees(self):
@@ -71,4 +89,4 @@ class MenuTests(TestCase):
     def test_entree_courante_couvre_les_pages_de_detail(self):
         methodiste = creer_utilisateur("methode", roles.METHODE)
         actives = [entree["libelle"] for entree in entrees_menu(methodiste, "fiche") if entree["actif"]]
-        self.assertEqual(actives, ["Produits"])
+        self.assertEqual(actives, ["Produits et machines"])

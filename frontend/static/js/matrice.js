@@ -148,7 +148,7 @@
       .then(function (reponse) {
         // Une page d'erreur ou de connexion (session expirée) n'est pas du JSON : on garde un message clair.
         return reponse.json().catch(function () { return {}; }).then(function (donnees) {
-          if (!reponse.ok || !donnees.etat) throw new Error(donnees.erreur || "Enregistrement refusé, rechargez la page.");
+          if (!reponse.ok || typeof donnees.etat !== "string") throw new Error(donnees.erreur || "Enregistrement refusé, rechargez la page.");
           return donnees;
         });
       })

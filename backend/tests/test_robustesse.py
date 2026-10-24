@@ -45,7 +45,8 @@ class ControleDesPagesTests(TestCase):
         operateur = creer_utilisateur("operateur", roles.OPERATEUR)
         self.assertEqual([nom for nom, _ in rechercher("", roles.droits(operateur))], ["Machines"])
         self.client.force_login(operateur)
-        self.assertNotContains(self.client.get("/recherche/", {"q": "PL-9"}), "PL-9</")
+        groupes = self.client.get("/recherche/", {"q": "PL-9"}).context["groupes"]
+        self.assertEqual(groupes, [])
 
     def test_retour_a_la_connexion_garde_l_adresse_complete(self):
         reponse = self.client.get("/articles/", {"categorie": "usure", "q": "a&b"})

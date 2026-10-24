@@ -136,14 +136,19 @@ class Commande(models.Model):
         if nouvel_etat not in self.etats_suivants:
             raise ValueError(f"Une commande « {self.get_etat_display()} » ne peut pas passer à « {nouvel_etat} ».")
         aujourdhui = timezone.localdate()
+        # Seuls les champs de cette étape sont écrits : une autre action en même temps garde les siens.
+        champs = ["etat"]
         if nouvel_etat == self.PASSEE:
+            champs += ["date_passage", "date_prevue", "numero_fournisseur"]
             self.date_passage = aujourdhui
             delai = self.delai_fournisseur()
             if self.date_prevue is None and delai is not None:
                 self.date_prevue = aujourdhui + timedelta(days=delai)
         elif nouvel_etat == self.RECUE:
+            champs.append("date_reception")
             self.date_reception = aujourdhui
         elif nouvel_etat == self.RECEPTIONNEE:
+            champs += ["date_entree_stock", "date_reception"]
             self.date_entree_stock = aujourdhui
             if self.date_reception is None:
                 self.date_reception = aujourdhui
@@ -155,7 +160,7 @@ class Commande(models.Model):
                     Mouvement.enregistrer(ligne.article, Mouvement.ENTREE, ligne.quantite_recue, utilisateur=utilisateur,
                                           commentaire=f"Réception commande {self.numero}")
         self.etat = nouvel_etat
-        self.save()
+        self.save(update_fields=champs)
 
     @transaction.atomic
     def receptionner(self, quantites_recues, utilisateur=None):

@@ -40,5 +40,6 @@ class MouvementAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    # Seul un super-utilisateur peut effacer un article créé par erreur, avec ses mouvements.
     def has_delete_permission(self, request, obj=None):
-        return False
+        return request.user.is_superuser

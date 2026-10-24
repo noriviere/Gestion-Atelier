@@ -4,6 +4,7 @@ Par défaut la démo tourne sur SQLite. Si la variable POSTGRES_DB est définie
 (cas du docker-compose), PostgreSQL est utilisé.
 """
 import os
+import warnings
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -21,10 +22,11 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "demo-cle-non-secrete" if DEBUG
 if not SECRET_KEY:
     raise ImproperlyConfigured("DJANGO_SECRET_KEY est obligatoire quand DJANGO_DEBUG=0.")
 ALLOWED_HOSTS = [hote for hote in os.environ.get("DJANGO_ALLOWED_HOSTS", "*" if DEBUG else "").split(",") if hote]
-if not ALLOWED_HOSTS:
+if not ALLOWED_HOSTS and not DEBUG:
     raise ImproperlyConfigured("DJANGO_ALLOWED_HOSTS est obligatoire quand DJANGO_DEBUG=0 (ex. « atelier.local,192.168.1.20 »).")
 
 # Derrière HTTPS (DJANGO_HTTPS=1) : cookies réservés à HTTPS et navigateur prévenu de ne plus passer en HTTP.
+# Le port 8000 ne doit alors être joignable que par le proxy HTTPS, qui seul pose X-Forwarded-Proto.
 if os.environ.get("DJANGO_HTTPS") == "1":
     SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
@@ -98,6 +100,8 @@ else:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+            # Les écritures attendent leur tour au lieu d'échouer sur « database is locked » (double clic).
+            "OPTIONS": {"transaction_mode": "IMMEDIATE"},
         }
     }
 
@@ -121,6 +125,8 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [FRONTEND_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Avant collectstatic (tests, export de la démo), le dossier n'existe pas : whitenoise le signale sans raison.
+warnings.filterwarnings("ignore", message="No directory at", module="whitenoise.base")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

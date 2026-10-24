@@ -139,3 +139,8 @@ TEST_RUNNER = "config.test_runner.LanceurTests"
 MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", BASE_DIR / "media"))
 MEDIA_URL = "media/"
 DATA_UPLOAD_MAX_MEMORY_SIZE = 25 * 1024 * 1024
+FILE_UPLOAD_HANDLERS = [
+    "produits.envois.LimiteTailleEnvoi",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+]

@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 
 from comptes import roles
 from inventaire.models import Fournisseur
-from inventaire.views import articles_sous_le_mini, lire_quantite
+from inventaire.calculs import articles_sous_le_mini, lire_quantite
 
 from .models import Commande, renseigner_commandes_en_cours
 

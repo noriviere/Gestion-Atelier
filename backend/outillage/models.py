@@ -38,11 +38,12 @@ class Outil(models.Model):
         return chemin
 
     def descendants(self):
-        """Tous les sous-ensembles, à tous les niveaux."""
+        """Tous les sous-ensembles, à tous les niveaux (une requête par niveau de profondeur)."""
         resultat = []
-        for sous_ensemble in self.sous_ensembles.all():
-            resultat.append(sous_ensemble)
-            resultat.extend(sous_ensemble.descendants())
+        niveau = list(self.sous_ensembles.all())
+        while niveau:
+            resultat.extend(niveau)
+            niveau = list(Outil.objects.filter(parent__in=niveau))
         return resultat
 
 

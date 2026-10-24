@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.db import transaction
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -10,12 +10,12 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from comptes import roles
-from outillage.views import construire_arbre
+from outillage.views import construire_arbres
 
 from . import matrice
 from .forms import (ConsommationsFormSet, DocumentForm, DuplicationProduitForm, FicheForm, ProduitForm, ReglagesForm,
                     formset_parametres)
-from .models import Document, Machine, Produit, ProduitMachine
+from .models import TAILLE_MAXI_DOCUMENT, Document, Machine, Produit, ProduitMachine
 
 
 def objet_ou_404(modele, identifiant):
@@ -150,7 +150,7 @@ def fiche(request, pk):
             "etat": etat,
             "libelle_etat": matrice.LIBELLES[etat],
             "parametres": fabrication.parametres.all(),
-            "arbres": [construire_arbre(outil) for outil in fabrication.outils.all()],
+            "arbres": construire_arbres(fabrication.outils.all()),
             "consommations": fabrication.consommations.select_related("article"),
             "photos": [document for document in documents if document.est_une_image],
             "documents": [document for document in documents if not document.est_une_image],
@@ -258,7 +258,9 @@ def dupliquer_fiche(request, pk):
 def ajouter_document(request, pk):
     fabrication = get_object_or_404(ProduitMachine.objects.select_related("produit"), pk=pk)
     formulaire = DocumentForm(request.POST, request.FILES)
-    if formulaire.is_valid():
+    if getattr(request, "envoi_trop_gros", False):
+        messages.error(request, f"Fichier trop volumineux : {TAILLE_MAXI_DOCUMENT // (1024 * 1024)} Mo au plus.")
+    elif formulaire.is_valid():
         document = formulaire.save(commit=False)
         document.produit = fabrication.produit
         document.fabrication = fabrication if formulaire.cleaned_data["portee"] == DocumentForm.POUR_LA_FICHE else None
@@ -275,11 +277,7 @@ def ajouter_document(request, pk):
 def supprimer_document(request, pk):
     document = get_object_or_404(Document, pk=pk)
     retour = request.POST.get("retour") or document.produit.get_absolute_url()
-    nom_fichier = document.fichier.name
     document.delete()
-    # Un produit ou une fiche dupliqués partagent le fichier : il n'est effacé qu'au dernier document qui s'en sert.
-    if not Document.objects.filter(fichier=nom_fichier).exists():
-        document.fichier.storage.delete(nom_fichier)
     messages.success(request, f"« {document.titre} » retiré.")
     # Seulement une adresse de ce site : « //autre-site » commence aussi par « / ».
     if not url_has_allowed_host_and_scheme(retour, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
@@ -302,10 +300,12 @@ def document(request, pk, nom):
 
 def machine(request, pk):
     machine = get_object_or_404(Machine, pk=pk)
-    fabrications = list(machine.fabrications.select_related("produit"))
+    # Nombre de machines où chaque produit est programmé, compté en une requête pour toute la page.
+    fabrications = list(machine.fabrications.select_related("produit").annotate(
+        nombre_programmees=Count("produit__fabrications", filter=Q(produit__fabrications__etat=ProduitMachine.PROGRAMME))
+    ))
     for fabrication in fabrications:
-        nombre_programmees = fabrication.produit.fabrications.filter(etat=ProduitMachine.PROGRAMME).count()
-        fabrication.etat_affiche = matrice.etat_affiche(fabrication.etat, nombre_programmees)
+        fabrication.etat_affiche = matrice.etat_affiche(fabrication.etat, fabrication.nombre_programmees)
         fabrication.libelle_etat = matrice.LIBELLES[fabrication.etat_affiche]
     return render(
         request,

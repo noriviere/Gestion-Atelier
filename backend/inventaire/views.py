@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import timedelta
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,16 +18,9 @@ from produits.models import Produit
 
 from . import excel
 from .forms import ArticleForm, FournisseurForm, LiensFournisseursFormSet, MouvementForm
+from .calculs import articles_sous_le_mini, formater_ecart, lire_quantite
 from .models import Article, Fournisseur, Mouvement, TypeInventaire
 from .recherche import rechercher
-
-
-def articles_sous_le_mini():
-    return (
-        Article.objects.filter(stock__lte=F("stock_mini"))
-        .select_related("type_inventaire")
-        .prefetch_related("liens_fournisseurs__fournisseur")
-    )
 
 
 def articles_a_compter(type_inventaire, tous_les_articles=False):
@@ -56,12 +49,6 @@ PERIODES_ECARTS = [(30, "30 derniers jours"), (90, "3 derniers mois"), (365, "12
 PERIODE_ECARTS_PAR_DEFAUT = 90
 
 
-def formater_ecart(ecart):
-    """+2, −1,5 : l'écart avec son signe, en notation française."""
-    texte = f"{abs(ecart).normalize():f}".replace(".", ",")
-    return f"+{texte}" if ecart > 0 else f"−{texte}" if ecart < 0 else "0"
-
-
 def resumer_ecarts(comptages):
     """Chiffres clés d'une liste de comptages : nombre, écarts, part des comptages justes et valeur des écarts."""
     comptages = list(comptages)
@@ -75,26 +62,6 @@ def resumer_ecarts(comptages):
         "valeur_surplus": sum((valeur for valeur in valeurs if valeur > 0), Decimal(0)),
         "valeur_nette": sum(valeurs, Decimal(0)),
     }
-
-
-# Plus grande quantité enregistrable : les champs de quantité ont 10 chiffres dont 2 après la virgule.
-QUANTITE_MAXI = Decimal("99999999")
-
-
-def lire_quantite(texte):
-    """Convertit une saisie (« 12 », « 3,5 ») en Decimal ; None si vide.
-
-    ValueError si la saisie est illisible, négative ou trop grande (« NaN » et « Infinity » compris)."""
-    texte = texte.strip().replace(",", ".")
-    if not texte:
-        return None
-    try:
-        quantite = Decimal(texte)
-    except InvalidOperation:
-        raise ValueError(texte)
-    if not quantite.is_finite() or quantite < 0 or quantite > QUANTITE_MAXI:
-        raise ValueError(texte)
-    return quantite
 
 
 def accueil(request):
@@ -202,7 +169,7 @@ def a_commander(request):
 
 def inventaires(request):
     resumes_par_type = []
-    for type_inventaire in TypeInventaire.objects.all():
+    for type_inventaire in TypeInventaire.objects.prefetch_related("articles"):
         articles_du_type = list(type_inventaire.articles.all())
         resumes_par_type.append({
             "type_inventaire": type_inventaire,

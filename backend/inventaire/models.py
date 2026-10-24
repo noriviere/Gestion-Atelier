@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import Sum
 from django.urls import reverse
@@ -60,14 +61,19 @@ class Article(models.Model):
     emplacement = models.CharField(max_length=60, blank=True)
     unite = models.CharField(max_length=20, default="pièce")
     stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    stock_mini = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    mini_commande = models.DecimalField("quantité mini de commande", max_digits=10, decimal_places=2, default=1)
+    stock_mini = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+    mini_commande = models.DecimalField("quantité mini de commande", max_digits=10, decimal_places=2, default=1,
+                                        validators=[MinValueValidator(0)])
     frequence_inventaire = models.PositiveIntegerField("fréquence d'inventaire (jours)", default=90)
     dernier_inventaire = models.DateField(null=True, blank=True)
     fournisseurs = models.ManyToManyField(Fournisseur, through="ArticleFournisseur", related_name="articles")
 
     class Meta:
         ordering = ["reference"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(stock_mini__gte=0), name="stock_mini_positif"),
+            models.CheckConstraint(condition=models.Q(mini_commande__gte=0), name="mini_commande_positif"),
+        ]
 
     def __str__(self):
         return f"{self.reference} – {self.designation}"
@@ -199,6 +205,11 @@ class Mouvement(models.Model):
 
     class Meta:
         ordering = ["-date"]
+        # Fiche article (derniers mouvements) et rapport des écarts (comptages par période).
+        indexes = [
+            models.Index(fields=["article", "-date"], name="mouvement_article_date"),
+            models.Index(fields=["type", "date"], name="mouvement_type_date"),
+        ]
 
     def __str__(self):
         return f"{self.get_type_display()} {self.quantite} {self.article.reference}"

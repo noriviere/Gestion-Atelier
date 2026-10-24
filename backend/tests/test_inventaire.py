@@ -7,9 +7,9 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
+from inventaire.calculs import formater_ecart, lire_quantite
 from inventaire.models import Article, Mouvement
-from inventaire.views import (articles_a_compter, formater_ecart, lire_quantite, regrouper_par_fournisseur_prefere,
-                              resumer_ecarts)
+from inventaire.views import articles_a_compter, regrouper_par_fournisseur_prefere, resumer_ecarts
 
 from .fabriques import creer_article, creer_type_inventaire, creer_utilisateur, lier_fournisseur
 

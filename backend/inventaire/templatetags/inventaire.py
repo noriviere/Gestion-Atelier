@@ -1,6 +1,6 @@
 from django import template
 
-from inventaire.views import formater_ecart
+from inventaire.calculs import formater_ecart
 
 register = template.Library()
 

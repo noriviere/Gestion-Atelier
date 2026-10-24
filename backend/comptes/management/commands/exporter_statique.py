@@ -15,7 +15,7 @@ from urllib.parse import parse_qsl, urlsplit
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.test import Client, override_settings
 
@@ -63,6 +63,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         sortie = Path(options["sortie"])
         if sortie.exists():
+            # Le dossier est effacé avant l'export : seulement s'il est vide ou contient un export précédent.
+            if any(sortie.iterdir()) and not (sortie / "index.html").exists():
+                raise CommandError(f"{sortie} n'est pas vide et ne ressemble pas à un export : choisissez un autre --sortie.")
             shutil.rmtree(sortie)
         sortie.mkdir(parents=True)
         shutil.copytree(settings.FRONTEND_DIR / "static", sortie / "static")

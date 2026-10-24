@@ -3,7 +3,6 @@
 Le même tableau sert aux deux sens : un export peut être corrigé puis réimporté.
 Une ligne est rattachée à un article existant par sa référence ; sinon l'article est créé.
 """
-import unicodedata
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
@@ -15,6 +14,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from .models import Article, ArticleFournisseur, Fournisseur, Mouvement, TypeInventaire
+from .recherche import normaliser as normaliser_texte
 
 COLONNES = [
     # clé, titre de colonne, obligatoire, explication
@@ -47,8 +47,7 @@ class FichierIllisible(Exception):
 
 def normaliser(texte):
     """« Pièce d'usure » -> « piecedusure » : compare des saisies sans tenir compte des accents, espaces et majuscules."""
-    sans_accents = unicodedata.normalize("NFKD", str(texte)).encode("ascii", "ignore").decode()
-    return "".join(caractere for caractere in sans_accents.lower() if caractere.isalnum())
+    return "".join(caractere for caractere in normaliser_texte(str(texte)) if caractere.isalnum())
 
 
 COLONNE_PAR_TITRE = {normaliser(titre): cle for cle, titre, _, _ in COLONNES}

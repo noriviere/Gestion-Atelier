@@ -11,10 +11,17 @@
   {% if demo_statique %}<script src="{% static 'js/demo.js' %}" defer></script>{% endif %}
 </head>
 <body>
-{% if demo_statique %}<div class="bandeau-demo">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré. <a href="/__profils__">Changer de profil</a></div>{% endif %}
+{% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré.</span><span class="texte-ecran-etroit">Démo : données fictives, rien n'est enregistré.</span> <a href="/__profils__">Changer de profil</a></div>{% endif %}
 {% if user.is_authenticated %}
 <header class="barre">
   <a class="logo" href="{% url 'accueil' %}">Gestion Atelier</a>
+  <div class="commandes-mobile">
+    {% include "_bouton_theme.html" %}
+    <button type="button" class="bouton-menu" data-action="ouvrir-menu" aria-expanded="false" aria-controls="menu-principal" aria-label="Ouvrir le menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="menu-principal" id="menu-principal">
   {% with page_courante=request.resolver_match.url_name %}
   <nav>
     <a href="{% url 'accueil' %}" class="{% if page_courante == 'accueil' %}actif{% endif %}">Accueil</a>
@@ -30,8 +37,9 @@
   <div class="utilisateur">
     <span class="nom-utilisateur">{{ user.get_full_name|default:user.username }}</span>
     <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>
-    {% include "_bouton_theme.html" %}
+    <span class="theme-ecran-large">{% include "_bouton_theme.html" %}</span>
     {% if demo_statique %}<a class="bouton-sortie" href="/__profils__">Profils</a>{% else %}<form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit">Déconnexion</button></form>{% endif %}
+  </div>
   </div>
 </header>
 {% endif %}

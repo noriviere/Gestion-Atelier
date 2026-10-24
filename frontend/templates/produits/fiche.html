@@ -39,7 +39,7 @@
   <h2>Photos</h2>
   <div class="galerie" data-galerie>
     {% for photo in photos %}<figure><a href="{{ photo.get_absolute_url }}" target="_blank" rel="noopener"><img src="{{ photo.get_absolute_url }}" alt="{{ photo.titre }}" loading="lazy"></a><figcaption>{{ photo.titre }}{% if not photo.fabrication_id %} <span class="discret">(produit)</span>{% endif %}
-      {% if peut_modifier %}<form method="post" action="{% url 'supprimer_document' photo.pk %}" class="en-ligne no-print" data-demo-message="Photo retirée.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</figcaption></figure>{% endfor %}
+      {% if peut_documenter %}<form method="post" action="{% url 'supprimer_document' photo.pk %}" class="en-ligne no-print" data-demo-message="Photo retirée.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</figcaption></figure>{% endfor %}
   </div>
   </section>
 
@@ -60,11 +60,11 @@
   <h2 id="documents">Documents</h2>
   <ul class="liste-documents" data-liste-documents>
     {% for document in documents %}<li><a href="{{ document.get_absolute_url }}" target="_blank" rel="noopener"><span class="etiquette">{{ document.extension|upper }}</span> {{ document.titre }}</a>{% if not document.fabrication_id %} <span class="discret">(produit, toutes machines)</span>{% endif %}
-      {% if peut_modifier %}<form method="post" action="{% url 'supprimer_document' document.pk %}" class="en-ligne no-print" data-demo-message="Document retiré.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</li>
+      {% if peut_documenter %}<form method="post" action="{% url 'supprimer_document' document.pk %}" class="en-ligne no-print" data-demo-message="Document retiré.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</li>
     {% empty %}<li class="discret aucun-document">Aucun document.</li>{% endfor %}
   </ul>
 
-  {% if peut_modifier %}
+  {% if peut_documenter %}
   <form method="post" action="{% url 'ajouter_document' fabrication.pk %}" enctype="multipart/form-data" class="depot-document no-print" data-simulation-locale>{% csrf_token %}
     <h3>Ajouter une photo ou un document</h3>
     <div class="champs-depot">

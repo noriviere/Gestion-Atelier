@@ -3,7 +3,7 @@ from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from comptes.roles import ATELIER, METHODE
+from comptes.roles import ATELIER, METHODE, REGLEUR
 from outillage.models import Outil
 from produits import matrice
 from produits.models import Consommation, Document, Machine, Parametre, Produit, ProduitMachine
@@ -258,6 +258,21 @@ class PagesProduitsTests(TestCase):
         self.client.post(f"/produits/documents/{photo.pk}/supprimer/", {"retour": self.fiche.get_absolute_url()})
         self.assertFalse(Document.objects.exists())
         self.assertFalse(photo.fichier.storage.exists(chemin))
+
+    def test_le_regleur_ajoute_des_photos_mais_pas_l_operateur(self):
+        self.client.force_login(creer_utilisateur("regleur", REGLEUR))
+        self.assertContains(self.client.get(self.fiche.get_absolute_url()), "Ajouter une photo ou un document")
+        self.assertNotContains(self.client.get(self.fiche.get_absolute_url()), "Modifier la fiche")
+        image = SimpleUploadedFile("pince.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        self.client.post(f"/produits/fiche/{self.fiche.pk}/documents/", {"titre": "Pince", "fichier": image, "portee": "fiche"})
+        photo = Document.objects.get()
+        self.client.force_login(self.operateur)
+        self.assertNotContains(self.client.get(self.fiche.get_absolute_url()), "Ajouter une photo ou un document")
+        image = SimpleUploadedFile("autre.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        reponse = self.client.post(f"/produits/fiche/{self.fiche.pk}/documents/", {"titre": "Autre", "fichier": image, "portee": "fiche"})
+        self.assertEqual(reponse.status_code, 403)
+        self.assertEqual(self.client.post(f"/produits/documents/{photo.pk}/supprimer/").status_code, 403)
+        self.assertEqual(Document.objects.count(), 1)
 
     def test_un_fichier_partage_par_une_copie_n_est_pas_efface(self):
         plan = Document.objects.create(produit=self.produit, titre="Plan", fichier=ContentFile(b"%PDF", name="plan.pdf"))

@@ -24,7 +24,9 @@ PROFILS = [
     ("admin", "admin", "Admin", "Tous les droits, dont la gestion des comptes et des listes de référence."),
     ("methode", "methode", "Méthode et management",
      "Crée et modifie articles, outils, produits et seuils ; consulte tout."),
-    ("operateur", "operateur", "Régleur et opérateur",
+    ("regleur", "regleur", "Régleur",
+     "Consulte les fiches, ajoute photos et documents, saisit les sorties de stock et les comptages."),
+    ("operateur", "operateur", "Opérateur",
      "Consulte les fiches, saisit les sorties de stock et les comptages d'inventaire."),
 ]
 

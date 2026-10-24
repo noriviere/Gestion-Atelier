@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from comptes.decorators import modification_requise
+from comptes.decorators import documents_autorises, modification_requise
 from outillage.views import construire_arbre
 
 from . import matrice
@@ -241,7 +241,7 @@ def dupliquer_fiche(request, pk):
 
 
 @require_POST
-@modification_requise
+@documents_autorises
 def ajouter_document(request, pk):
     fabrication = get_object_or_404(ProduitMachine.objects.select_related("produit"), pk=pk)
     formulaire = DocumentForm(request.POST, request.FILES)
@@ -259,7 +259,7 @@ def ajouter_document(request, pk):
 
 
 @require_POST
-@modification_requise
+@documents_autorises
 def supprimer_document(request, pk):
     document = get_object_or_404(Document, pk=pk)
     retour = request.POST.get("retour") or document.produit.get_absolute_url()

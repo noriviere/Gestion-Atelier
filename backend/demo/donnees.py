@@ -19,9 +19,9 @@ COMPTES = [
     ("admin", "Admin", "", "Admin"),
     ("methode", "Noël", "Méthodes", "Méthode et management"),
     ("chef", "Chef", "d'équipe", "Méthode et management"),
-    ("regleur", "Régleur", "Équipe A", "Régleur et opérateur"),
-    ("intendante", "Intendante", "", "Régleur et opérateur"),
-    ("operateur", "Opérateur", "(compte partagé)", "Régleur et opérateur"),
+    ("regleur", "Régleur", "Équipe A", "Régleur"),
+    ("intendante", "Intendante", "", "Opérateur"),
+    ("operateur", "Opérateur", "(compte partagé)", "Opérateur"),
 ]
 
 FOURNISSEURS = [

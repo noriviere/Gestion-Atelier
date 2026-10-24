@@ -19,7 +19,7 @@
 {% if documents %}
 <h2>Documents du produit</h2>
 <ul class="liste-documents">{% for document in documents %}<li><a href="{{ document.get_absolute_url }}" target="_blank" rel="noopener"><span class="etiquette">{{ document.extension|upper }}</span> {{ document.titre }}</a></li>{% endfor %}</ul>
-<p class="discret">Ces documents apparaissent sur toutes les fiches du produit. Les photos et documents s'ajoutent depuis une fiche.</p>
+<p class="discret">Ces documents apparaissent sur toutes les fiches du produit. Les photos et documents s'ajoutent depuis une fiche (Méthode et management, régleurs).</p>
 {% endif %}
 
 {% if peut_modifier %}

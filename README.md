@@ -27,7 +27,8 @@ Cette version est une **démo** avec des données fictives, destinée à présen
   dans l'application ; une nouvelle fiche reprend les libellés de paramètres de la machine. Une fiche
   se copie vers une autre machine, un produit se duplique avec toutes ses fiches.
 - **Profils** : `Admin`, `Méthode et management` (paramétrage via le menu Paramétrage),
-  `Régleur et opérateur` (consultation, mouvements de stock, comptages).
+  `Régleur` (consultation, mouvements de stock, comptages, photos et documents des fiches),
+  `Opérateur` (consultation, mouvements de stock, comptages).
 
 Comptes de démonstration, tous avec le mot de passe `demo` :
 `admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.
@@ -37,7 +38,7 @@ Comptes de démonstration, tous avec le mot de passe `demo` :
 Une version statique de la démo est publiée sur GitHub Pages :
 https://noriviere.github.io/Gestion-Atelier/
 
-On y choisit un profil (Admin, Méthode et management, Régleur et opérateur) pour voir l'application
+On y choisit un profil (Admin, Méthode et management, Régleur, Opérateur) pour voir l'application
 avec ses droits. Les sorties de stock, comptages et filtres sont simulés dans le navigateur :
 rien n'est enregistré. Le site est régénéré automatiquement à chaque modification de `main`
 (workflow `.github/workflows/pages.yml`, commande `python manage.py exporter_statique`).

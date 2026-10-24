@@ -1,4 +1,4 @@
-"""Les trois niveaux d'accès et leurs droits."""
+"""Les niveaux d'accès et leurs droits."""
 from django.contrib.auth.models import AnonymousUser, Group
 from django.test import TestCase
 
@@ -24,6 +24,19 @@ class ProfilsTests(TestCase):
         self.assertFalse(roles.peut_modifier(operateur))
         self.assertTrue(roles.peut_mouvementer(operateur))
 
+    def test_seuls_intendant_methode_et_admin_comptent_les_inventaires(self):
+        self.assertTrue(roles.peut_compter(creer_utilisateur("intendante", roles.INTENDANT)))
+        self.assertTrue(roles.peut_compter(creer_utilisateur("methode", roles.METHODE)))
+        self.assertTrue(roles.peut_compter(creer_utilisateur("admin", superutilisateur=True)))
+        self.assertFalse(roles.peut_compter(creer_utilisateur("operateur", roles.ATELIER)))
+        self.assertFalse(roles.peut_compter(creer_utilisateur("inconnu")))
+
+    def test_intendant_mouvemente_sans_modifier(self):
+        intendante = creer_utilisateur("intendante", roles.INTENDANT)
+        self.assertEqual(roles.profil(intendante), roles.INTENDANT)
+        self.assertTrue(roles.peut_mouvementer(intendante))
+        self.assertFalse(roles.peut_modifier(intendante))
+
     def test_le_profil_le_plus_eleve_l_emporte(self):
         chef = creer_utilisateur("chef", roles.ATELIER)
         chef.groups.add(Group.objects.get(name=roles.METHODE))
@@ -43,6 +56,11 @@ class PermissionsDesGroupesTests(TestCase):
         self.assertTrue(operateur.has_perm("inventaire.add_mouvement"))
         self.assertFalse(operateur.has_perm("inventaire.change_article"))
         self.assertFalse(operateur.has_perm("produits.delete_produit"))
+
+    def test_intendant_consulte_et_saisit_des_mouvements(self):
+        intendante = creer_utilisateur("intendante", roles.INTENDANT)
+        self.assertTrue(intendante.has_perm("inventaire.add_mouvement"))
+        self.assertFalse(intendante.has_perm("inventaire.change_article"))
 
     def test_methode_a_tous_les_droits_metier_mais_pas_sur_les_comptes(self):
         methodiste = creer_utilisateur("methode", roles.METHODE)

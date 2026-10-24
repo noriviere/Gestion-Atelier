@@ -69,6 +69,15 @@ class PagesDemoTests(TestCase):
         self.assertEqual(porte_lame.stock, Decimal("5"))
         self.assertFalse(porte_lame.inventaire_du)
 
+    def test_operateur_ne_saisit_pas_de_comptage(self):
+        self.client.login(username="operateur", password="demo")
+        porte_lame = Article.objects.get(reference="PL-M")
+        page = self.client.get(f"/inventaires/{porte_lame.type_inventaire_id}/")
+        self.assertNotContains(page, "Enregistrer les comptages")
+        reponse = self.client.post(f"/inventaires/{porte_lame.type_inventaire_id}/", {f"compte_{porte_lame.pk}": "5"})
+        self.assertEqual(reponse.status_code, 403)
+        porte_lame.refresh_from_db()
+        self.assertEqual(porte_lame.stock, Decimal("3"))
 
     def test_stock_bas_avec_commande_en_cours_est_signale(self):
         self.client.login(username="operateur", password="demo")

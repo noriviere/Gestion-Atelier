@@ -23,8 +23,10 @@ PROFILS = [
     ("admin", "admin", "Admin", "Tous les droits, dont la gestion des comptes et des listes de référence."),
     ("methode", "methode", "Méthode et management",
      "Crée et modifie articles, outils, produits et seuils ; consulte tout."),
+    ("intendant", "intendante", "Intendant",
+     "Saisit les comptages d'inventaire tournant et les mouvements de stock ; consulte tout."),
     ("operateur", "operateur", "Régleur et opérateur",
-     "Consulte les fiches, saisit les sorties de stock et les comptages d'inventaire."),
+     "Consulte les fiches et saisit les sorties de stock."),
 ]
 
 LIEN = re.compile(r'(href|src|action)="(/[^"]*)"')

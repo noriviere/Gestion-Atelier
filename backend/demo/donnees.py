@@ -20,7 +20,7 @@ COMPTES = [
     ("methode", "Noël", "Méthodes", "Méthode et management"),
     ("chef", "Chef", "d'équipe", "Méthode et management"),
     ("regleur", "Régleur", "Équipe A", "Régleur et opérateur"),
-    ("intendante", "Intendante", "", "Régleur et opérateur"),
+    ("intendante", "Intendante", "", "Intendant"),
     ("operateur", "Opérateur", "(compte partagé)", "Régleur et opérateur"),
 ]
 

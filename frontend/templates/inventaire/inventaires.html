@@ -9,7 +9,7 @@
   <tr><td><strong>{{ resume.type_inventaire.nom }}</strong><br><span class="discret">{{ resume.type_inventaire.description }}</span></td>
     <td class="nombre">{{ resume.nombre_articles }}</td>
     <td class="nombre">{% if resume.nombre_a_compter %}<span class="etiquette attention">{{ resume.nombre_a_compter }}</span>{% else %}<span class="etiquette ok">0</span>{% endif %}</td>
-    <td><a href="{% url 'comptage' resume.type_inventaire.pk %}">Saisir un comptage</a> · <a href="{% url 'feuille_comptage' resume.type_inventaire.pk %}">Feuille à imprimer</a></td></tr>
+    <td><a href="{% url 'comptage' resume.type_inventaire.pk %}">{% if peut_compter %}Saisir un comptage{% else %}Articles à compter{% endif %}</a> · <a href="{% url 'feuille_comptage' resume.type_inventaire.pk %}">Feuille à imprimer</a></td></tr>
   {% endfor %}
 </table></div>
 {% endblock %}

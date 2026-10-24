@@ -166,7 +166,7 @@ def comptage(request, pk):
     type_inventaire = get_object_or_404(TypeInventaire, pk=pk)
     tous_les_articles = bool(request.GET.get("tous"))
     if request.method == "POST":
-        if not roles.peut_mouvementer(request.user):
+        if not roles.peut_compter(request.user):
             raise PermissionDenied
         nombre_comptages = 0
         for article in type_inventaire.articles.all():

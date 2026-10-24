@@ -61,3 +61,15 @@
     });
   });
 })();
+
+// Formulaires à confirmer avant envoi (suppression d'un outil, par exemple).
+(function () {
+  document.querySelectorAll("form[data-confirmation]").forEach(function (formulaire) {
+    formulaire.addEventListener("submit", function (evenement) {
+      if (!window.confirm(formulaire.dataset.confirmation)) {
+        evenement.preventDefault();
+        evenement.stopImmediatePropagation();
+      }
+    });
+  });
+})();

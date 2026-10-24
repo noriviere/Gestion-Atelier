@@ -76,8 +76,8 @@ class Command(BaseCommand):
                 continue
             html = reponse.content.decode()
             fichier = posixpath.join(dossier, chemin_statique(url))
-            for _, lien in LIEN.findall(html):
-                if self.est_page(lien) and lien not in vues:
+            for attribut, lien in LIEN.findall(html):
+                if attribut == "href" and self.est_page(lien) and lien not in vues:
                     a_voir.append(lien)
             cible = sortie / fichier
             cible.parent.mkdir(parents=True, exist_ok=True)

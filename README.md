@@ -13,6 +13,8 @@ Cette version est une **démo** avec des données fictives, destinée à présen
 - **Inventaires tournants** : fréquence de comptage par article, feuille de comptage imprimable
   par type d'inventaire, saisie des quantités comptées qui corrige le stock.
 - **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
+  Le profil Méthode crée et modifie les outils et leurs pièces directement dans l'application ;
+  depuis la fiche d'un outil, tous les profils sortent du stock une pièce remplacée.
 - **Produits** : un produit par machine avec cadence, outillages, consommables et notes,
   affiché sous forme de fiche imprimable.
 - **Profils** : `Admin`, `Méthode et management` (paramétrage via le menu Paramétrage),
@@ -27,8 +29,10 @@ Une version statique de la démo est publiée sur GitHub Pages :
 https://noriviere.github.io/Gestion-Atelier/
 
 On y choisit un profil (Admin, Méthode et management, Régleur et opérateur) pour voir l'application
-avec ses droits. Les sorties de stock, comptages et filtres sont simulés dans le navigateur :
-rien n'est enregistré. Le site est régénéré automatiquement à chaque modification de `main`
+avec ses droits. Les sorties de stock (depuis un article ou une fiche outil), entrées, comptages
+et filtres sont simulés dans le navigateur : les stocks et mouvements saisis sont gardés dans ce
+navigateur et repris sur toutes les pages, jusqu'au bouton « Remettre à zéro ». La création et la
+modification d'outils sont vérifiées puis confirmées, sans être conservées. Rien n'est envoyé. Le site est régénéré automatiquement à chaque modification de `main`
 (workflow `.github/workflows/pages.yml`, commande `python manage.py exporter_statique`).
 
 ## Lancer la démo sur un PC (Python 3.11 ou plus)

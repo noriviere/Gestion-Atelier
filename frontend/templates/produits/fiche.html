@@ -30,7 +30,7 @@
     <tr><th>Article</th><th>Quantité / fréquence</th><th class="nombre">Stock</th><th>Emplacement</th></tr>
     {% for consommation in consommations %}
     <tr><td><a href="{{ consommation.article.get_absolute_url }}">{{ consommation.article.reference }}</a> {{ consommation.article.designation }}</td><td>{{ consommation.quantite }}</td>
-      <td class="nombre"><span>{% if consommation.article.a_commander %}<span class="etiquette alerte">{{ consommation.article.stock|floatformat:"-2" }}</span>{% else %}{{ consommation.article.stock|floatformat:"-2" }}{% endif %} {{ consommation.article.unite }}</span></td>
+      <td class="nombre">{% include "inventaire/_stock.html" with article=consommation.article unite=True %}</td>
       <td>{{ consommation.article.emplacement }}</td></tr>
     {% empty %}<tr><td colspan="4">Aucun consommable renseigné.</td></tr>{% endfor %}
   </table>

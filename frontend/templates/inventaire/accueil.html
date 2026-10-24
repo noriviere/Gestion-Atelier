@@ -18,7 +18,7 @@
       <tr><th>Article</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>Fournisseur préféré</th></tr>
       {% for article in articles_a_commander %}
       <tr><td><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> {{ article.designation }}</td>
-        <td class="nombre"><span class="etiquette alerte">{{ article.stock|floatformat:"-2" }}</span></td>
+        <td class="nombre">{% include "inventaire/_stock.html" %}</td>
         <td class="nombre">{{ article.stock_mini|floatformat:"-2" }}</td>
         <td>{{ article.fournisseur_prefere|default:"—" }}</td></tr>
       {% endfor %}

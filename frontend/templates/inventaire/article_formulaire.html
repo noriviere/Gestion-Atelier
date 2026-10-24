@@ -2,7 +2,7 @@
 {% load aide %}
 {% block titre %}{% if article %}Modifier {{ article.reference }}{% else %}Nouvel article{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'articles' %}">Stock</a> › {% if article %}<a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> › modifier{% else %}nouvel article{% endif %}</div>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'articles' %}">Stock</a></li>{% if article %}<li><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a></li><li aria-current="page">Modifier</li>{% else %}<li aria-current="page">Nouvel article</li>{% endif %}</ol></nav>
 <h1>{% if article %}Modifier {{ article.reference }}{% else %}Nouvel article{% endif %}</h1>
 <p class="sous-titre">{% if article %}Le stock ne se modifie pas ici : il change par les sorties, les entrées et les comptages d'inventaire.{% else %}Pièce d'usure ou consommable, acheté ou de design interne.{% endif %}</p>
 <form method="post" class="formulaire" data-demo-message="Article enregistré.">{% csrf_token %}

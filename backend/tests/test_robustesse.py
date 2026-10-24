@@ -6,6 +6,7 @@ from unittest import mock
 from django.contrib.admin.sites import site as administration
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import RequestFactory, TestCase
@@ -17,7 +18,7 @@ from comptes.droits import PAGES, PAGES_SANS_DROIT_UNIQUE
 from inventaire import excel
 from inventaire.models import Article, Fournisseur, Mouvement
 from inventaire.recherche import rechercher
-from inventaire.views import lire_quantite
+from inventaire.calculs import lire_quantite
 from produits.models import Document, Machine, Produit
 
 from .fabriques import creer_article, creer_utilisateur
@@ -155,3 +156,67 @@ class StockProtegeTests(TestCase):
         with self.assertRaises(CommandError):
             call_command("charger_demo")
         self.assertFalse(Machine.objects.exists())
+
+
+class PassePrioriteBasseTests(TestCase):
+    def test_supprimer_un_produit_efface_ses_fichiers_sauf_ceux_encore_partages(self):
+        produit = Produit.objects.create(reference="N2", designation="Produit N2")
+        copie = Produit.objects.create(reference="N3", designation="Produit N3")
+        plan = Document.objects.create(produit=produit, titre="Plan", fichier=ContentFile(b"%PDF", name="plan.pdf"))
+        partage = Document.objects.create(produit=produit, titre="Photo", fichier=ContentFile(b"x", name="photo.png"))
+        partage.copier_vers(copie)
+        with self.captureOnCommitCallbacks(execute=True):
+            produit.delete()
+        self.assertFalse(plan.fichier.storage.exists(plan.fichier.name))
+        self.assertTrue(partage.fichier.storage.exists(partage.fichier.name))
+
+    def test_envoi_trop_gros_arrete_et_signale(self):
+        from produits.models import ProduitMachine
+
+        produit = Produit.objects.create(reference="N2", designation="Produit N2")
+        fiche = ProduitMachine.objects.create(produit=produit, machine=Machine.objects.create(code="S1", nom="S1"),
+                                              cadence=100)
+        self.client.force_login(creer_utilisateur("methode", roles.METHODE))
+        with mock.patch("produits.envois.TAILLE_MAXI_DOCUMENT", 10):
+            reponse = self.client.post(f"/produits/fiche/{fiche.pk}/documents/", {
+                "titre": "Gros", "portee": "fiche",
+                "fichier": SimpleUploadedFile("gros.pdf", b"%PDF" + b"0" * 100, content_type="application/pdf")}, follow=True)
+        self.assertContains(reponse, "Fichier trop volumineux")
+        self.assertFalse(Document.objects.exists())
+
+    def test_numero_de_commande_deja_pris_passe_au_suivant(self):
+        fournisseur = Fournisseur.objects.create(nom="A")
+        with mock.patch("commandes.models.prochain_numero", side_effect=["CDE-1", "CDE-1", "CDE-2"]):
+            premiere = Commande.objects.create(fournisseur=fournisseur)
+            seconde = Commande.objects.create(fournisseur=fournisseur)
+        self.assertEqual((premiere.numero, seconde.numero), ("CDE-1", "CDE-2"))
+
+    def test_la_base_refuse_une_quantite_de_commande_nulle(self):
+        from django.db import IntegrityError, transaction
+
+        commande = Commande.objects.create(fournisseur=Fournisseur.objects.create(nom="A"))
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            LigneCommande.objects.create(commande=commande, article=creer_article("PL-9"), quantite=0)
+
+    def test_arbre_d_outillage_en_nombre_de_requetes_fixe(self):
+        from outillage.models import Outil, PieceOutil
+        from outillage.views import construire_arbres
+
+        racine = Outil.objects.create(code="J1", nom="Jeu")
+        niveau = racine
+        for profondeur in range(4):
+            niveau = Outil.objects.create(code=f"S{profondeur}", nom="Sous-ensemble", parent=niveau)
+            PieceOutil.objects.create(outil=niveau, article=creer_article(f"P{profondeur}"))
+        with self.assertNumQueries(2):
+            arbre, = construire_arbres([racine])
+        self.assertEqual(arbre["sous_ensembles"][0]["sous_ensembles"][0]["outil"].code, "S1")
+
+    def test_export_refuse_d_effacer_un_dossier_qui_n_est_pas_un_export(self):
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as dossier:
+            (Path(dossier) / "important.txt").write_text("à garder")
+            with self.assertRaises(CommandError):
+                call_command("exporter_statique", sortie=dossier)
+            self.assertTrue((Path(dossier) / "important.txt").exists())

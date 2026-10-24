@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.contrib import messages
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -11,18 +13,37 @@ from .forms import OutilForm, PiecesOutilFormSet, SortiePieceForm
 from .models import Outil, PieceOutil
 
 
-def construire_arbre(outil):
-    """Outil et sous-ensembles imbriqués, avec leurs pièces, pour l'affichage en arborescence."""
+def tables_arbre():
+    """Sous-ensembles par outil parent et pièces par outil, lus en deux requêtes pour tout l'outillage."""
+    outils_par_parent, pieces_par_outil = defaultdict(list), defaultdict(list)
+    for sous_ensemble in Outil.objects.filter(parent__isnull=False):
+        outils_par_parent[sous_ensemble.parent_id].append(sous_ensemble)
+    for piece_montee in PieceOutil.objects.select_related("article"):
+        pieces_par_outil[piece_montee.outil_id].append(piece_montee)
+    return outils_par_parent, pieces_par_outil
+
+
+def construire_arbre(outil, tables=None):
+    """Outil et sous-ensembles imbriqués, avec leurs pièces, pour l'affichage en arborescence.
+
+    Passer les mêmes tables (tables_arbre) pour construire plusieurs arbres sans relire la base."""
+    outils_par_parent, pieces_par_outil = tables or tables_arbre()
     return {
         "outil": outil,
-        "pieces": list(outil.liens_pieces.select_related("article")),
-        "sous_ensembles": [construire_arbre(sous_ensemble) for sous_ensemble in outil.sous_ensembles.all()],
+        "pieces": pieces_par_outil[outil.pk],
+        "sous_ensembles": [construire_arbre(sous_ensemble, (outils_par_parent, pieces_par_outil))
+                           for sous_ensemble in outils_par_parent[outil.pk]],
     }
+
+
+def construire_arbres(outils):
+    tables = tables_arbre()
+    return [construire_arbre(outil, tables) for outil in outils]
 
 
 def outils(request):
     outils_principaux = Outil.objects.filter(parent__isnull=True).prefetch_related("fabrications__produit")
-    return render(request, "outillage/outils.html", {"arbres": [construire_arbre(outil) for outil in outils_principaux]})
+    return render(request, "outillage/outils.html", {"arbres": construire_arbres(outils_principaux)})
 
 
 def outil(request, pk):

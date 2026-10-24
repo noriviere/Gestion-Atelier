@@ -9,7 +9,7 @@
   </nav>
   <article class="texte-aide">
     <div class="haut-aide no-print">
-      {% if sujet %}<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'aide' %}">Mode d'emploi</a></li><li aria-current="page">{{ sujet.titre }}</li></ol></nav>{% else %}<span></span>{% endif %}
+      {% if sujet %}<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'aide' %}">Mode d'emploi</a></li><li aria-current="page">{{ sujet.titre }}</li></ol></nav>{% else %}<span></span>{% endif %}
       <button type="button" class="lien-bouton" data-action="revenir" hidden>← Revenir à la page précédente</button>
     </div>
     {% block texte %}{% endblock %}

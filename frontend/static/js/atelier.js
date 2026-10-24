@@ -1,3 +1,31 @@
+// Outils partagés par atelier.js, matrice.js et demo.js.
+(function (Atelier) {
+  var mouvementReduit = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Message en haut de la page, dans la zone annoncée aux lecteurs d'écran (base.html).
+  Atelier.afficherMessage = function (texte, estUneErreur, remonter) {
+    var zonePrincipale = document.querySelector("main");
+    var listeMessages = zonePrincipale.querySelector("ul.messages");
+    if (!listeMessages) {
+      listeMessages = document.createElement("ul");
+      listeMessages.className = "messages";
+      listeMessages.setAttribute("role", "status");
+      zonePrincipale.insertBefore(listeMessages, zonePrincipale.firstChild);
+    }
+    listeMessages.innerHTML = "";
+    var message = document.createElement("li");
+    if (estUneErreur) message.className = "error";
+    message.textContent = texte;
+    listeMessages.appendChild(message);
+    if (remonter) window.scrollTo({ top: 0, behavior: mouvementReduit ? "auto" : "smooth" });
+  };
+
+  // « 3,5 » ou « 3.5 » -> 3.5 ; NaN si illisible.
+  Atelier.lireNombre = function (texte) {
+    return parseFloat(String(texte).replace(",", "."));
+  };
+})(window.Atelier = window.Atelier || {});
+
 // Formulaires à confirmer avant envoi (suppression d'un outil, par exemple).
 // En premier : une erreur dans un bloc suivant ne doit jamais laisser passer une suppression sans confirmation.
 (function () {
@@ -13,7 +41,7 @@
 
 // Comportements communs à toutes les pages : bouton de thème et boutons d'impression.
 (function () {
-  var CLE_THEME = "gestion-atelier-theme";
+  var CLE_THEME = window.Atelier.CLE_THEME || "gestion-atelier-theme";
   var racine = document.documentElement;
 
   function enregistrerTheme(theme) {
@@ -120,7 +148,9 @@
       ligne.querySelectorAll("input:not([type=hidden]), select").forEach(function (champ) {
         champ.value = "";
       });
+      // Le bouton disparaît avec sa ligne : le focus passe au bouton d'ajout plutôt qu'au haut de la page.
       ligne.hidden = true;
+      boutonAjouter.focus();
     });
   });
 
@@ -173,7 +203,7 @@
 
   // Même règle que la recherche côté serveur : minuscules, sans accents.
   function normaliser(texte) {
-    return texte.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    return texte.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 
   function filtrerResultats() {
@@ -206,9 +236,7 @@
 
 // Comptage d'inventaire : écart avec le stock théorique, affiché pendant la saisie.
 (function () {
-  function lireNombre(texte) {
-    return parseFloat(String(texte).replace(",", "."));
-  }
+  var lireNombre = window.Atelier.lireNombre;
 
   function afficherEcart(champ) {
     var celluleEcart = champ.closest("tr").querySelector(".ecart-saisi");
@@ -262,5 +290,9 @@
   document.querySelectorAll("form[method=post] a[data-info]").forEach(function (lienAide) {
     lienAide.target = "_blank";
     lienAide.rel = "noopener";
+    var mention = document.createElement("span");
+    mention.className = "visuellement-cache";
+    mention.textContent = " (nouvel onglet)";
+    lienAide.appendChild(mention);
   });
 })();

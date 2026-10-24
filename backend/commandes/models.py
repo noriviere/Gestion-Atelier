@@ -1,8 +1,10 @@
 from collections import defaultdict
 from datetime import timedelta
+from decimal import Decimal
 
 from django.conf import settings
-from django.db import models, transaction
+from django.core.validators import MinValueValidator
+from django.db import IntegrityError, models, transaction
 from django.db.models import Max
 from django.urls import reverse
 from django.utils import timezone
@@ -65,9 +67,17 @@ class Commande(models.Model):
         return reverse("commande", args=[self.pk])
 
     def save(self, *args, **kwargs):
-        if not self.numero:
+        if self.numero:
+            return super().save(*args, **kwargs)
+        # Deux commandes créées au même instant peuvent viser le même numéro : la seconde prend le suivant.
+        for essai in range(5):
             self.numero = prochain_numero(self.date_creation.year)
-        super().save(*args, **kwargs)
+            try:
+                with transaction.atomic():
+                    return super().save(*args, **kwargs)
+            except IntegrityError:
+                if essai == 4:
+                    raise
 
     @property
     def est_en_cours(self):
@@ -206,7 +216,8 @@ class LigneCommandeQuerySet(models.QuerySet):
 class LigneCommande(models.Model):
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name="lignes")
     article = models.ForeignKey(Article, on_delete=models.PROTECT, related_name="lignes_commande")
-    quantite = models.DecimalField("quantité", max_digits=10, decimal_places=2)
+    quantite = models.DecimalField("quantité", max_digits=10, decimal_places=2,
+                                   validators=[MinValueValidator(Decimal("0.01"))])
     prix_unitaire = models.DecimalField("prix unitaire (€)", max_digits=10, decimal_places=2, null=True, blank=True,
                                         help_text="Laisser vide pour reprendre le prix du fournisseur.")
     quantite_recue = models.DecimalField("quantité reçue", max_digits=10, decimal_places=2, null=True, blank=True,
@@ -216,6 +227,11 @@ class LigneCommande(models.Model):
 
     class Meta:
         ordering = ["article__reference"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(quantite__gt=0), name="ligne_quantite_positive"),
+            models.CheckConstraint(condition=models.Q(quantite_recue__gte=0) | models.Q(quantite_recue__isnull=True),
+                                   name="ligne_quantite_recue_positive"),
+        ]
         verbose_name = "ligne de commande"
         verbose_name_plural = "lignes de commande"
 

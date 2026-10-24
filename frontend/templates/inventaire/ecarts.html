@@ -2,7 +2,7 @@
 {% load inventaire aide %}
 {% block titre %}Écarts d'inventaire – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'inventaires' %}">Inventaires</a> › écarts</div>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'inventaires' %}">Inventaires</a></li><li aria-current="page">Écarts</li></ol></nav>
 <h1>Écarts d'inventaire{% info "inventaires" "ecarts" "Le rapport des écarts" %}</h1>
 <p class="sous-titre">Différence entre la quantité comptée et le stock théorique à chaque comptage. Un écart négatif est un manquant. Les valeurs sont chiffrées au prix du fournisseur préféré.</p>
 <div class="grille">

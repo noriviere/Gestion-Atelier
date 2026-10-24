@@ -270,7 +270,8 @@ class PagesProduitsTests(TestCase):
         self.assertEqual(self.client.get(photo.get_absolute_url()).status_code, 403)
         self.client.force_login(self.methode)
         chemin = photo.fichier.name
-        self.client.post(f"/produits/documents/{photo.pk}/supprimer/", {"retour": self.fiche.get_absolute_url()})
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(f"/produits/documents/{photo.pk}/supprimer/", {"retour": self.fiche.get_absolute_url()})
         self.assertFalse(Document.objects.exists())
         self.assertFalse(photo.fichier.storage.exists(chemin))
 

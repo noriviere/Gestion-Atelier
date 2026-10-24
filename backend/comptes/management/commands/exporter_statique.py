@@ -9,13 +9,12 @@ sont copiés tels quels à côté des pages.
 import posixpath
 import re
 import shutil
-from html import escape
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.test import Client, override_settings
 
@@ -63,6 +62,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         sortie = Path(options["sortie"])
         if sortie.exists():
+            # Le dossier est effacé avant l'export : seulement s'il est vide ou contient un export précédent.
+            if any(sortie.iterdir()) and not (sortie / "index.html").exists():
+                raise CommandError(f"{sortie} n'est pas vide et ne ressemble pas à un export : choisissez un autre --sortie.")
             shutil.rmtree(sortie)
         sortie.mkdir(parents=True)
         shutil.copytree(settings.FRONTEND_DIR / "static", sortie / "static")
@@ -131,9 +133,6 @@ class Command(BaseCommand):
         return LIEN.sub(remplacer, html)
 
     def page_profils(self):
-        cartes = "".join(
-            f'<a class="tuile" href="{dossier}/index.html"><h2>{escape(titre)}</h2>'
-            f'<div class="libelle">{escape(description)}</div></a>'
-            for dossier, _, titre, description in PROFILS
-        )
-        return render_to_string("profils_demo.html", {"cartes": cartes})
+        profils = [{"dossier": dossier, "titre": titre, "description": description}
+                   for dossier, _, titre, description in PROFILS]
+        return render_to_string("profils_demo.html", {"profils": profils})

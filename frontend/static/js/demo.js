@@ -48,25 +48,12 @@
   }
 
   // --- Affichage ----------------------------------------------------------------
+  // Les messages de la démo font remonter en haut de la page, où ils s'affichent.
   function afficherMessage(texte, estUneErreur) {
-    var zonePrincipale = document.querySelector("main");
-    var listeMessages = zonePrincipale.querySelector("ul.messages");
-    if (!listeMessages) {
-      listeMessages = document.createElement("ul");
-      listeMessages.className = "messages";
-      zonePrincipale.insertBefore(listeMessages, zonePrincipale.firstChild);
-    }
-    listeMessages.innerHTML = "";
-    var message = document.createElement("li");
-    if (estUneErreur) message.className = "error";
-    message.textContent = texte;
-    listeMessages.appendChild(message);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.Atelier.afficherMessage(texte, estUneErreur, true);
   }
 
-  function lireNombre(texte) {
-    return parseFloat(String(texte).replace(",", "."));
-  }
+  var lireNombre = window.Atelier.lireNombre;
 
   function formaterNombre(valeur) {
     return (Math.round(valeur * 100) / 100).toLocaleString("fr-FR");
@@ -197,7 +184,8 @@
       afficherMessage("Saisissez une quantité positive.", true);
       return;
     }
-    var typeMouvement = formulaire.querySelector("[name=type]:checked").value === "sortie" ? "Sortie" : "Entrée";
+    var typeChoisi = formulaire.querySelector("[name=type]:checked");
+    var typeMouvement = typeChoisi && typeChoisi.value === "entree" ? "Entrée" : "Sortie";
     var nouveauStock = enregistrerMouvement(formulaire.dataset.article, typeMouvement, quantite,
       formulaire.querySelector("[name=commentaire]").value.trim());
     formulaire.reset();
@@ -285,6 +273,7 @@
       var lien = document.createElement("a");
       lien.href = adresse;
       lien.target = "_blank";
+      lien.rel = "noopener";
       lien.textContent = titre;
       element.appendChild(lien);
       liste.appendChild(element);
@@ -346,6 +335,8 @@
     },
   };
 
+  // demo.js est chargé après atelier.js : une confirmation refusée (data-confirmation) arrête l'envoi
+  // avant ce gestionnaire, grâce à stopImmediatePropagation.
   document.querySelectorAll("form[method=post]").forEach(function (formulaire) {
     formulaire.addEventListener("submit", function (evenement) {
       evenement.preventDefault();
@@ -372,10 +363,27 @@
     var listesDeroulantes = formulaire.querySelectorAll("select");
     var casesACocher = formulaire.querySelectorAll("[type=checkbox]");
 
+    // Ligne « Aucun… » du gabarit (une seule cellule sur toute la largeur) : ce n'est pas une donnée à filtrer.
+    function estUneLigneVide(ligne) {
+      return ligne.cells.length === 1 && ligne.cells[0].colSpan > 1;
+    }
+    var lignesDeDonnees = Array.prototype.slice.call(tableau.rows, 1).filter(function (ligne) {
+      return !estUneLigneVide(ligne);
+    });
+    var ligneAucunResultat = null;
+    if (lignesDeDonnees.length) {
+      ligneAucunResultat = tableau.insertRow(-1);
+      var cellule = ligneAucunResultat.insertCell(0);
+      cellule.colSpan = tableau.rows[0].cells.length;
+      cellule.className = "discret";
+      cellule.textContent = "Aucune ligne ne correspond aux filtres.";
+      ligneAucunResultat.hidden = true;
+    }
+
     function filtrerLignes(evenement) {
       if (evenement) evenement.preventDefault();
       var texteRecherche = champRecherche ? champRecherche.value.trim().toLowerCase() : "";
-      Array.prototype.slice.call(tableau.rows, 1).forEach(function (ligne) {
+      lignesDeDonnees.forEach(function (ligne) {
         var visible = !texteRecherche || ligne.textContent.toLowerCase().indexOf(texteRecherche) !== -1;
         listesDeroulantes.forEach(function (liste) {
           // Une ligne peut porter plusieurs valeurs séparées par des espaces (ex. « passee en_cours »).
@@ -387,6 +395,9 @@
         });
         ligne.hidden = !visible;
       });
+      if (ligneAucunResultat) {
+        ligneAucunResultat.hidden = lignesDeDonnees.some(function (ligne) { return !ligne.hidden; });
+      }
     }
 
     // La page exportée contient toutes les lignes : le filtre par défaut est appliqué à l'ouverture.

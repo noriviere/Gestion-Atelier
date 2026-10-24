@@ -2,7 +2,7 @@
 {% load inventaire aide %}
 {% block titre %}{{ article.reference }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'articles' %}">Stock</a></li><li aria-current="page">{{ article.reference }}</li></ol></nav>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'articles' %}">Stock</a></li><li aria-current="page">{{ article.reference }}</li></ol></nav>
 <h1>{{ article.reference }} – {{ article.designation }}</h1>
 <p class="sous-titre">{{ article.get_categorie_display }} · {% if article.est_design_interne %}design interne, plan {{ article.numero_plan }}{% else %}article acheté{% endif %} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
 {% if droits.stock_articles %}<div class="actions"><a class="bouton secondaire" href="{% url 'article_modifier' article.pk %}">Modifier l'article</a></div>{% endif %}
@@ -57,8 +57,8 @@
       <h2 class="titre-carte">Sortie / entrée de stock{% info "stock" "mouvement" "Sortie ou entrée de stock" %}</h2>
       <form method="post" data-demo="mouvement" data-article="{{ article.pk }}">{% csrf_token %}
         {% for choix_type in form.type %}<div>{{ choix_type }}</div>{% endfor %}
-        <p>{{ form.quantite.label_tag }}<br>{{ form.quantite }} {{ form.quantite.errors }}</p>
-        <p>{{ form.commentaire.label_tag }}<br>{{ form.commentaire }}</p>
+        {% include "_champ.html" with champ=form.quantite %}
+        {% include "_champ.html" with champ=form.commentaire %}
         <button class="bouton" type="submit">Enregistrer</button>
       </form>
     </div>

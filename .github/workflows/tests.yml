@@ -1,0 +1,39 @@
+# Lance les tests sur PostgreSQL, la base de la version installée, à chaque PR et à chaque modification de main.
+# SQLite (démo locale) laisse passer des erreurs que PostgreSQL refuse : longueurs de texte, nombres trop grands.
+name: Tests PostgreSQL
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: atelier
+          POSTGRES_USER: atelier
+          POSTGRES_PASSWORD: tests
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U atelier"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_DB: atelier
+      POSTGRES_USER: atelier
+      POSTGRES_PASSWORD: tests
+      POSTGRES_HOST: localhost
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py test

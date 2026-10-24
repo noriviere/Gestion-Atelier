@@ -223,3 +223,81 @@ main > *:nth-child(n + 5) { animation-delay: 160ms; }
   .carte, .tableau { border: 0; padding: 0; }
   a { color: inherit; }
 }
+
+/* 9. Téléphone et petits écrans ----------------------------------------------
+   En dessous de 760 px : menu repliable, tableaux en fiches, tuiles sur deux colonnes. */
+.commandes-mobile, .texte-ecran-etroit { display: none; }
+.menu-principal { display: contents; }
+.bouton-menu { display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 38px; height: 38px; padding: 0 9px; border: 1px solid var(--barre-bord); border-radius: 8px; background: transparent; cursor: pointer; }
+.bouton-menu span { display: block; height: 2px; border-radius: 2px; background: #fff; transition: transform 250ms var(--courbe), opacity 200ms ease; }
+header.menu-ouvert .bouton-menu span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+header.menu-ouvert .bouton-menu span:nth-child(2) { opacity: 0; }
+header.menu-ouvert .bouton-menu span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+@media (max-width: 760px) {
+  body { font-size: 15px; }
+  main { padding: 16px; }
+  h1 { font-size: 21px; }
+  h2 { font-size: 17px; margin-top: 22px; }
+  .bandeau-demo { font-size: 13px; padding: 6px 12px; }
+  .texte-ecran-large, .theme-ecran-large { display: none; }
+  .texte-ecran-etroit { display: inline; }
+
+  header.barre { padding: 0 16px; gap: 0; justify-content: space-between; }
+  header.barre .logo { padding: 12px 0; }
+  .commandes-mobile { display: flex; align-items: center; gap: 10px; }
+  .menu-principal { display: none; width: 100%; padding: 4px 0 14px; border-top: 1px solid var(--barre-bord); }
+  header.menu-ouvert .menu-principal { display: block; animation: glissement 220ms var(--courbe) both; }
+  header.barre nav { flex-direction: column; gap: 0; }
+  header.barre nav a { padding: 12px 4px; font-size: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+  header.barre nav a::after { left: 0; right: auto; top: 10px; bottom: 10px; width: 3px; height: auto; border-radius: 0 3px 3px 0; transform: scaleY(0); }
+  header.barre nav a:hover::after, header.barre nav a.actif::after { transform: scaleY(1); }
+  header.barre nav a.actif { padding-left: 12px; }
+  header.barre .utilisateur { padding-top: 12px; flex-wrap: wrap; }
+
+  .grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tuile { padding: 12px 14px; }
+  .tuile .valeur { font-size: 24px; }
+  .profils { margin: 24px auto; }
+  .profils .grille { grid-template-columns: 1fr; }
+  .carte { padding: 14px 16px; }
+
+  form.filtres > input[type="search"], form.filtres > select { flex: 1 1 100%; }
+  input, select, textarea { font-size: 16px; } /* évite le zoom automatique sur téléphone */
+  .actions .bouton { flex: 1 1 auto; text-align: center; }
+
+  /* Tableaux : chaque ligne devient une fiche, chaque cellule affiche le titre de sa colonne. */
+  .tableau { border: 0; box-shadow: none; overflow: visible; background: transparent; }
+  main table, main table tbody, main table tr, main table td { display: block; width: 100%; }
+  main table { background: transparent; }
+  main table tr.ligne-entete { display: none; }
+  main table tr { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 8px 12px; margin-bottom: 10px; box-shadow: var(--ombre); }
+  main table tr[hidden] { display: none; }
+  main table td { border: 0; padding: 4px 0; text-align: left; }
+  main table td.nombre { text-align: left; }
+  main table td[data-titre] { display: flex; justify-content: space-between; gap: 12px; }
+  main table td[data-titre]::before { content: attr(data-titre); color: var(--discret); font-size: 13px; flex-shrink: 0; }
+  main table td[data-titre] > * { text-align: right; }
+  main table td:first-child { font-weight: 600; }
+  main table td:first-child[data-titre]::before { content: none; }
+  main table td:first-child[data-titre] { flex-wrap: wrap; justify-content: flex-start; gap: 4px 12px; }
+  main table td:first-child[data-titre] > :first-child { flex-shrink: 0; }
+  main table td:empty { display: none; }
+  tr:hover td { background: transparent; }
+  .carte table tr { box-shadow: none; }
+  input.compte { width: 110px; }
+
+  .fiche-entete { flex-direction: column; gap: 8px; }
+  .fiche-entete .cadence { text-align: left; display: flex; align-items: baseline; gap: 8px; }
+  .fiche-entete .cadence .valeur { font-size: 28px; }
+  ul.arbre ul { padding-left: 14px; }
+  .noeud-piece { font-size: 13.5px; }
+  dl.infos { grid-template-columns: 1fr; gap: 2px; }
+  dl.infos dd { margin-bottom: 8px; }
+  .deux-colonnes { gap: 0; }
+  .connexion { margin: 32px auto; }
+}
+
+@media print {
+  .commandes-mobile { display: none !important; }
+}

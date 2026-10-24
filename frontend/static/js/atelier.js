@@ -31,3 +31,33 @@
     });
   });
 })();
+
+// Affichage sur téléphone : menu repliable et tableaux présentés en fiches.
+(function () {
+  var boutonMenu = document.querySelector('[data-action="ouvrir-menu"]');
+  if (boutonMenu) {
+    var entete = boutonMenu.closest("header");
+    boutonMenu.addEventListener("click", function () {
+      var menuOuvert = entete.classList.toggle("menu-ouvert");
+      boutonMenu.setAttribute("aria-expanded", menuOuvert ? "true" : "false");
+      boutonMenu.setAttribute("aria-label", menuOuvert ? "Fermer le menu" : "Ouvrir le menu");
+    });
+  }
+
+  // Chaque cellule reçoit le titre de sa colonne, affiché devant la valeur sur petit écran.
+  document.querySelectorAll("main table").forEach(function (tableau) {
+    var ligneEntete = tableau.rows[0];
+    if (!ligneEntete || !ligneEntete.querySelector("th")) return;
+    var titresColonnes = Array.prototype.map.call(ligneEntete.cells, function (cellule) {
+      return cellule.textContent.trim();
+    });
+    ligneEntete.classList.add("ligne-entete");
+    Array.prototype.slice.call(tableau.rows, 1).forEach(function (ligne) {
+      Array.prototype.forEach.call(ligne.cells, function (cellule, position) {
+        if (titresColonnes[position] && cellule.colSpan === 1) {
+          cellule.setAttribute("data-titre", titresColonnes[position]);
+        }
+      });
+    });
+  });
+})();

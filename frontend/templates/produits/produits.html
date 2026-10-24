@@ -60,6 +60,7 @@
     <input type="hidden" name="machine">
     <fieldset>
       <legend>État de la case</legend>
+      <p class="discret">Au clavier : flèches pour choisir, Entrée pour valider.</p>
       {% for code, libelle in etats %}<label class="option-etat"><input type="radio" name="etat" value="{{ code }}"> <span class="pastille etat-{{ code|default:'vide' }}">{{ libelle|default:"Vide" }}</span></label>{% endfor %}
     </fieldset>
   </form>

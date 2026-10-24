@@ -124,20 +124,31 @@ class Commande(models.Model):
             fournisseur=self.fournisseur, article__in=articles, delai__isnull=False
         ).aggregate(delai=Max("delai"))["delai"]
 
+    def _verrouiller(self):
+        """Bloque la commande jusqu'à la fin de la transaction et relit son état : un double clic sur
+        « Réceptionner » ne fait entrer la livraison en stock qu'une fois."""
+        self.etat = Commande.objects.select_for_update().values_list("etat", flat=True).get(pk=self.pk)
+
     @transaction.atomic
     def changer_etat(self, nouvel_etat, utilisateur=None):
         """Fait avancer la commande et note la date ; la réception fait entrer les quantités en stock."""
+        self._verrouiller()
         if nouvel_etat not in self.etats_suivants:
             raise ValueError(f"Une commande « {self.get_etat_display()} » ne peut pas passer à « {nouvel_etat} ».")
         aujourdhui = timezone.localdate()
+        # Seuls les champs de cette étape sont écrits : une autre action en même temps garde les siens.
+        champs = ["etat"]
         if nouvel_etat == self.PASSEE:
+            champs += ["date_passage", "date_prevue", "numero_fournisseur"]
             self.date_passage = aujourdhui
             delai = self.delai_fournisseur()
             if self.date_prevue is None and delai is not None:
                 self.date_prevue = aujourdhui + timedelta(days=delai)
         elif nouvel_etat == self.RECUE:
+            champs.append("date_reception")
             self.date_reception = aujourdhui
         elif nouvel_etat == self.RECEPTIONNEE:
+            champs += ["date_entree_stock", "date_reception"]
             self.date_entree_stock = aujourdhui
             if self.date_reception is None:
                 self.date_reception = aujourdhui
@@ -149,11 +160,14 @@ class Commande(models.Model):
                     Mouvement.enregistrer(ligne.article, Mouvement.ENTREE, ligne.quantite_recue, utilisateur=utilisateur,
                                           commentaire=f"Réception commande {self.numero}")
         self.etat = nouvel_etat
-        self.save()
+        self.save(update_fields=champs)
 
     @transaction.atomic
     def receptionner(self, quantites_recues, utilisateur=None):
         """Entre en stock les quantités réellement livrées ({ligne: quantité}) ; une ligne absente est livrée en totalité."""
+        self._verrouiller()
+        if self.RECEPTIONNEE not in self.etats_suivants:
+            raise ValueError(f"Une commande « {self.get_etat_display()} » ne peut pas être réceptionnée.")
         for ligne in self.lignes.all():
             if ligne in quantites_recues:
                 ligne.quantite_recue = quantites_recues[ligne]

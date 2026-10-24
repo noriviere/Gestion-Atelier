@@ -12,13 +12,13 @@
 </div>
 
 <form class="filtres" method="get" data-filtrer-au-chargement>
-  <input type="search" name="q" value="{{ filtres.q }}" placeholder="Numéro, article">
-  <select name="etat">
+  <input type="search" name="q" value="{{ filtres.q }}" placeholder="Numéro, article" aria-label="Rechercher une commande">
+  <select name="etat" aria-label="État">
     <option value="en_cours" {% if etat_choisi == "en_cours" %}selected{% endif %}>En cours</option>
     {% for code_etat, nom_etat in etats %}<option value="{{ code_etat }}" {% if etat_choisi == code_etat %}selected{% endif %}>{{ nom_etat }}</option>{% endfor %}
     <option value="" {% if not etat_choisi %}selected{% endif %}>Toutes</option>
   </select>
-  <select name="fournisseur"><option value="">Tous fournisseurs</option>
+  <select name="fournisseur" aria-label="Fournisseur"><option value="">Tous fournisseurs</option>
     {% for fournisseur in fournisseurs %}<option value="{{ fournisseur.pk }}" {% if filtres.fournisseur == fournisseur.pk|stringformat:"s" %}selected{% endif %}>{{ fournisseur.nom }}</option>{% endfor %}
   </select>
   <label><input type="checkbox" name="retard" value="1" {% if filtres.retard %}checked{% endif %}> En retard seulement</label>

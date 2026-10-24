@@ -18,7 +18,7 @@ def titres(groupes, nom_groupe):
 class RechercheTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("charger_demo", stdout=SORTIE_MUETTE)
+        call_command("charger_demo", effacer_tout=True, stdout=SORTIE_MUETTE)
 
     def test_normaliser_ignore_accents_et_majuscules(self):
         self.assertEqual(normaliser("Pièce d'USURE"), "piece d'usure")

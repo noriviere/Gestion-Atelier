@@ -11,4 +11,6 @@
   var systemeEnSombre = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   var theme = themeEnregistre || (systemeEnSombre ? "sombre" : "clair");
   document.documentElement.setAttribute("data-theme", theme);
+  // Sans JavaScript, le menu reste déplié sur téléphone : le repli ne s'applique qu'avec la classe « js ».
+  document.documentElement.classList.add("js");
 })();

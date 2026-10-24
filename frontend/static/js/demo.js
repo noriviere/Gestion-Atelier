@@ -365,7 +365,7 @@
   });
 
   // Filtres et recherches : appliqués directement sur les lignes du tableau.
-  document.querySelectorAll("form.filtres").forEach(function (formulaire) {
+  document.querySelectorAll("form.filtres:not([method=post])").forEach(function (formulaire) {
     var tableau = document.querySelector("main table");
     if (!tableau) return;
     var champRecherche = formulaire.querySelector("[type=search]");

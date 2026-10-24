@@ -6,6 +6,7 @@ from django.db import transaction
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from comptes import roles
@@ -15,6 +16,13 @@ from . import matrice
 from .forms import (ConsommationsFormSet, DocumentForm, DuplicationProduitForm, FicheForm, ProduitForm, ReglagesForm,
                     formset_parametres)
 from .models import Document, Machine, Produit, ProduitMachine
+
+
+def objet_ou_404(modele, identifiant):
+    """L'objet dont l'identifiant vient d'un formulaire ou de l'adresse ; 404 s'il est illisible ou inconnu."""
+    if not str(identifiant or "").isdigit():
+        raise Http404
+    return get_object_or_404(modele, pk=identifiant)
 
 
 def produits(request):
@@ -58,8 +66,8 @@ def reponse_case(case):
 
 @require_POST
 def changer_etat(request):
-    produit = get_object_or_404(Produit, pk=request.POST.get("produit"))
-    machine = get_object_or_404(Machine, pk=request.POST.get("machine"))
+    produit = objet_ou_404(Produit, request.POST.get("produit"))
+    machine = objet_ou_404(Machine, request.POST.get("machine"))
     etat = request.POST.get("etat", "")
     try:
         case = ProduitMachine.changer_etat(produit, machine, etat)
@@ -191,8 +199,9 @@ def modifier_fiche(request, pk=None, produit_pk=None):
     else:
         produit = get_object_or_404(Produit, pk=produit_pk)
         machine_id = request.POST.get("machine") or request.GET.get("machine")
-        existante = ProduitMachine.objects.filter(produit=produit, machine_id=machine_id).first() \
-            if machine_id and str(machine_id).isdigit() else None
+        if machine_id:
+            machine_id = objet_ou_404(Machine, machine_id).pk
+        existante = ProduitMachine.objects.filter(produit=produit, machine_id=machine_id).first() if machine_id else None
         if existante and existante.a_une_fiche and request.method == "GET":
             return redirect("modifier_fiche", existante.pk)
         # Une case « non faisable » ou « possible » devient une fiche : on reprend la ligne existante.
@@ -233,7 +242,7 @@ def modifier_fiche(request, pk=None, produit_pk=None):
 @require_POST
 def dupliquer_fiche(request, pk):
     source = get_object_or_404(ProduitMachine.objects.select_related("produit", "machine"), pk=pk)
-    machine = get_object_or_404(Machine, pk=request.POST.get("machine"))
+    machine = objet_ou_404(Machine, request.POST.get("machine"))
     try:
         copie = source.dupliquer_vers_machine(machine)
     except ValueError as erreur:
@@ -272,7 +281,10 @@ def supprimer_document(request, pk):
     if not Document.objects.filter(fichier=nom_fichier).exists():
         document.fichier.storage.delete(nom_fichier)
     messages.success(request, f"« {document.titre} » retiré.")
-    return redirect(retour if retour.startswith("/") else "produits")
+    # Seulement une adresse de ce site : « //autre-site » commence aussi par « / ».
+    if not url_has_allowed_host_and_scheme(retour, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        retour = "produits"
+    return redirect(retour)
 
 
 def document(request, pk, nom):
@@ -280,8 +292,12 @@ def document(request, pk, nom):
     document = get_object_or_404(Document, pk=pk)
     if nom != document.nom_fichier or not document.fichier.storage.exists(document.fichier.name):
         raise Http404
-    return FileResponse(document.fichier.open("rb"), filename=document.nom_fichier,
-                        as_attachment=not (document.est_une_image or document.extension == "pdf"))
+    reponse = FileResponse(document.fichier.open("rb"), filename=document.nom_fichier,
+                           as_attachment=not (document.est_une_image or document.extension == "pdf"))
+    if document.extension == "svg":
+        # Un SVG peut contenir du script : ouvert seul dans un onglet, il ne doit rien pouvoir exécuter.
+        reponse["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
+    return reponse
 
 
 def machine(request, pk):

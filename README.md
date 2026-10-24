@@ -78,12 +78,27 @@ Puis ouvrir http://localhost:8000 (ou l'adresse du PC depuis un autre poste du r
 
 ## Lancer sur la machine virtuelle Linux (Docker)
 
+Créer d'abord, à côté de `docker-compose.yml`, un fichier `.env` (jamais versionné) :
+
 ```bash
-docker compose up -d --build
-docker compose exec web python manage.py charger_demo
+DJANGO_SECRET_KEY=une-longue-chaine-aleatoire     # python -c "import secrets; print(secrets.token_urlsafe(50))"
+DJANGO_ALLOWED_HOSTS=nom-ou-ip-de-la-vm
+POSTGRES_PASSWORD=mot-de-passe-de-la-base
 ```
 
-L'application répond sur le port 8000, avec une base PostgreSQL. Les photos et documents des fiches
+```bash
+docker compose up -d --build
+docker compose exec web python manage.py charger_demo --effacer-tout   # seulement pour une démo : efface tout
+```
+
+L'application répond sur le port 8000, avec une base PostgreSQL. Hors démo locale, `DEBUG` est coupé :
+l'application refuse de démarrer sans clé secrète ni adresses autorisées, et `charger_demo` demande
+`--effacer-tout` pour ne pas effacer des données réelles par erreur. Derrière HTTPS, ajouter `DJANGO_HTTPS=1`
+(le port 8000 ne doit alors être joignable que par le proxy HTTPS).
+
+Mise à jour d'une VM déjà installée : PostgreSQL garde le mot de passe choisi à la création de sa base.
+Mettre dans `.env` l'ancien mot de passe (`atelier-a-changer`), ou le changer d'abord dans la base
+(`docker compose exec db psql -U atelier -c "ALTER USER atelier PASSWORD '…'"`). Les photos et documents des fiches
 sont stockés dans le volume Docker `documents` (à inclure dans la sauvegarde avec la base).
 
 ## Modifier les données fictives

@@ -15,4 +15,6 @@ def profil(request):
         "droits": {code: code in droits_utilisateur for code in TOUS_LES_CODES},
         "acces_parametrage": roles.acces_parametrage(request.user),
         "demo_statique": settings.DEMO_STATIQUE,
+        # Les identifiants de démo ne s'affichent pas sur une installation réelle (DEBUG coupé).
+        "comptes_demo_visibles": settings.DEBUG or settings.DEMO_STATIQUE,
     }

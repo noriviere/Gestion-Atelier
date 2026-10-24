@@ -1,3 +1,16 @@
+// Formulaires à confirmer avant envoi (suppression d'un outil, par exemple).
+// En premier : une erreur dans un bloc suivant ne doit jamais laisser passer une suppression sans confirmation.
+(function () {
+  document.querySelectorAll("form[data-confirmation]").forEach(function (formulaire) {
+    formulaire.addEventListener("submit", function (evenement) {
+      if (!window.confirm(formulaire.dataset.confirmation)) {
+        evenement.preventDefault();
+        evenement.stopImmediatePropagation();
+      }
+    });
+  });
+})();
+
 // Comportements communs à toutes les pages : bouton de thème et boutons d'impression.
 (function () {
   var CLE_THEME = "gestion-atelier-theme";
@@ -86,7 +99,9 @@
     var corps = zone.querySelector("[data-lignes]");
     var modele = zone.querySelector("template[data-modele]");
 
-    zone.querySelector('[data-action="ajouter-ligne"]').addEventListener("click", function () {
+    var boutonAjouter = zone.querySelector('[data-action="ajouter-ligne"]');
+    if (!boutonAjouter || !champTotal || !corps || !modele) return;
+    boutonAjouter.addEventListener("click", function () {
       var numero = parseInt(champTotal.value, 10);
       var conteneur = document.createElement("tbody");
       conteneur.innerHTML = modele.innerHTML.replace(/__prefix__/g, numero);
@@ -124,6 +139,7 @@
   document.querySelectorAll(".zone-depot").forEach(function (zone) {
     var champFichier = zone.querySelector("input[type=file]");
     var texte = zone.querySelector("span");
+    if (!champFichier || !texte) return;
     var texteInitial = texte.innerHTML;
     var champTitre = zone.closest("form").querySelector("[name=titre]");
     champFichier.addEventListener("change", function () {
@@ -146,17 +162,6 @@
   });
 })();
 
-// Formulaires à confirmer avant envoi (suppression d'un outil, par exemple).
-(function () {
-  document.querySelectorAll("form[data-confirmation]").forEach(function (formulaire) {
-    formulaire.addEventListener("submit", function (evenement) {
-      if (!window.confirm(formulaire.dataset.confirmation)) {
-        evenement.preventDefault();
-        evenement.stopImmediatePropagation();
-      }
-    });
-  });
-})();
 
 // Recherche globale : filtre les résultats à la frappe, sans recharger la page.
 (function () {

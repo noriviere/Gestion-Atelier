@@ -79,16 +79,14 @@ def commandes(request):
 
 
 def lire_quantites_recues(commande, donnees_formulaire):
-    """{ligne: quantité} d'après les champs recu_<id de ligne> ; ValueError si une saisie est illisible ou négative."""
+    """{ligne: quantité} d'après les champs recu_<id de ligne> ; ValueError si une saisie est illisible, négative ou trop grande."""
     quantites_recues = {}
     for ligne in commande.lignes.select_related("article"):
         texte = donnees_formulaire.get(f"recu_{ligne.pk}", "")
         try:
             quantite = lire_quantite(texte)
         except ValueError:
-            raise ValueError(f"Quantité illisible pour {ligne.article.reference} : « {texte} ».")
-        if quantite is not None and quantite < 0:
-            raise ValueError(f"Quantité négative pour {ligne.article.reference}.")
+            raise ValueError(f"Quantité refusée pour {ligne.article.reference} : « {texte} » (nombre positif attendu).")
         if quantite is not None:
             quantites_recues[ligne] = quantite
     return quantites_recues

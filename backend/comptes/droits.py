@@ -110,6 +110,10 @@ PAGES = {
     "droits": "admin_droits",
 }
 
+# Pages hors de PAGES : ouvertes à tout compte connecté (leur contenu suit les droits), ou dont la vue
+# vérifie elle-même les droits. Un test oblige chaque nouvelle page à figurer dans l'une des deux listes.
+PAGES_SANS_DROIT_UNIQUE = {"connexion", "deconnexion", "accueil", "recherche", "aide", "aide_sujet", "modifier_fiche"}
+
 _ATELIER = ["stock_consulter", "stock_mouvements", "commandes_consulter", "commandes_receptionner",
             "outillage_consulter", "produits_consulter"]
 

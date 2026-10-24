@@ -77,15 +77,24 @@ def resumer_ecarts(comptages):
     }
 
 
+# Plus grande quantité enregistrable : les champs de quantité ont 10 chiffres dont 2 après la virgule.
+QUANTITE_MAXI = Decimal("99999999")
+
+
 def lire_quantite(texte):
-    """Convertit une saisie (« 12 », « 3,5 ») en Decimal ; None si vide, ValueError si illisible."""
+    """Convertit une saisie (« 12 », « 3,5 ») en Decimal ; None si vide.
+
+    ValueError si la saisie est illisible, négative ou trop grande (« NaN » et « Infinity » compris)."""
     texte = texte.strip().replace(",", ".")
     if not texte:
         return None
     try:
-        return Decimal(texte)
+        quantite = Decimal(texte)
     except InvalidOperation:
         raise ValueError(texte)
+    if not quantite.is_finite() or quantite < 0 or quantite > QUANTITE_MAXI:
+        raise ValueError(texte)
+    return quantite
 
 
 def accueil(request):
@@ -114,7 +123,7 @@ def recherche(request):
     return render(
         request,
         "inventaire/recherche.html",
-        {"texte_recherche": texte_recherche, "groupes": rechercher(texte_recherche)},
+        {"texte_recherche": texte_recherche, "groupes": rechercher(texte_recherche, roles.droits(request.user))},
     )
 
 
@@ -133,7 +142,7 @@ def articles(request):
     if origine:
         selection = selection.filter(origine=origine)
     type_inventaire_id = request.GET.get("type", "")
-    if type_inventaire_id:
+    if type_inventaire_id.isdigit():
         selection = selection.filter(type_inventaire_id=type_inventaire_id)
     if request.GET.get("alerte"):
         selection = selection.filter(stock__lte=F("stock_mini"))
@@ -214,7 +223,7 @@ def comptage(request, pk):
             try:
                 quantite_comptee = lire_quantite(request.POST.get(f"compte_{article.pk}", ""))
             except ValueError as erreur:
-                messages.error(request, f"Quantité illisible pour {article.reference} : « {erreur} ».")
+                messages.error(request, f"Quantité refusée pour {article.reference} : « {erreur} » (nombre positif attendu).")
                 continue
             if quantite_comptee is None:
                 continue
@@ -303,7 +312,10 @@ def article_formulaire(request, pk=None):
     liens_fournisseurs = LiensFournisseursFormSet(request.POST or None, instance=article)
     if request.method == "POST" and formulaire.is_valid() and liens_fournisseurs.is_valid():
         with transaction.atomic():
-            article = formulaire.save()
+            article = formulaire.save(commit=False)
+            # En modification, seuls les champs du formulaire sont écrits : le stock reste celui des mouvements,
+            # même si une sortie a été saisie pendant que le formulaire était ouvert.
+            article.save(update_fields=ArticleForm.Meta.fields if pk else None)
             liens_fournisseurs.instance = article
             liens_fournisseurs.save()
             stock_initial = formulaire.cleaned_data.get("stock_initial")

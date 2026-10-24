@@ -41,7 +41,7 @@ def outil(request, pk):
 
 def enregistrer_outil(request, outil, page_retour):
     """Formulaire de l'outil et de ses pièces d'usure, commun à la création et à la modification."""
-    parent_propose = {"parent": request.GET["parent"]} if request.GET.get("parent") else {}
+    parent_propose = {"parent": request.GET["parent"]} if request.GET.get("parent", "").isdigit() else {}
     formulaire = OutilForm(request.POST or None, instance=outil, initial=parent_propose)
     pieces = PiecesOutilFormSet(request.POST or None, instance=outil)
     if request.method == "POST" and formulaire.is_valid() and pieces.is_valid():
@@ -59,7 +59,8 @@ def enregistrer_outil(request, outil, page_retour):
 
 
 def nouvel_outil(request):
-    parent = Outil.objects.filter(pk=request.GET.get("parent") or None).first()
+    parent_id = request.GET.get("parent", "")
+    parent = Outil.objects.filter(pk=parent_id).first() if parent_id.isdigit() else None
     return enregistrer_outil(request, Outil(), parent.get_absolute_url() if parent else reverse("outils"))
 
 

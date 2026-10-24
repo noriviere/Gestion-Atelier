@@ -18,7 +18,7 @@ SORTIE_MUETTE = open("/dev/null", "w")
 class PagesDemoTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("charger_demo", stdout=SORTIE_MUETTE)
+        call_command("charger_demo", effacer_tout=True, stdout=SORTIE_MUETTE)
 
     def test_toutes_les_pages_repondent(self):
         self.client.login(username="operateur", password="demo")
@@ -154,7 +154,7 @@ class PagesDemoTests(TestCase):
 class ExportStatiqueTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        call_command("charger_demo", stdout=SORTIE_MUETTE)
+        call_command("charger_demo", effacer_tout=True, stdout=SORTIE_MUETTE)
 
     def test_chemin_statique_des_adresses(self):
         self.assertEqual(chemin_statique("/"), "index.html")

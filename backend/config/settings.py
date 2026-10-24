@@ -4,7 +4,10 @@ Par défaut la démo tourne sur SQLite. Si la variable POSTGRES_DB est définie
 (cas du docker-compose), PostgreSQL est utilisé.
 """
 import os
+import warnings
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Racine du dépôt : backend/ contient le code Python, frontend/ les gabarits HTML,
 # les feuilles de style et le JavaScript.
@@ -12,9 +15,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 BACKEND_DIR = BASE_DIR / "backend"
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "demo-cle-non-secrete-a-changer-en-production")
+# Sans variable d'environnement, c'est la démo locale (DEBUG). Une installation réelle met DJANGO_DEBUG=0
+# et doit alors fournir sa propre clé secrète et la liste des adresses du serveur (voir docker-compose.yml).
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "demo-cle-non-secrete" if DEBUG else "")
+if not SECRET_KEY:
+    raise ImproperlyConfigured("DJANGO_SECRET_KEY est obligatoire quand DJANGO_DEBUG=0.")
+ALLOWED_HOSTS = [hote for hote in os.environ.get("DJANGO_ALLOWED_HOSTS", "*" if DEBUG else "").split(",") if hote]
+if not ALLOWED_HOSTS and not DEBUG:
+    raise ImproperlyConfigured("DJANGO_ALLOWED_HOSTS est obligatoire quand DJANGO_DEBUG=0 (ex. « atelier.local,192.168.1.20 »).")
+
+# Derrière HTTPS (DJANGO_HTTPS=1) : cookies réservés à HTTPS et navigateur prévenu de ne plus passer en HTTP.
+# Le port 8000 ne doit alors être joignable que par le proxy HTTPS, qui seul pose X-Forwarded-Proto.
+if os.environ.get("DJANGO_HTTPS") == "1":
+    SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -33,6 +50,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Sert les feuilles de style et le JavaScript quand gunicorn tourne seul (Docker).
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -81,11 +100,17 @@ else:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+            # Les écritures attendent leur tour au lieu d'échouer sur « database is locked » (double clic).
+            "OPTIONS": {"transaction_mode": "IMMEDIATE"},
         }
     }
 
+# Règles des mots de passe choisis dans l'application ; les comptes de démo (« demo ») sont créés sans elles.
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 4}},
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 LOGIN_URL = "connexion"
@@ -100,6 +125,8 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [FRONTEND_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Avant collectstatic (tests, export de la démo), le dossier n'existe pas : whitenoise le signale sans raison.
+warnings.filterwarnings("ignore", message="No directory at", module="whitenoise.base")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

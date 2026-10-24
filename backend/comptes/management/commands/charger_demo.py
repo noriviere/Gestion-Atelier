@@ -1,9 +1,10 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.files.base import ContentFile
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
@@ -18,10 +19,19 @@ MOT_DE_PASSE_DEMO = "demo"
 
 
 class Command(BaseCommand):
-    help = "Efface les données métier et charge les données fictives de demo/donnees.py."
+    help = ("Efface les données métier et charge les données fictives de demo/donnees.py. "
+            "Les comptes de démo (admin compris) reprennent le mot de passe « demo ».")
+
+    def add_arguments(self, parser):
+        parser.add_argument("--effacer-tout", action="store_true",
+                            help="Obligatoire hors mode DEBUG : confirme l'effacement des données réelles.")
 
     @transaction.atomic
     def handle(self, *args, **options):
+        # Sur une installation réelle (DEBUG coupé), la commande effacerait le stock et les commandes.
+        if not settings.DEBUG and not options["effacer_tout"]:
+            raise CommandError("Cette commande efface toutes les données et remet le mot de passe « demo » aux comptes "
+                               "de démo. Hors démo, relancez-la avec --effacer-tout si c'est bien voulu.")
         self.effacer_donnees_metier()
         configurer_permissions(reinitialiser=True)
         comptes = self.creer_comptes()

@@ -186,6 +186,10 @@ class LigneImport:
         return "modification" if self.changements else "inchange"
 
 
+# Les champs numériques de l'article ont au plus 10 chiffres dont 2 après la virgule.
+NOMBRE_MAXI = Decimal("99999999")
+
+
 def lire_nombre(texte, titre, erreurs, entier=False, obligatoire=False):
     if not texte:
         if obligatoire:
@@ -194,6 +198,9 @@ def lire_nombre(texte, titre, erreurs, entier=False, obligatoire=False):
     try:
         nombre = Decimal(texte.replace(",", ".").replace(" ", "").replace(" ", ""))
     except InvalidOperation:
+        erreurs.append(f"{titre} illisible : « {texte} ».")
+        return None
+    if not nombre.is_finite() or nombre > NOMBRE_MAXI:
         erreurs.append(f"{titre} illisible : « {texte} ».")
         return None
     if nombre < 0:
@@ -210,6 +217,22 @@ def lire_nombre(texte, titre, erreurs, entier=False, obligatoire=False):
 def trouver_ou_creer(modele, nom):
     """Fournisseur ou type d'inventaire de ce nom, sans tenir compte des majuscules ; créé s'il n'existe pas."""
     return modele.objects.filter(nom__iexact=nom).first() or modele.objects.create(nom=nom)
+
+
+def verifier_longueurs(ligne):
+    """Un texte plus long que sa colonne en base ferait échouer tout l'import à l'enregistrement."""
+    # (colonne du fichier, modèle, champ en base, texte)
+    textes = [("reference", Article, "reference", ligne.reference),
+              ("type_inventaire", TypeInventaire, "nom", ligne.donnees["type_inventaire"])]
+    textes += [(cle, Article, cle, ligne.donnees[cle]) for cle in ("designation", "numero_plan", "emplacement", "unite")]
+    if ligne.fournisseur:
+        textes += [("fournisseur", Fournisseur, "nom", ligne.fournisseur["nom"]),
+                   ("reference_fournisseur", ArticleFournisseur, "reference_fournisseur",
+                    ligne.fournisseur["reference_fournisseur"])]
+    for cle, modele, champ, texte in textes:
+        longueur_maxi = modele._meta.get_field(champ).max_length
+        if len(texte) > longueur_maxi:
+            ligne.erreurs.append(f"{TITRES.get(cle, cle)} trop long : {len(texte)} caractères pour {longueur_maxi} au plus.")
 
 
 def analyser_ligne(numero, valeurs, articles_existants):
@@ -261,6 +284,7 @@ def analyser_ligne(numero, valeurs, articles_existants):
         }
     elif any(valeurs.get(cle) for cle in ("reference_fournisseur", "prix", "delai")):
         erreurs.append("Réf. fournisseur, prix ou délai sans fournisseur préféré.")
+    verifier_longueurs(ligne)
     if ligne.article is not None and not erreurs:
         ligne.changements = changements(ligne.article, ligne.donnees, ligne.fournisseur)
     return ligne
@@ -327,7 +351,8 @@ def appliquer_import(analyse, utilisateur=None):
             article = ligne.article
             for champ, valeur in donnees.items():
                 setattr(article, champ, valeur)
-            article.save()
+            # Sans toucher au stock : un mouvement saisi pendant l'import ne doit pas être écrasé.
+            article.save(update_fields=list(donnees))
             nombre_modifies += 1
         if ligne.fournisseur:
             definir_fournisseur_prefere(article, ligne.fournisseur)

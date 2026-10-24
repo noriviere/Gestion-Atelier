@@ -8,10 +8,12 @@
   {# Chargé avant l'affichage pour appliquer le thème choisi sans clignotement. #}
   <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/atelier.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
   {% if demo_statique %}<script src="{% static 'js/demo.js' %}" defer></script>{% endif %}
 </head>
-<body>
-{% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré.</span><span class="texte-ecran-etroit">Démo : données fictives, rien n'est enregistré.</span> <a href="/__profils__">Changer de profil</a></div>{% endif %}
+<body{% if demo_statique %} data-demo{% endif %}>
+<a class="lien-evitement" href="#contenu">Aller au contenu</a>
+{% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les mouvements de stock sont gardés dans votre navigateur, rien n'est envoyé.</span><span class="texte-ecran-etroit">Démo : données fictives, gardées dans votre navigateur.</span> <a href="/__profils__">Changer de profil</a> · <button type="button" class="lien-bouton" data-action="reinitialiser-demo">Remettre à zéro</button></div>{% endif %}
 {% if user.is_authenticated %}
 <header class="barre">
   <a class="logo" href="{% url 'accueil' %}">Gestion Atelier</a>
@@ -22,20 +24,14 @@
     </button>
   </div>
   <div class="menu-principal" id="menu-principal">
-  {% with page_courante=request.resolver_match.url_name %}
-  <nav>
-    <a href="{% url 'accueil' %}" class="{% if page_courante == 'accueil' %}actif{% endif %}">Accueil</a>
-    <a href="{% url 'articles' %}" class="{% if page_courante == 'articles' or page_courante == 'article' or page_courante == 'article_modifier' or page_courante == 'article_nouveau' %}actif{% endif %}">Stock</a>
-    <a href="{% url 'a_commander' %}" class="{% if page_courante == 'a_commander' %}actif{% endif %}">À commander</a>
-    <a href="{% url 'commandes' %}" class="{% if page_courante == 'commandes' or page_courante == 'commande' %}actif{% endif %}">Commandes</a>
-    <a href="{% url 'fournisseurs' %}" class="{% if page_courante == 'fournisseurs' or page_courante == 'fournisseur' or page_courante == 'fournisseur_modifier' or page_courante == 'fournisseur_nouveau' %}actif{% endif %}">Fournisseurs</a>
-    <a href="{% url 'inventaires' %}" class="{% if page_courante == 'inventaires' or page_courante == 'comptage' or page_courante == 'ecarts' %}actif{% endif %}">Inventaires</a>
-    <a href="{% url 'outils' %}" class="{% if page_courante == 'outils' or page_courante == 'outil' %}actif{% endif %}">Outillage</a>
-    <a href="{% url 'produits' %}" class="{% if page_courante == 'produits' or page_courante == 'produit' or page_courante == 'fiche' %}actif{% endif %}">Produits</a>
-    <a href="{% url 'machines' %}" class="{% if page_courante == 'machines' or page_courante == 'machine' %}actif{% endif %}">Machines</a>
-    {% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
+  <nav aria-label="Menu principal">
+    {% for entree in entrees_menu %}<a href="{{ entree.url }}"{% if entree.actif %} class="actif" aria-current="page"{% endif %}>{{ entree.libelle }}</a>
+    {% endfor %}{% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
   </nav>
-  {% endwith %}
+  <form class="recherche-barre" method="get" action="{% url 'recherche' %}" role="search">
+    <label class="visuellement-cache" for="champ-recherche-barre">Rechercher un article, un outil, un produit ou une machine</label>
+    <input type="search" id="champ-recherche-barre" name="q" placeholder="Rechercher…">
+  </form>
   <div class="utilisateur">
     <span class="nom-utilisateur">{{ user.get_full_name|default:user.username }}</span>
     <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>
@@ -45,7 +41,7 @@
   </div>
 </header>
 {% endif %}
-<main>
+<main id="contenu" tabindex="-1">
   {% if messages %}<ul class="messages">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>{% endif %}
   {% block contenu %}{% endblock %}
 </main>

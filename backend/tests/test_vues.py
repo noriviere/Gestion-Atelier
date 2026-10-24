@@ -9,6 +9,8 @@ from django.test import TestCase
 from comptes.management.commands.exporter_statique import chemin_statique
 from commandes.models import Commande
 from inventaire.models import Article, TypeInventaire
+from outillage.models import Outil
+from produits.models import Document, Machine, Produit, ProduitMachine
 
 SORTIE_MUETTE = open("/dev/null", "w")
 
@@ -26,7 +28,10 @@ class PagesDemoTests(TestCase):
                         f"/inventaires/{type_inventaire.pk}/", f"/inventaires/{type_inventaire.pk}/?tous=1",
                         f"/inventaires/{type_inventaire.pk}/feuille/", "/inventaires/ecarts/",
                         f"/inventaires/ecarts/?type={type_inventaire.pk}", "/outils/", "/produits/",
-                        "/produits/machines/", "/commandes/", "/commandes/?etat=&retard=1",
+                        "/produits/?vue=non_securise&q=N1", *[f"/produits/machines/{machine.pk}/" for machine in Machine.objects.all()],
+                        *[f"/produits/{produit.pk}/" for produit in Produit.objects.all()],
+                        *[fabrication.get_absolute_url() for fabrication in ProduitMachine.objects.filter(etat__in=ProduitMachine.ETATS_AVEC_FICHE)],
+                        *[document.get_absolute_url() for document in Document.objects.all()[:3]], "/commandes/", "/commandes/?etat=&retard=1",
                         *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
 
@@ -106,6 +111,23 @@ class PagesDemoTests(TestCase):
         porte_lame.refresh_from_db()
         self.assertEqual(porte_lame.stock, Decimal("3"))
 
+    def test_menu_signale_la_page_courante_aux_lecteurs_d_ecran(self):
+        self.client.login(username="operateur", password="demo")
+        reponse = self.client.get("/outils/")
+        self.assertContains(reponse, 'href="/outils/" class="actif" aria-current="page"', html=False)
+        self.assertContains(reponse, 'aria-current="page"', count=1)
+        self.assertContains(reponse, 'href="#contenu"')
+        self.assertContains(reponse, '<main id="contenu"')
+
+    def test_fil_d_ariane_de_la_fiche_remonte_au_produit(self):
+        self.client.login(username="operateur", password="demo")
+        fabrication = ProduitMachine.objects.select_related("produit", "machine").first()
+        reponse = self.client.get(fabrication.get_absolute_url())
+        self.assertContains(reponse, '<nav class="fil no-print" aria-label="Fil d\'Ariane">')
+        self.assertContains(reponse, f'<a href="{fabrication.produit.get_absolute_url()}">{fabrication.produit.reference}</a>')
+        self.assertContains(reponse, f'<li aria-current="page">Fiche sur {fabrication.machine.code}</li>')
+
+
     def test_stock_bas_avec_commande_en_cours_est_signale(self):
         self.client.login(username="operateur", password="demo")
         porte_lame = Article.objects.get(reference="PL-M")
@@ -130,6 +152,7 @@ class ExportStatiqueTests(TestCase):
         self.assertEqual(chemin_statique("/articles/12/"), "articles/12/index.html")
         self.assertEqual(chemin_statique("/inventaires/3/?tous=1"), "inventaires/3/tous-1/index.html")
         self.assertEqual(chemin_statique("/articles/export.xlsx"), "articles/export.xlsx")
+        self.assertEqual(chemin_statique("/produits/documents/4/plan-N2.pdf"), "produits/documents/4/plan-N2.pdf")
 
     def test_export_un_jeu_de_pages_par_profil(self):
         with tempfile.TemporaryDirectory() as dossier:
@@ -145,3 +168,25 @@ class ExportStatiqueTests(TestCase):
             self.assertTrue((racine / "operateur" / "articles" / "export.xlsx").read_bytes().startswith(b"PK"))
             self.assertIn("Enregistrer les comptages", (racine / "intendant" / "inventaires" / str(TypeInventaire.objects.first().pk) / "index.html").read_text())
             self.assertTrue((racine / "methode" / "articles" / "nouveau" / "index.html").exists())
+            outil = Outil.objects.get(code="OUT-N7")
+            self.assertTrue((racine / "methode" / "outils" / str(outil.pk) / "modifier" / "index.html").exists())
+            self.assertTrue((racine / "methode" / "outils" / "nouveau" / f"parent-{outil.pk}" / "index.html").exists())
+            self.assertFalse((racine / "operateur" / "outils" / str(outil.pk) / "modifier").exists())
+            fiche_outil_operateur = (racine / "operateur" / "outils" / str(outil.pk) / "index.html").read_text()
+            self.assertIn('data-demo="sortie-piece"', fiche_outil_operateur)
+            self.assertFalse((racine / "operateur" / "outils" / str(outil.pk) / "sortie").exists())
+
+    def test_export_des_fiches_avec_photos_formulaires_et_matrice(self):
+        with tempfile.TemporaryDirectory() as dossier:
+            call_command("exporter_statique", sortie=dossier, stdout=SORTIE_MUETTE)
+            racine = Path(dossier)
+            fiche = ProduitMachine.objects.get(produit__reference="N2", machine__code="S1")
+            page_fiche = (racine / "methode" / chemin_statique(fiche.get_absolute_url())).read_text()
+            photo = fiche.documents.get()
+            self.assertTrue((racine / "methode" / chemin_statique(photo.get_absolute_url())).read_bytes().startswith(b"<svg"))
+            self.assertIn(f'src="../../documents/{photo.pk}/{photo.nom_fichier}"', page_fiche)
+            formulaire = racine / "methode" / chemin_statique(f"/produits/fiche/{fiche.pk}/modifier/")
+            self.assertIn("Paramètres de réglage", formulaire.read_text())
+            matrice = (racine / "methode" / "produits" / "index.html").read_text()
+            self.assertNotIn('data-url-fiche="/', matrice)
+            self.assertFalse((racine / "operateur" / chemin_statique(f"/produits/fiche/{fiche.pk}/modifier/")).exists())

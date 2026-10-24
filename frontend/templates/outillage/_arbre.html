@@ -3,8 +3,13 @@
   {% if noeud.pieces or noeud.sous_ensembles %}
   <ul>
     {% for piece_montee in noeud.pieces %}
-    <li class="noeud-piece">{{ piece_montee.quantite }} × <a href="{{ piece_montee.article.get_absolute_url }}">{{ piece_montee.article.reference }}</a> {{ piece_montee.article.designation }}
-      {% if avec_stock %}{% if piece_montee.article.a_commander %}<span class="etiquette alerte">stock {{ piece_montee.article.stock|floatformat:"-2" }}</span>{% else %}<span class="etiquette ok">stock {{ piece_montee.article.stock|floatformat:"-2" }}</span>{% endif %}{% endif %}</li>
+    <li class="noeud-piece"><span>{{ piece_montee.quantite }} × <a href="{{ piece_montee.article.get_absolute_url }}">{{ piece_montee.article.reference }}</a> {{ piece_montee.article.designation }}
+      {% if avec_stock %}{% include "inventaire/_stock.html" with article=piece_montee.article etiquette_ok=True prefixe="stock " %}{% endif %}</span>
+      {% if avec_sortie and peut_mouvementer %}<form class="sortie-piece" method="post" action="{% url 'sortie_piece' outil_de_la_page.pk %}" data-demo="sortie-piece">{% csrf_token %}
+        <input type="hidden" name="piece" value="{{ piece_montee.pk }}" data-article="{{ piece_montee.article.pk }}" data-reference="{{ piece_montee.article.reference }}" data-outil="{{ piece_montee.outil.code }}">
+        <input class="compte" name="quantite" value="{{ piece_montee.quantite }}" inputmode="decimal" aria-label="Quantité de {{ piece_montee.article.reference }} à sortir">
+        <button class="bouton petit" type="submit">Sortir</button>
+      </form>{% endif %}</li>
     {% endfor %}
     {% for sous_ensemble in noeud.sous_ensembles %}{% include "outillage/_arbre.html" with noeud=sous_ensemble %}{% endfor %}
   </ul>

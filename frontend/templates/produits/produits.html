@@ -1,15 +1,78 @@
 {% extends "base.html" %}
-{% block titre %}Produits – Gestion Atelier{% endblock %}
+{% load static %}
+{% block titre %}Produits et machines – Gestion Atelier{% endblock %}
+{% block scripts %}<script src="{% static 'js/matrice.js' %}" defer></script>{% endblock %}
 {% block contenu %}
-<h1>Produits</h1>
-<p class="sous-titre">Choisissez un produit puis une machine pour ouvrir sa fiche.</p>
-<form class="filtres" method="get"><input type="search" name="q" value="{{ recherche }}" placeholder="Référence, désignation, client"><button class="bouton">Rechercher</button>
-  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'admin:produits_produit_add' %}">Nouveau produit</a>{% endif %}</form>
-<div class="tableau"><table>
-  <tr><th>Référence</th><th>Désignation</th><th>Client</th><th>Fiches par machine</th></tr>
-  {% for produit in produits %}
-  <tr><td><a href="{{ produit.get_absolute_url }}">{{ produit.reference }}</a></td><td>{{ produit.designation }}</td><td>{{ produit.client }}</td>
-    <td>{% for fabrication in produit.fabrications.all %}<a class="etiquette prefere" href="{{ fabrication.get_absolute_url }}">{{ fabrication.machine.code }}</a> {% empty %}<span class="discret">aucune</span>{% endfor %}</td></tr>
-  {% empty %}<tr><td colspan="4">Aucun produit.</td></tr>{% endfor %}
-</table></div>
+<h1>Produits et machines</h1>
+<p class="sous-titre">Une ligne par produit, une colonne par machine.
+  {% if peut_modifier %}Cliquez une case pour changer son état, ouvrir sa fiche, la créer ou la copier d'une autre machine.{% else %}Cliquez une case programmée pour ouvrir sa fiche.{% endif %}</p>
+
+<div class="grille grille-compacte">
+  <div class="tuile"><div class="valeur">{{ totaux.produits }}</div><div class="libelle">produits</div></div>
+  <div class="tuile"><div class="valeur">{{ totaux.programmees }}</div><div class="libelle">couples produit / machine programmés</div></div>
+  <div class="tuile attention"><div class="valeur">{{ totaux.non_securises }}</div><div class="libelle">produits sur une seule machine</div></div>
+  <div class="tuile alerte"><div class="valeur">{{ totaux.sans_machine }}</div><div class="libelle">produits sans machine programmée</div></div>
+  <div class="tuile"><div class="valeur">{{ totaux.a_faire }}</div><div class="libelle">cases à faire ou à sécuriser</div></div>
+</div>
+
+<form class="filtres" method="get">
+  <input type="search" name="q" value="{{ recherche }}" placeholder="Référence, désignation, client" aria-label="Rechercher un produit">
+  <select name="vue" aria-label="Produits affichés">{% for code, libelle in vues %}<option value="{{ code }}"{% if code == vue %} selected{% endif %}>{{ libelle }}</option>{% endfor %}</select>
+  <button class="bouton">Afficher</button>
+  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'nouveau_produit' %}">Nouveau produit</a>{% endif %}
+</form>
+
+<div class="defilement-matrice">
+<table class="matrice" data-url-etat="{% url 'changer_etat' %}">
+  <tr><th class="colonne-produit">Produit</th>
+    {% for machine in machines %}<th class="colonne-machine"><a href="{{ machine.get_absolute_url }}" title="{{ machine.nom }} – {{ machine.description }}">{{ machine.code }}</a></th>{% endfor %}
+    <th class="nombre" title="Nombre de machines programmées">Prog.</th></tr>
+  {% for ligne in lignes %}
+  <tr id="produit-{{ ligne.produit.pk }}" data-vue="{{ ligne.vues|join:' ' }}" data-produit="{{ ligne.produit.pk }}" data-reference="{{ ligne.produit.reference }}" data-url-nouvelle="{% url 'nouvelle_fiche' ligne.produit.pk %}">
+    <th scope="row" class="colonne-produit"><a href="{{ ligne.produit.get_absolute_url }}">{{ ligne.produit.reference }}</a> <span class="discret">{{ ligne.produit.designation }}</span></th>
+    {% for case in ligne.cases %}
+    <td class="case-matrice etat-{{ case.etat|default:'vide' }}" data-machine="{{ case.machine.pk }}" data-code-machine="{{ case.machine.code }}" data-etat="{{ case.fabrication.etat|default:'' }}"{% if case.fabrication.a_une_fiche %} data-url-fiche="{{ case.fabrication.get_absolute_url }}"{% if peut_modifier %} data-url-modifier="{% url 'modifier_fiche' case.fabrication.pk %}" data-url-dupliquer="{% url 'dupliquer_fiche' case.fabrication.pk %}"{% endif %}{% endif %}>
+      {% if peut_modifier %}<button type="button" class="bouton-case" title="{{ ligne.produit.reference }} sur {{ case.machine.code }}">{{ case.libelle }}</button>
+      {% elif case.fabrication.a_une_fiche %}<a href="{{ case.fabrication.get_absolute_url }}" title="Fiche {{ ligne.produit.reference }} sur {{ case.machine.code }}">{{ case.libelle }}</a>
+      {% else %}{{ case.libelle }}{% endif %}
+    </td>
+    {% endfor %}
+    <td class="nombre compte-programmees">{{ ligne.nombre_programmees }}</td>
+  </tr>
+  {% empty %}<tr><td colspan="{{ machines|length|add:2 }}">Aucun produit.</td></tr>{% endfor %}
+</table>
+</div>
+
+<p class="legende">
+  <span class="pastille etat-programme">Programmé</span> le produit tourne sur la machine
+  <span class="pastille etat-a_faire">À faire</span> à mettre au point, aucune machine programmée
+  <span class="pastille etat-a_securiser">À sécuriser</span> à faire alors que le produit tourne déjà ailleurs
+  <span class="pastille etat-non_faisable">Non faisable</span> la machine ne convient pas
+  <span class="pastille etat-vide">Vide</span> rien de prévu, mais possible
+</p>
+
+{% if peut_modifier %}
+<dialog class="dialogue-case" id="dialogue-case" aria-labelledby="titre-dialogue-case">
+  <form method="dialog" class="fermer-dialogue"><button class="bouton-fermer" aria-label="Fermer">×</button></form>
+  <h2 id="titre-dialogue-case" class="titre-carte"></h2>
+  <form method="post" action="{% url 'changer_etat' %}" class="choix-etat" data-simulation-locale>{% csrf_token %}
+    <input type="hidden" name="produit">
+    <input type="hidden" name="machine">
+    <fieldset>
+      <legend>État de la case</legend>
+      {% for code, libelle in etats %}<label class="option-etat"><input type="radio" name="etat" value="{{ code }}"> <span class="pastille etat-{{ code|default:'vide' }}">{{ libelle|default:"Vide" }}</span></label>{% endfor %}
+    </fieldset>
+  </form>
+  <div class="actions actions-dialogue">
+    <a class="bouton" data-role="ouvrir" href="#">Ouvrir la fiche</a>
+    <a class="bouton secondaire" data-role="modifier" href="#">Modifier la fiche</a>
+    <a class="bouton" data-role="creer" href="#">Créer la fiche</a>
+  </div>
+  <form method="post" class="copier-fiche" data-simulation-locale>{% csrf_token %}
+    <input type="hidden" name="machine">
+    <p class="discret">Ou partir de la fiche d'une autre machine (outils, consommables, paramètres et notes sont copiés) :</p>
+    <div class="sources-copie"></div>
+  </form>
+</dialog>
+{% endif %}
 {% endblock %}

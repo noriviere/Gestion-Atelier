@@ -3,7 +3,8 @@
 Le site est parcouru avec chaque compte de démonstration ; chaque profil obtient
 son propre jeu de pages, et une page d'accueil permet de choisir le profil.
 Les liens sont rendus relatifs, les liens vers l'administration ouvrent un message
-de démo, et les saisies sont simulées par static/demo.js.
+de démo, et les saisies sont simulées par static/demo.js. Les documents et photos des fiches
+sont copiés tels quels à côté des pages.
 """
 import posixpath
 import re
@@ -25,21 +26,27 @@ PROFILS = [
      "Crée et modifie articles, outils, produits et seuils ; consulte tout."),
     ("intendant", "intendante", "Intendant",
      "Saisit les comptages d'inventaire tournant et les mouvements de stock ; consulte tout."),
-    ("operateur", "operateur", "Régleur et opérateur",
+    ("regleur", "regleur", "Régleur",
+     "Consulte les fiches, ajoute photos et documents, saisit les sorties de stock."),
+    ("operateur", "operateur", "Opérateur",
      "Consulte les fiches et saisit les sorties de stock."),
 ]
 
-LIEN = re.compile(r'(href|src|action)="(/[^"]*)"')
+# Formulaires de consultation (méthode GET) : leur page est exportée et le formulaire y mène.
+# Les autres formulaires envoient des saisies, simulées par demo.js.
+FORMULAIRES_DE_CONSULTATION = ("/recherche/",)
+# data-url-… : adresses lues par le JavaScript des pages (matrice produits × machines), réécrites mais pas parcourues.
+LIEN = re.compile(r'(href|src|action|data-url-[a-z-]+)="(/[^"]*)"')
 
 
 def chemin_statique(url):
     """/articles/?alerte=1 -> articles/alerte-1/index.html (chemin relatif au dossier du profil).
 
-    Un fichier à télécharger garde son nom : /articles/export.xlsx -> articles/export.xlsx.
+    Un fichier (dernier segment avec une extension, ex. /produits/documents/3/plan.pdf) garde son chemin.
     """
     parties = urlsplit(url)
     chemin = parties.path.strip("/")
-    if posixpath.splitext(chemin)[1] and not parties.query:
+    if "." in posixpath.basename(chemin) and not parties.query:
         return chemin
     for cle, valeur in parse_qsl(parties.query):
         chemin = posixpath.join(chemin, re.sub(r"[^\w-]", "_", f"{cle}-{valeur}"))
@@ -84,13 +91,15 @@ class Command(BaseCommand):
             fichier = posixpath.join(dossier, chemin_statique(url))
             cible = sortie / fichier
             cible.parent.mkdir(parents=True, exist_ok=True)
-            if not reponse["Content-Type"].startswith("text/html"):
-                cible.write_bytes(reponse.content)
+            if not reponse.get("Content-Type", "").startswith("text/html"):
+                cible.write_bytes(b"".join(reponse.streaming_content) if reponse.streaming else reponse.content)
                 continue
             html = reponse.content.decode()
             for attribut, lien in LIEN.findall(html):
-                # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter.
-                if attribut != "action" and self.est_page(lien) and lien not in vues:
+                # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter,
+                # sauf pour les formulaires de consultation.
+                a_parcourir = attribut in ("href", "src") or (attribut == "action" and lien in FORMULAIRES_DE_CONSULTATION)
+                if a_parcourir and self.est_page(lien) and lien not in vues:
                     a_voir.append(lien)
             cible.write_text(self.reecrire(html, fichier, dossier), encoding="utf-8")
         return len(vues)
@@ -113,7 +122,7 @@ class Command(BaseCommand):
                 return f'{attribut}="{relatif("index.html")}"'
             if lien.startswith(settings.STATIC_URL if settings.STATIC_URL.startswith("/") else "/" + settings.STATIC_URL):
                 return f'{attribut}="{relatif(lien.lstrip("/"))}"'
-            if attribut == "action" or not self.est_page(lien):
+            if not self.est_page(lien) or (attribut == "action" and lien not in FORMULAIRES_DE_CONSULTATION):
                 return f'{attribut}="#"'
             return f'{attribut}="{relatif(posixpath.join(dossier, chemin_statique(lien)))}"'
 

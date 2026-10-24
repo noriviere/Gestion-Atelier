@@ -18,6 +18,9 @@ services:
       POSTGRES_PASSWORD: atelier-a-changer
       POSTGRES_HOST: db
       DJANGO_DEBUG: "1"
+      DJANGO_MEDIA_ROOT: /app/media
+    volumes:
+      - documents:/app/media
     ports:
       - "8000:8000"
     depends_on:
@@ -25,3 +28,4 @@ services:
     restart: unless-stopped
 volumes:
   donnees:
+  documents:

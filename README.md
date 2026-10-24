@@ -24,11 +24,20 @@ Cette version est une **démo** avec des données fictives, destinée à présen
   L'écart avec le stock théorique s'affiche pendant la saisie et dans le rapport des écarts
   (par période et type, chiffré au prix du fournisseur préféré).
 - **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
-- **Produits** : un produit par machine avec cadence, outillages, consommables et notes,
-  affiché sous forme de fiche imprimable.
+  Le profil Méthode crée et modifie les outils et leurs pièces directement dans l'application ;
+  depuis la fiche d'un outil, tous les profils sortent du stock une pièce remplacée.
+- **Produits et machines** : une matrice avec une ligne par produit et une colonne par machine.
+  Chaque case a un état : programmé, à faire (affiché « à sécuriser » quand le produit tourne déjà
+  sur une autre machine), non faisable, ou vide (rien de prévu mais possible). Un clic sur une case
+  change son état, ouvre la fiche, la crée ou la copie depuis une autre machine.
+- **Fiches production** : cadence, paramètres de réglage structurés (libellé, valeur, unité), outillages,
+  consommables, notes, photos et documents (plan PDF, tableur…), imprimable. Création et modification
+  dans l'application ; une nouvelle fiche reprend les libellés de paramètres de la machine. Une fiche
+  se copie vers une autre machine, un produit se duplique avec toutes ses fiches.
 - **Profils** : `Admin`, `Méthode et management` (paramétrage, articles et fournisseurs),
-  `Intendant` (comptages d'inventaire, mouvements de stock), `Régleur et opérateur` (consultation,
-  mouvements de stock).
+  `Intendant` (comptages d'inventaire, mouvements de stock),
+  `Régleur` (consultation, mouvements de stock, photos et documents des fiches),
+  `Opérateur` (consultation, mouvements de stock).
 
 Comptes de démonstration, tous avec le mot de passe `demo` :
 `admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.
@@ -38,9 +47,11 @@ Comptes de démonstration, tous avec le mot de passe `demo` :
 Une version statique de la démo est publiée sur GitHub Pages :
 https://noriviere.github.io/Gestion-Atelier/
 
-On y choisit un profil (Admin, Méthode et management, Intendant, Régleur et opérateur) pour voir l'application
-avec ses droits. Les sorties de stock, comptages et filtres sont simulés dans le navigateur :
-rien n'est enregistré. Le site est régénéré automatiquement à chaque modification de `main`
+On y choisit un profil (Admin, Méthode et management, Intendant, Régleur, Opérateur) pour voir l'application
+avec ses droits. Les sorties de stock (depuis un article ou une fiche outil), entrées, comptages
+et filtres sont simulés dans le navigateur : les stocks et mouvements saisis sont gardés dans ce
+navigateur et repris sur toutes les pages, jusqu'au bouton « Remettre à zéro ». La création et la
+modification d'outils sont vérifiées puis confirmées, sans être conservées. Rien n'est envoyé. Le site est régénéré automatiquement à chaque modification de `main`
 (workflow `.github/workflows/pages.yml`, commande `python manage.py exporter_statique`).
 
 ## Lancer la démo sur un PC (Python 3.11 ou plus)
@@ -63,7 +74,8 @@ docker compose up -d --build
 docker compose exec web python manage.py charger_demo
 ```
 
-L'application répond sur le port 8000, avec une base PostgreSQL.
+L'application répond sur le port 8000, avec une base PostgreSQL. Les photos et documents des fiches
+sont stockés dans le volume Docker `documents` (à inclure dans la sauvegarde avec la base).
 
 ## Modifier les données fictives
 

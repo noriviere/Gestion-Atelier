@@ -11,6 +11,7 @@
   {% if demo_statique %}<script src="{% static 'js/demo.js' %}" defer></script>{% endif %}
 </head>
 <body>
+<a class="lien-evitement" href="#contenu">Aller au contenu</a>
 {% if demo_statique %}<div class="bandeau-demo"><span class="texte-ecran-large">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré.</span><span class="texte-ecran-etroit">Démo : données fictives, rien n'est enregistré.</span> <a href="/__profils__">Changer de profil</a></div>{% endif %}
 {% if user.is_authenticated %}
 <header class="barre">
@@ -23,14 +24,14 @@
   </div>
   <div class="menu-principal" id="menu-principal">
   {% with page_courante=request.resolver_match.url_name %}
-  <nav>
-    <a href="{% url 'accueil' %}" class="{% if page_courante == 'accueil' %}actif{% endif %}">Accueil</a>
-    <a href="{% url 'articles' %}" class="{% if page_courante == 'articles' or page_courante == 'article' %}actif{% endif %}">Stock</a>
-    <a href="{% url 'a_commander' %}" class="{% if page_courante == 'a_commander' %}actif{% endif %}">À commander</a>
-    <a href="{% url 'inventaires' %}" class="{% if page_courante == 'inventaires' or page_courante == 'comptage' %}actif{% endif %}">Inventaires</a>
-    <a href="{% url 'outils' %}" class="{% if page_courante == 'outils' or page_courante == 'outil' %}actif{% endif %}">Outillage</a>
-    <a href="{% url 'produits' %}" class="{% if page_courante == 'produits' or page_courante == 'produit' or page_courante == 'fiche' %}actif{% endif %}">Produits</a>
-    <a href="{% url 'machines' %}" class="{% if page_courante == 'machines' or page_courante == 'machine' %}actif{% endif %}">Machines</a>
+  <nav aria-label="Menu principal">
+    <a href="{% url 'accueil' %}" {% if page_courante == 'accueil' %}class="actif" aria-current="page"{% endif %}>Accueil</a>
+    <a href="{% url 'articles' %}" {% if page_courante == 'articles' or page_courante == 'article' %}class="actif" aria-current="page"{% endif %}>Stock</a>
+    <a href="{% url 'a_commander' %}" {% if page_courante == 'a_commander' %}class="actif" aria-current="page"{% endif %}>À commander</a>
+    <a href="{% url 'inventaires' %}" {% if page_courante == 'inventaires' or page_courante == 'comptage' %}class="actif" aria-current="page"{% endif %}>Inventaires</a>
+    <a href="{% url 'outils' %}" {% if page_courante == 'outils' or page_courante == 'outil' %}class="actif" aria-current="page"{% endif %}>Outillage</a>
+    <a href="{% url 'produits' %}" {% if page_courante == 'produits' or page_courante == 'produit' or page_courante == 'fiche' %}class="actif" aria-current="page"{% endif %}>Produits</a>
+    <a href="{% url 'machines' %}" {% if page_courante == 'machines' or page_courante == 'machine' %}class="actif" aria-current="page"{% endif %}>Machines</a>
     {% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
   </nav>
   {% endwith %}
@@ -43,7 +44,7 @@
   </div>
 </header>
 {% endif %}
-<main>
+<main id="contenu" tabindex="-1">
   {% if messages %}<ul class="messages">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>{% endif %}
   {% block contenu %}{% endblock %}
 </main>

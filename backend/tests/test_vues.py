@@ -67,6 +67,14 @@ class PagesDemoTests(TestCase):
         self.assertEqual(porte_lame.stock, Decimal("5"))
         self.assertFalse(porte_lame.inventaire_du)
 
+    def test_menu_signale_la_page_courante_aux_lecteurs_d_ecran(self):
+        self.client.login(username="operateur", password="demo")
+        reponse = self.client.get("/outils/")
+        self.assertContains(reponse, 'href="/outils/" class="actif" aria-current="page"', html=False)
+        self.assertContains(reponse, 'aria-current="page"', count=1)
+        self.assertContains(reponse, 'href="#contenu"')
+        self.assertContains(reponse, '<main id="contenu"')
+
 
 class ExportStatiqueTests(TestCase):
     @classmethod

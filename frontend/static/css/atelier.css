@@ -164,6 +164,11 @@ html[data-theme="sombre"] .bouton:not(.secondaire) { color: #0b0e13; }
 .bouton.secondaire:hover { background: var(--accent-doux); }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 20px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Lien « Aller au contenu » : invisible jusqu'à ce qu'il reçoive le focus au clavier. */
+.lien-evitement { position: absolute; left: 12px; top: -60px; z-index: 20; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 0 0 6px 6px; transition: top var(--duree) ease; }
+.lien-evitement:focus { top: 0; text-decoration: none; }
+html[data-theme="sombre"] .lien-evitement { color: #0b0e13; }
+main:focus { outline: none; }
 
 /* 6. Pages particulières -------------------------------------------------- */
 ul.arbre, ul.arbre ul { list-style: none; margin: 0; padding-left: 22px; border-left: 2px solid var(--bord); }

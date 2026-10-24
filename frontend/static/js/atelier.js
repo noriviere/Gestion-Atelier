@@ -37,10 +37,20 @@
   var boutonMenu = document.querySelector('[data-action="ouvrir-menu"]');
   if (boutonMenu) {
     var entete = boutonMenu.closest("header");
-    boutonMenu.addEventListener("click", function () {
-      var menuOuvert = entete.classList.toggle("menu-ouvert");
+    var afficherMenu = function (menuOuvert) {
+      entete.classList.toggle("menu-ouvert", menuOuvert);
       boutonMenu.setAttribute("aria-expanded", menuOuvert ? "true" : "false");
       boutonMenu.setAttribute("aria-label", menuOuvert ? "Fermer le menu" : "Ouvrir le menu");
+    };
+    boutonMenu.addEventListener("click", function () {
+      afficherMenu(!entete.classList.contains("menu-ouvert"));
+    });
+    // Échap referme le menu et rend le focus au bouton, pour qui navigue au clavier.
+    document.addEventListener("keydown", function (evenement) {
+      if (evenement.key === "Escape" && entete.classList.contains("menu-ouvert")) {
+        afficherMenu(false);
+        boutonMenu.focus();
+      }
     });
   }
 

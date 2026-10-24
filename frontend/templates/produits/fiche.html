@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}Fiche {{ fabrication.produit.reference }} sur {{ fabrication.machine.code }}{% endblock %}
 {% block contenu %}
-<div class="fil no-print"><a href="{% url 'produits' %}">Produits</a> › <a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a> › {{ fabrication.machine.code }}</div>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'produits' %}">Produits</a></li><li><a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a></li><li aria-current="page">Fiche sur {{ fabrication.machine.code }}</li></ol></nav>
 <div class="actions"><button class="bouton" type="button" data-action="imprimer">Imprimer la fiche</button>
   {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'admin:produits_produitmachine_change' fabrication.pk %}">Modifier la fiche</a>{% endif %}</div>
 <div class="carte">

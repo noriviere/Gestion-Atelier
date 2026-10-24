@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}{{ article.reference }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'articles' %}">Stock</a> › {{ article.reference }}</div>
+<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'articles' %}">Stock</a></li><li aria-current="page">{{ article.reference }}</li></ol></nav>
 <h1>{{ article.reference }} – {{ article.designation }}</h1>
 <p class="sous-titre">{{ article.get_categorie_display }} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
 {% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:inventaire_article_change' article.pk %}">Modifier l'article</a></div>{% endif %}
@@ -13,11 +13,24 @@
         <dt>Stock actuel</dt><dd>{% include "inventaire/_stock.html" with unite=True mention=True etiquette_ok=True %}</dd>
         <dt>Stock mini</dt><dd>{{ article.stock_mini|floatformat:"-2" }}</dd>
         <dt>Mini de commande</dt><dd>{{ article.mini_commande|floatformat:"-2" }}</dd>
-        {% if article.a_commander %}<dt>Quantité suggérée</dt><dd>{{ article.quantite_a_commander|floatformat:"-2" }}</dd>{% endif %}
+        <dt>En commande</dt><dd>{% if lignes_en_cours %}{{ article.quantite_en_commande|floatformat:"-2" }} {{ article.unite }} · stock prévisionnel {{ article.stock_previsionnel|floatformat:"-2" }}{% else %}—{% endif %}</dd>
+        {% if article.a_commander %}<dt>Reste à commander</dt><dd>{% if article.couvert_par_commande %}<span class="etiquette ok">couvert par les commandes en cours</span>{% else %}{{ article.reste_a_commander|floatformat:"-2" }}{% endif %}</dd>{% endif %}
         <dt>Inventaire</dt><dd>tous les {{ article.frequence_inventaire }} jours · dernier : {{ article.dernier_inventaire|date:"d/m/Y"|default:"jamais" }}
           {% if article.inventaire_du %}<span class="etiquette attention">à compter</span>{% endif %}</dd>
       </dl>
     </div>
+
+    {% if lignes_en_cours %}
+    <h2>Commandes en cours</h2>
+    <div class="tableau"><table>
+      <tr><th>Commande</th><th>Fournisseur</th><th class="nombre">Quantité</th><th>Livraison prévue</th><th>État</th></tr>
+      {% for ligne in lignes_en_cours %}{% with commande=ligne.commande %}
+      <tr><td><a href="{{ commande.get_absolute_url }}">{{ commande.numero }}</a></td><td>{{ commande.fournisseur }}</td>
+        <td class="nombre">{{ ligne.quantite|floatformat:"-2" }}</td><td>{{ commande.date_prevue|date:"d/m/Y"|default:"—" }}</td>
+        <td>{% include "commandes/_etat.html" %}</td></tr>
+      {% endwith %}{% endfor %}
+    </table></div>
+    {% endif %}
 
     <h2>Fournisseurs</h2>
     <div class="tableau"><table>

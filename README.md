@@ -10,6 +10,11 @@ Cette version est une **démo** avec des données fictives, destinée à présen
 - **Stock** : articles avec type d'inventaire, emplacement, stock mini et quantité mini de commande,
   plusieurs fournisseurs dont un préféré, sorties et entrées de stock.
 - **À commander** : articles sous le stock mini, regroupés par fournisseur préféré, imprimable.
+- **Commandes** : suivi des commandes fournisseurs (numéro, n° fournisseur, prix, délai, dates,
+  état en attente / passée / reçue / réceptionnée / annulée), retards signalés, filtres par état,
+  fournisseur et retard. Une commande se prépare depuis « À commander » ; à la réception, les quantités
+  livrées entrent en stock (livraison partielle possible). Dans le stock, la fiche article, l'accueil
+  et « À commander », un article bas en stock affiche ses commandes en cours.
 - **Inventaires tournants** : fréquence de comptage par article, feuille de comptage imprimable
   par type d'inventaire, saisie des quantités comptées qui corrige le stock.
 - **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
@@ -67,6 +72,12 @@ simples. Après modification, `python manage.py charger_demo` efface et recharge
 - Un article est **à commander** quand son stock est inférieur ou égal au stock mini.
 - La **quantité suggérée** ramène le stock au niveau du mini, plus le mini de commande :
   `max(mini de commande, stock mini − stock + mini de commande)`.
+- La **quantité en commande** d'un article additionne ses lignes de commandes en attente, passées ou reçues
+  (pas encore entrées en stock). Un article sous le mini est **couvert** quand stock + en commande dépasse
+  le stock mini ; sinon le **reste à commander** applique la règle ci-dessus au stock prévisionnel.
+- Une commande passée est **en retard** quand sa date de livraison prévue est dépassée. Au passage de la
+  commande, la date prévue est calculée avec le délai le plus long du fournisseur pour ses articles,
+  sauf si elle est saisie.
 - Un article est **à inventorier** quand son dernier comptage date de plus que sa fréquence.
 
 ## Tests

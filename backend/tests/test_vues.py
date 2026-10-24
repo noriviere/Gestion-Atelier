@@ -7,8 +7,10 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from comptes.management.commands.exporter_statique import chemin_statique
+from commandes.models import Commande
 from inventaire.models import Article, TypeInventaire
 from outillage.models import Outil
+from produits.models import ProduitMachine
 
 SORTIE_MUETTE = open("/dev/null", "w")
 
@@ -25,7 +27,8 @@ class PagesDemoTests(TestCase):
         for adresse in ["/", "/articles/", f"/articles/{article.pk}/", "/a-commander/", "/inventaires/",
                         f"/inventaires/{type_inventaire.pk}/", f"/inventaires/{type_inventaire.pk}/?tous=1",
                         f"/inventaires/{type_inventaire.pk}/feuille/", "/outils/", "/produits/",
-                        "/produits/machines/"]:
+                        "/produits/machines/", "/commandes/", "/commandes/?etat=&retard=1",
+                        *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
 
     def test_connexion_obligatoire(self):
@@ -67,6 +70,36 @@ class PagesDemoTests(TestCase):
         porte_lame.refresh_from_db()
         self.assertEqual(porte_lame.stock, Decimal("5"))
         self.assertFalse(porte_lame.inventaire_du)
+
+    def test_menu_signale_la_page_courante_aux_lecteurs_d_ecran(self):
+        self.client.login(username="operateur", password="demo")
+        reponse = self.client.get("/outils/")
+        self.assertContains(reponse, 'href="/outils/" class="actif" aria-current="page"', html=False)
+        self.assertContains(reponse, 'aria-current="page"', count=1)
+        self.assertContains(reponse, 'href="#contenu"')
+        self.assertContains(reponse, '<main id="contenu"')
+
+    def test_fil_d_ariane_de_la_fiche_remonte_au_produit(self):
+        self.client.login(username="operateur", password="demo")
+        fabrication = ProduitMachine.objects.select_related("produit", "machine").first()
+        reponse = self.client.get(fabrication.get_absolute_url())
+        self.assertContains(reponse, '<nav class="fil no-print" aria-label="Fil d\'Ariane">')
+        self.assertContains(reponse, f'<a href="{fabrication.produit.get_absolute_url()}">{fabrication.produit.reference}</a>')
+        self.assertContains(reponse, f'<li aria-current="page">Fiche sur {fabrication.machine.code}</li>')
+
+
+    def test_stock_bas_avec_commande_en_cours_est_signale(self):
+        self.client.login(username="operateur", password="demo")
+        porte_lame = Article.objects.get(reference="PL-M")
+        reponse = self.client.get(f"/articles/{porte_lame.pk}/")
+        self.assertContains(reponse, "couvert par les commandes en cours")
+        self.assertContains(reponse, "en retard")
+
+    def test_a_commander_propose_de_preparer_les_commandes_restantes(self):
+        self.client.login(username="methode", password="demo")
+        reponse = self.client.get("/a-commander/")
+        self.assertContains(reponse, "Préparer la commande Usinage Martin")
+        self.assertContains(reponse, "couvert")
 
 
 class ExportStatiqueTests(TestCase):

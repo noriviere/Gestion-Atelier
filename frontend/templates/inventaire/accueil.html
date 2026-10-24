@@ -3,7 +3,8 @@
 <h1>Bonjour {{ user.first_name|default:user.username }}</h1>
 <p class="sous-titre">Vue d'ensemble de l'atelier.</p>
 <div class="grille">
-  <a class="tuile {% if nombre_a_commander %}alerte{% endif %}" href="{% url 'a_commander' %}"><div class="valeur">{{ nombre_a_commander }}</div><div class="libelle">articles à commander</div></a>
+  <a class="tuile {% if nombre_a_commander %}alerte{% endif %}" href="{% url 'a_commander' %}"><div class="valeur">{{ nombre_a_commander }}</div><div class="libelle">articles sous le mini{% if nombre_a_commander != nombre_non_couverts %}, dont {{ nombre_non_couverts }} sans commande{% endif %}</div></a>
+  <a class="tuile {% if nombre_commandes_en_retard %}alerte{% endif %}" href="{% url 'commandes' %}"><div class="valeur">{{ nombre_commandes_en_cours }}</div><div class="libelle">commandes en cours{% if nombre_commandes_en_retard %}, dont {{ nombre_commandes_en_retard }} en retard{% endif %}</div></a>
   <a class="tuile {% if nombre_inventaires_dus %}attention{% endif %}" href="{% url 'inventaires' %}"><div class="valeur">{{ nombre_inventaires_dus }}</div><div class="libelle">articles à inventorier</div></a>
   <a class="tuile" href="{% url 'articles' %}"><div class="valeur">{{ nombre_articles }}</div><div class="libelle">articles en stock</div></a>
   <a class="tuile" href="{% url 'outils' %}"><div class="valeur">{{ nombre_outils }}</div><div class="libelle">outils</div></a>
@@ -15,12 +16,13 @@
     <h2>Sous le stock mini</h2>
     {% if articles_a_commander %}
     <div class="tableau"><table>
-      <tr><th>Article</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>Fournisseur préféré</th></tr>
+      <tr><th>Article</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>Fournisseur préféré</th><th>Commande</th></tr>
       {% for article in articles_a_commander %}
       <tr><td><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> {{ article.designation }}</td>
         <td class="nombre">{% include "inventaire/_stock.html" %}</td>
         <td class="nombre">{{ article.stock_mini|floatformat:"-2" }}</td>
-        <td>{{ article.fournisseur_prefere|default:"—" }}</td></tr>
+        <td>{{ article.fournisseur_prefere|default:"—" }}</td>
+        <td>{% include "inventaire/_en_commande.html" %}{% if not article.lignes_en_cours %}<span class="etiquette attention">aucune</span>{% endif %}</td></tr>
       {% endfor %}
     </table></div>
     {% if nombre_a_commander > articles_a_commander|length %}<a href="{% url 'a_commander' %}">Voir les {{ nombre_a_commander }} articles</a>{% endif %}

@@ -12,6 +12,7 @@ from produits.models import Produit
 
 from .forms import MouvementForm
 from .models import Article, Mouvement, TypeInventaire
+from .recherche import rechercher
 
 
 def articles_sous_le_mini():
@@ -69,6 +70,15 @@ def accueil(request):
             "nombre_produits": Produit.objects.count(),
             "derniers_mouvements": Mouvement.objects.select_related("article", "utilisateur")[:6],
         },
+    )
+
+
+def recherche(request):
+    texte_recherche = request.GET.get("q", "").strip()
+    return render(
+        request,
+        "inventaire/recherche.html",
+        {"texte_recherche": texte_recherche, "groupes": rechercher(texte_recherche)},
     )
 
 

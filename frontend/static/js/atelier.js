@@ -71,3 +71,44 @@
     });
   });
 })();
+
+// Recherche globale : filtre les résultats à la frappe, sans recharger la page.
+(function () {
+  var champRecherche = document.querySelector("[data-recherche-globale]");
+  if (!champRecherche) return;
+  var bilan = document.querySelector("[data-recherche-bilan]");
+  var messageVide = document.querySelector("[data-recherche-vide]");
+  var groupes = document.querySelectorAll("[data-groupe-resultats]");
+
+  // Même règle que la recherche côté serveur : minuscules, sans accents.
+  function normaliser(texte) {
+    return texte.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+
+  function filtrerResultats() {
+    var mots = normaliser(champRecherche.value).split(/\s+/).filter(Boolean);
+    var nombreTotal = 0;
+    groupes.forEach(function (groupe) {
+      var nombreDansLeGroupe = 0;
+      groupe.querySelectorAll("li[data-texte]").forEach(function (ligne) {
+        var visible = mots.every(function (mot) {
+          return ligne.dataset.texte.indexOf(mot) !== -1;
+        });
+        ligne.hidden = !visible;
+        if (visible) nombreDansLeGroupe += 1;
+      });
+      groupe.hidden = nombreDansLeGroupe === 0;
+      groupe.querySelector("[data-nombre-resultats]").textContent = "(" + nombreDansLeGroupe + ")";
+      nombreTotal += nombreDansLeGroupe;
+    });
+    if (messageVide) messageVide.hidden = nombreTotal > 0;
+    if (bilan) bilan.textContent = mots.length ? nombreTotal + " résultat" + (nombreTotal > 1 ? "s" : "") : "";
+  }
+
+  // Sur la démo statique, la page reçoit la recherche par l'adresse et non par le serveur.
+  var texteDansLAdresse = new URLSearchParams(window.location.search).get("q");
+  if (texteDansLAdresse && !champRecherche.value) champRecherche.value = texteDansLAdresse;
+
+  champRecherche.addEventListener("input", filtrerResultats);
+  filtrerResultats();
+})();

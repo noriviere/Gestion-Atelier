@@ -35,6 +35,10 @@
     {% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
   </nav>
   {% endwith %}
+  <form class="recherche-barre" method="get" action="{% url 'recherche' %}" role="search">
+    <label class="visuellement-cache" for="champ-recherche-barre">Rechercher un article, un outil, un produit ou une machine</label>
+    <input type="search" id="champ-recherche-barre" name="q" placeholder="Rechercher…">
+  </form>
   <div class="utilisateur">
     <span class="nom-utilisateur">{{ user.get_full_name|default:user.username }}</span>
     <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>

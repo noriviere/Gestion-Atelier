@@ -102,7 +102,7 @@ class Command(BaseCommand):
                 return f'{attribut}="{relatif("index.html")}"'
             if lien.startswith(settings.STATIC_URL if settings.STATIC_URL.startswith("/") else "/" + settings.STATIC_URL):
                 return f'{attribut}="{relatif(lien.lstrip("/"))}"'
-            if attribut == "action" or not self.est_page(lien):
+            if not self.est_page(lien):
                 return f'{attribut}="#"'
             return f'{attribut}="{relatif(posixpath.join(dossier, chemin_statique(lien)))}"'
 

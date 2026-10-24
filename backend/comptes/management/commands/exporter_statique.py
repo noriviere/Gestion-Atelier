@@ -21,13 +21,13 @@ from django.test import Client, override_settings
 
 PROFILS = [
     # dossier, compte, titre, description
-    ("admin", "admin", "Admin", "Tous les droits, dont la gestion des comptes et des listes de référence."),
+    ("admin", "admin", "Admin", "Tous les droits, dont la page Droits qui règle ceux des autres profils."),
     ("methode", "methode", "Méthode et management",
      "Crée et modifie articles, outils, produits et seuils ; consulte tout."),
     ("intendant", "intendante", "Intendant",
-     "Saisit les comptages d'inventaire tournant et les mouvements de stock ; consulte tout."),
+     "Gère les commandes, les articles, les fournisseurs et les comptages d'inventaire ; consulte tout."),
     ("regleur", "regleur", "Régleur",
-     "Consulte les fiches, ajoute photos et documents, saisit les sorties de stock."),
+     "Consulte les fiches avec photos et documents, ajuste les réglages, saisit les sorties de stock."),
     ("operateur", "operateur", "Opérateur",
      "Consulte les fiches et saisit les sorties de stock."),
 ]

@@ -3,7 +3,7 @@
 {% block contenu %}
 <h1>Outillage</h1>
 <p class="sous-titre">Arborescence des outils, de leurs sous-ensembles et des pièces d'usure montées.</p>
-{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'nouvel_outil' %}">Nouvel outil</a></div>{% endif %}
+{% if droits.outillage_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'nouvel_outil' %}">Nouvel outil</a></div>{% endif %}
 {% for arbre in arbres %}
 <div class="carte">
   <ul class="arbre">{% include "outillage/_arbre.html" with noeud=arbre avec_stock=True %}</ul>

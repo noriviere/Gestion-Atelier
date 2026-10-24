@@ -7,6 +7,7 @@
 
 <form method="post" class="formulaire-fiche" data-demo-message="Fiche enregistrée : elle s'ouvre avec ses paramètres, outils et consommables.">{% csrf_token %}
   {% for erreur in formulaire.non_field_errors %}<div class="erreur-champ">{{ erreur }}</div>{% endfor %}
+  {% if fiche_complete %}
   <div class="deux-colonnes">
     <div class="carte">
       <h2 class="titre-carte">Fabrication</h2>
@@ -26,16 +27,24 @@
       <div class="discret">Cochez l'outil principal : ses sous-ensembles et pièces d'usure suivent dans la fiche.</div>
     </div>
   </div>
+  {% else %}
+  <div class="carte">
+    <h2 class="titre-carte">Notes de réglage</h2>
+    {% include "_champ.html" with champ=formulaire.notes %}
+  </div>
+  {% endif %}
 
   <div class="carte">
     <h2 class="titre-carte">Paramètres de réglage</h2>
     {% include "produits/_lignes_formset.html" with formset=parametres titres=titres_parametres ajouter="Ajouter un paramètre" %}
   </div>
 
+  {% if fiche_complete %}
   <div class="carte">
     <h2 class="titre-carte">Consommables</h2>
     {% include "produits/_lignes_formset.html" with formset=consommations titres=titres_consommations ajouter="Ajouter un consommable" %}
   </div>
+  {% endif %}
 
   <div class="actions barre-enregistrer">
     <button class="bouton" type="submit">Enregistrer la fiche</button>

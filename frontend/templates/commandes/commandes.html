@@ -22,7 +22,7 @@
   </select>
   <label><input type="checkbox" name="retard" value="1" {% if filtres.retard %}checked{% endif %}> En retard seulement</label>
   <button class="bouton" type="submit">Filtrer</button>
-  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'a_commander' %}">Préparer depuis « À commander »</a>{% endif %}
+  {% if droits.commandes_preparer %}<a class="bouton secondaire" href="{% url 'a_commander' %}">Préparer depuis « À commander »</a>{% endif %}
 </form>
 <div class="tableau"><table>
   <tr><th>Numéro</th><th>Fournisseur</th><th>Articles</th><th class="nombre">Montant</th><th>Passée le</th><th class="nombre">Délai</th><th>Livraison prévue</th><th>Reçue le</th><th>État</th></tr>

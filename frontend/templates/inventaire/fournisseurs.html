@@ -5,7 +5,7 @@
 <p class="sous-titre">Fournisseurs des pièces d'usure et des consommables, avec leurs coordonnées.</p>
 <form class="filtres" method="get">
   <input type="search" name="q" value="{{ recherche }}" placeholder="Nom, contact" aria-label="Rechercher un fournisseur">
-  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'fournisseur_nouveau' %}">Nouveau fournisseur</a>{% endif %}
+  {% if droits.stock_fournisseurs %}<a class="bouton secondaire" href="{% url 'fournisseur_nouveau' %}">Nouveau fournisseur</a>{% endif %}
 </form>
 <div class="tableau"><table>
   <tr><th>Fournisseur</th><th>Contact</th><th>Téléphone</th><th>E-mail</th><th class="nombre">Articles</th><th class="nombre">Dont préféré</th></tr>

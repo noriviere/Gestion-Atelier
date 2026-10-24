@@ -31,8 +31,17 @@ class PagesDemoTests(TestCase):
                         "/produits/?vue=non_securise&q=N1", *[f"/produits/machines/{machine.pk}/" for machine in Machine.objects.all()],
                         *[f"/produits/{produit.pk}/" for produit in Produit.objects.all()],
                         *[fabrication.get_absolute_url() for fabrication in ProduitMachine.objects.filter(etat__in=ProduitMachine.ETATS_AVEC_FICHE)],
-                        *[document.get_absolute_url() for document in Document.objects.all()[:3]], "/commandes/", "/commandes/?etat=&retard=1",
+                        "/commandes/", "/commandes/?etat=&retard=1",
                         *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
+            self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
+
+    def test_photos_et_documents_pour_le_regleur_pas_pour_l_operateur(self):
+        documents = [document.get_absolute_url() for document in Document.objects.all()[:3]]
+        self.client.login(username="operateur", password="demo")
+        for adresse in documents:
+            self.assertEqual(self.client.get(adresse).status_code, 403, adresse)
+        self.client.login(username="regleur", password="demo")
+        for adresse in documents:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
 
     def test_pages_de_saisie_repondent_pour_methode(self):

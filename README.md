@@ -10,7 +10,7 @@ Cette version est une **démo** avec des données fictives, destinée à présen
 - **Stock** : articles avec type d'inventaire, emplacement, stock mini et quantité mini de commande,
   plusieurs fournisseurs dont un préféré, sorties et entrées de stock. Chaque article est soit acheté
   (commandé sur la référence du fournisseur), soit un design interne (commandé sur son numéro de plan).
-  Création et modification des articles et des fournisseurs dans l'application (profils Admin et Méthode).
+  Création et modification des articles et des fournisseurs dans l'application (selon les droits, par défaut Méthode et Intendant).
 - **Import et export Excel** : export de tous les articles, modèle vide, import avec aperçu des créations,
   modifications et erreurs avant tout enregistrement.
 - **À commander** : articles sous le stock mini, regroupés par fournisseur préféré, imprimable.
@@ -34,10 +34,12 @@ Cette version est une **démo** avec des données fictives, destinée à présen
   consommables, notes, photos et documents (plan PDF, tableur…), imprimable. Création et modification
   dans l'application ; une nouvelle fiche reprend les libellés de paramètres de la machine. Une fiche
   se copie vers une autre machine, un produit se duplique avec toutes ses fiches.
-- **Profils** : `Admin`, `Méthode et management` (paramétrage, articles et fournisseurs),
-  `Intendant` (comptages d'inventaire, mouvements de stock),
-  `Régleur` (consultation, mouvements de stock, photos et documents des fiches),
-  `Opérateur` (consultation, mouvements de stock).
+- **Profils et droits** : `Admin`, `Méthode et management`, `Intendant`, `Régleur`, `Opérateur`.
+  Les droits de chaque profil se règlent sur la page **Droits** (profil Admin) : cinq blocs
+  (stock, commandes, outillage, produits, administration) découpés en sous-fonctions, avec
+  le profil de chaque compte. Le catalogue et les réglages de départ sont dans
+  `backend/comptes/droits.py` : l'intendant gère commandes, articles, fournisseurs et comptages ;
+  le régleur a en plus de l'opérateur les photos et documents et les réglages des fiches.
 
 Comptes de démonstration, tous avec le mot de passe `demo` :
 `admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.

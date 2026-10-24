@@ -1,6 +1,10 @@
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
 from django.urls import reverse
+
+from . import roles
+from .droits import PAGES
 
 
 class ConnexionObligatoireMiddleware:
@@ -15,3 +19,19 @@ class ConnexionObligatoireMiddleware:
         if not request.user.is_authenticated and not request.path.startswith(chemins_publics):
             return redirect(f"{page_connexion}?next={request.path}")
         return self.get_response(request)
+
+
+class DroitsDeConsultationMiddleware:
+    """Chaque page de consultation demande la sous-fonction indiquée dans droits.PAGES."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_view(self, request, vue, args, kwargs):
+        code = PAGES.get(request.resolver_match.url_name)
+        if code and request.user.is_authenticated and not roles.a_le_droit(request.user, code):
+            raise PermissionDenied
+        return None

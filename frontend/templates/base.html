@@ -26,7 +26,7 @@
   <div class="menu-principal" id="menu-principal">
   <nav aria-label="Menu principal">
     {% for entree in entrees_menu %}<a href="{{ entree.url }}"{% if entree.actif %} class="actif" aria-current="page"{% endif %}>{{ entree.libelle }}</a>
-    {% endfor %}{% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
+    {% endfor %}{% if acces_parametrage %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
   </nav>
   <form class="recherche-barre" method="get" action="{% url 'recherche' %}" role="search">
     <label class="visuellement-cache" for="champ-recherche-barre">Rechercher un article, un outil, un produit ou une machine</label>

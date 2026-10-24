@@ -5,7 +5,7 @@
 {% block contenu %}
 <h1>Produits et machines</h1>
 <p class="sous-titre">Une ligne par produit, une colonne par machine.
-  {% if peut_modifier %}Cliquez une case pour changer son état, ouvrir sa fiche, la créer ou la copier d'une autre machine.{% else %}Cliquez une case programmée pour ouvrir sa fiche.{% endif %}</p>
+  {% if droits.produits_modifier %}Cliquez une case pour changer son état, ouvrir sa fiche, la créer ou la copier d'une autre machine.{% else %}Cliquez une case programmée pour ouvrir sa fiche.{% endif %}</p>
 
 <div class="grille grille-compacte">
   <div class="tuile"><div class="valeur">{{ totaux.produits }}</div><div class="libelle">produits</div></div>
@@ -19,7 +19,7 @@
   <input type="search" name="q" value="{{ recherche }}" placeholder="Référence, désignation, client" aria-label="Rechercher un produit">
   <select name="vue" aria-label="Produits affichés">{% for code, libelle in vues %}<option value="{{ code }}"{% if code == vue %} selected{% endif %}>{{ libelle }}</option>{% endfor %}</select>
   <button class="bouton">Afficher</button>
-  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'nouveau_produit' %}">Nouveau produit</a>{% endif %}
+  {% if droits.produits_modifier %}<a class="bouton secondaire" href="{% url 'nouveau_produit' %}">Nouveau produit</a>{% endif %}
 </form>
 
 <div class="defilement-matrice">
@@ -31,8 +31,8 @@
   <tr id="produit-{{ ligne.produit.pk }}" data-vue="{{ ligne.vues|join:' ' }}" data-produit="{{ ligne.produit.pk }}" data-reference="{{ ligne.produit.reference }}" data-url-nouvelle="{% url 'nouvelle_fiche' ligne.produit.pk %}">
     <th scope="row" class="colonne-produit"><a href="{{ ligne.produit.get_absolute_url }}">{{ ligne.produit.reference }}</a> <span class="discret">{{ ligne.produit.designation }}</span></th>
     {% for case in ligne.cases %}
-    <td class="case-matrice etat-{{ case.etat|default:'vide' }}" data-machine="{{ case.machine.pk }}" data-code-machine="{{ case.machine.code }}" data-etat="{{ case.fabrication.etat|default:'' }}"{% if case.fabrication.a_une_fiche %} data-url-fiche="{{ case.fabrication.get_absolute_url }}"{% if peut_modifier %} data-url-modifier="{% url 'modifier_fiche' case.fabrication.pk %}" data-url-dupliquer="{% url 'dupliquer_fiche' case.fabrication.pk %}"{% endif %}{% endif %}>
-      {% if peut_modifier %}<button type="button" class="bouton-case" title="{{ ligne.produit.reference }} sur {{ case.machine.code }}">{{ case.libelle }}</button>
+    <td class="case-matrice etat-{{ case.etat|default:'vide' }}" data-machine="{{ case.machine.pk }}" data-code-machine="{{ case.machine.code }}" data-etat="{{ case.fabrication.etat|default:'' }}"{% if case.fabrication.a_une_fiche %} data-url-fiche="{{ case.fabrication.get_absolute_url }}"{% if droits.produits_modifier %} data-url-modifier="{% url 'modifier_fiche' case.fabrication.pk %}" data-url-dupliquer="{% url 'dupliquer_fiche' case.fabrication.pk %}"{% endif %}{% endif %}>
+      {% if droits.produits_modifier %}<button type="button" class="bouton-case" title="{{ ligne.produit.reference }} sur {{ case.machine.code }}">{{ case.libelle }}</button>
       {% elif case.fabrication.a_une_fiche %}<a href="{{ case.fabrication.get_absolute_url }}" title="Fiche {{ ligne.produit.reference }} sur {{ case.machine.code }}">{{ case.libelle }}</a>
       {% else %}{{ case.libelle }}{% endif %}
     </td>
@@ -51,7 +51,7 @@
   <span class="pastille etat-vide">Vide</span> rien de prévu, mais possible
 </p>
 
-{% if peut_modifier %}
+{% if droits.produits_modifier %}
 <dialog class="dialogue-case" id="dialogue-case" aria-labelledby="titre-dialogue-case">
   <form method="dialog" class="fermer-dialogue"><button class="bouton-fermer" aria-label="Fermer">×</button></form>
   <h2 id="titre-dialogue-case" class="titre-carte"></h2>

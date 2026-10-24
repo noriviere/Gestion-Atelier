@@ -5,7 +5,6 @@ from django.template.defaultfilters import floatformat
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from comptes.decorators import modification_requise, mouvement_requis
 from inventaire.models import Mouvement
 
 from .forms import OutilForm, PiecesOutilFormSet, SortiePieceForm
@@ -59,20 +58,17 @@ def enregistrer_outil(request, outil, page_retour):
     )
 
 
-@modification_requise
 def nouvel_outil(request):
     parent = Outil.objects.filter(pk=request.GET.get("parent") or None).first()
     return enregistrer_outil(request, Outil(), parent.get_absolute_url() if parent else reverse("outils"))
 
 
-@modification_requise
 def modifier_outil(request, pk):
     outil = get_object_or_404(Outil, pk=pk)
     return enregistrer_outil(request, outil, outil.get_absolute_url())
 
 
 @require_POST
-@modification_requise
 def supprimer_outil(request, pk):
     outil = get_object_or_404(Outil, pk=pk)
     parent = outil.parent
@@ -82,7 +78,6 @@ def supprimer_outil(request, pk):
 
 
 @require_POST
-@mouvement_requis
 def sortie_piece(request, pk):
     """Sortie de stock d'une pièce d'usure montée sur l'outil ou un de ses sous-ensembles."""
     outil = get_object_or_404(Outil, pk=pk)

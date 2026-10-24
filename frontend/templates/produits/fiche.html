@@ -3,8 +3,8 @@
 {% block contenu %}
 <nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'produits' %}">Produits et machines</a></li><li><a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a></li><li aria-current="page">Fiche sur {{ fabrication.machine.code }}</li></ol></nav>
 <div class="actions"><button class="bouton" type="button" data-action="imprimer">Imprimer la fiche</button>
-  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier la fiche</a>{% endif %}</div>
-{% if peut_modifier and autres_machines %}
+  {% if droits.produits_modifier %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier la fiche</a>{% elif droits.produits_reglages %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier les réglages</a>{% endif %}</div>
+{% if droits.produits_modifier and autres_machines %}
 <form method="post" action="{% url 'dupliquer_fiche' fabrication.pk %}" class="filtres no-print" data-demo-message="Fiche copiée : sur la version installée, la copie s'ouvre pour ajuster la cadence et les paramètres.">{% csrf_token %}
   <label for="machine-copie">Copier cette fiche vers</label>
   <select id="machine-copie" name="machine">{% for machine in autres_machines %}<option value="{{ machine.pk }}">{{ machine.code }} – {{ machine.nom }}</option>{% endfor %}</select>
@@ -35,13 +35,15 @@
 {% endif %}{% if fabrication.produit.notes %}{{ fabrication.produit.notes }}{% endif %}</div>
   {% endif %}
 
+  {% if droits.produits_documents_voir %}
   <section class="section-photos"{% if not photos %} hidden{% endif %}>
   <h2>Photos</h2>
   <div class="galerie" data-galerie>
     {% for photo in photos %}<figure><a href="{{ photo.get_absolute_url }}" target="_blank" rel="noopener"><img src="{{ photo.get_absolute_url }}" alt="{{ photo.titre }}" loading="lazy"></a><figcaption>{{ photo.titre }}{% if not photo.fabrication_id %} <span class="discret">(produit)</span>{% endif %}
-      {% if peut_documenter %}<form method="post" action="{% url 'supprimer_document' photo.pk %}" class="en-ligne no-print" data-demo-message="Photo retirée.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</figcaption></figure>{% endfor %}
+      {% if droits.produits_documents_gerer %}<form method="post" action="{% url 'supprimer_document' photo.pk %}" class="en-ligne no-print" data-demo-message="Photo retirée.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</figcaption></figure>{% endfor %}
   </div>
   </section>
+  {% endif %}
 
   <h2>Outillages</h2>
   {% for arbre in arbres %}<ul class="arbre">{% include "outillage/_arbre.html" with noeud=arbre avec_stock=True %}</ul>
@@ -57,14 +59,15 @@
     {% empty %}<tr><td colspan="4">Aucun consommable renseigné.</td></tr>{% endfor %}
   </table>
 
+  {% if droits.produits_documents_voir %}
   <h2 id="documents">Documents</h2>
   <ul class="liste-documents" data-liste-documents>
     {% for document in documents %}<li><a href="{{ document.get_absolute_url }}" target="_blank" rel="noopener"><span class="etiquette">{{ document.extension|upper }}</span> {{ document.titre }}</a>{% if not document.fabrication_id %} <span class="discret">(produit, toutes machines)</span>{% endif %}
-      {% if peut_documenter %}<form method="post" action="{% url 'supprimer_document' document.pk %}" class="en-ligne no-print" data-demo-message="Document retiré.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</li>
+      {% if droits.produits_documents_gerer %}<form method="post" action="{% url 'supprimer_document' document.pk %}" class="en-ligne no-print" data-demo-message="Document retiré.">{% csrf_token %}<input type="hidden" name="retour" value="{{ fabrication.get_absolute_url }}#documents"><button class="lien-discret" type="submit">Retirer</button></form>{% endif %}</li>
     {% empty %}<li class="discret aucun-document">Aucun document.</li>{% endfor %}
   </ul>
 
-  {% if peut_documenter %}
+  {% if droits.produits_documents_gerer %}
   <form method="post" action="{% url 'ajouter_document' fabrication.pk %}" enctype="multipart/form-data" class="depot-document no-print" data-simulation-locale>{% csrf_token %}
     <h3>Ajouter une photo ou un document</h3>
     <div class="champs-depot">
@@ -76,6 +79,7 @@
       </div>
     </div>
   </form>
+  {% endif %}
   {% endif %}
   <p class="discret impression-seule">Imprimé le {% now "d/m/Y à H:i" %} depuis Gestion Atelier.</p>
 </div>

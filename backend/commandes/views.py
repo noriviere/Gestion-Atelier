@@ -7,7 +7,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from comptes import roles
-from comptes.decorators import modification_requise
 from inventaire.models import Fournisseur
 from inventaire.views import articles_sous_le_mini, lire_quantite
 
@@ -99,9 +98,8 @@ def commande(request, pk):
     commande = get_object_or_404(Commande.objects.select_related("fournisseur", "cree_par"), pk=pk)
     if request.method == "POST":
         action = request.POST.get("action")
-        reservee_methode = action in (Commande.PASSEE, Commande.ANNULEE)
-        autorise = roles.peut_modifier(request.user) if reservee_methode else roles.peut_mouvementer(request.user)
-        if not autorise:
+        droit = "commandes_preparer" if action in (Commande.PASSEE, Commande.ANNULEE) else "commandes_receptionner"
+        if not roles.a_le_droit(request.user, droit):
             raise PermissionDenied
         try:
             if action == Commande.RECEPTIONNEE:
@@ -123,16 +121,15 @@ def commande(request, pk):
         {
             "commande": commande,
             "lignes": commande.lignes.select_related("article"),
-            "peut_passer": roles.peut_modifier(request.user) and Commande.PASSEE in commande.etats_suivants,
-            "peut_annuler": roles.peut_modifier(request.user) and Commande.ANNULEE in commande.etats_suivants,
-            "peut_marquer_recue": roles.peut_mouvementer(request.user) and Commande.RECUE in commande.etats_suivants,
-            "peut_receptionner": roles.peut_mouvementer(request.user) and Commande.RECEPTIONNEE in commande.etats_suivants,
+            "peut_passer": roles.a_le_droit(request.user, "commandes_preparer") and Commande.PASSEE in commande.etats_suivants,
+            "peut_annuler": roles.a_le_droit(request.user, "commandes_preparer") and Commande.ANNULEE in commande.etats_suivants,
+            "peut_marquer_recue": roles.a_le_droit(request.user, "commandes_receptionner") and Commande.RECUE in commande.etats_suivants,
+            "peut_receptionner": roles.a_le_droit(request.user, "commandes_receptionner") and Commande.RECEPTIONNEE in commande.etats_suivants,
         },
     )
 
 
 @require_POST
-@modification_requise
 def creer_commande(request, fournisseur_pk):
     """Prépare une commande en attente avec ce qui reste à commander chez ce fournisseur préféré."""
     fournisseur = get_object_or_404(Fournisseur, pk=fournisseur_pk)

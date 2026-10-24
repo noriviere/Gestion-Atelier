@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}{% if outil.pk %}Modifier {{ outil.code }}{% else %}Nouvel outil{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'outils' %}">Outillage</a>{% for ancetre in outil.chemin %}{% if ancetre.pk %} › <a href="{{ ancetre.get_absolute_url }}">{{ ancetre.code }}</a>{% endif %}{% endfor %} › {% if outil.pk %}Modifier{% else %}Nouvel outil{% endif %}</div>
@@ -11,7 +12,7 @@
       {% for champ in form %}<p class="champ{% if champ.name == 'description' %} champ-large{% endif %}">{{ champ.label_tag }}{{ champ }}{{ champ.errors }}</p>{% endfor %}
     </div>
   </div>
-  <h2>Pièces d'usure montées</h2>
+  <h2>Pièces d'usure montées{% info "outillage" "modifier" "Créer ou modifier un outil" %}</h2>
   {{ pieces.management_form }}
   {{ pieces.non_form_errors }}
   <div class="tableau"><table class="pieces-outil">
@@ -31,7 +32,7 @@
 </form>
 {% if outil.pk %}
 <form method="post" action="{% url 'supprimer_outil' outil.pk %}" class="zone-suppression" data-demo="suppression-outil" data-confirmation="Supprimer {{ outil.code }}{% if outil.sous_ensembles.exists %} et tous ses sous-ensembles{% endif %} ? Les articles restent dans le stock.">{% csrf_token %}
-  <button class="bouton danger" type="submit">Supprimer l'outil</button>
+  <button class="bouton danger" type="submit">Supprimer l'outil</button>{% info "outillage" "supprimer" "Supprimer un outil" %}
   <a href="{% if outil.parent %}{{ outil.parent.get_absolute_url }}{% else %}{% url 'outils' %}{% endif %}" data-lien-retour hidden></a>
 </form>
 {% endif %}

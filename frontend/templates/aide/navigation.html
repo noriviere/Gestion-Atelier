@@ -1,0 +1,73 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Se repérer dans l'application</h1>
+<p class="sous-titre">Ce qui est commun à toutes les pages : la barre du haut, la recherche, l'aide, l'affichage et l'impression.</p>
+
+<section class="point-aide" id="barre-du-haut">
+<h2>La barre du haut</h2>
+<p>Elle reste en haut de l'écran sur toutes les pages. On y trouve, de gauche à droite :</p>
+<ul>
+  <li><strong>Gestion Atelier</strong> : revient à l'accueil.</li>
+  <li><strong>Le menu</strong> : les grandes parties de l'application. Il ne montre que celles que votre profil peut ouvrir, et l'entrée de la page où vous êtes est soulignée.</li>
+  <li><strong>Paramétrage</strong> : l'interface d'administration, pour les listes de référence (types d'inventaire, machines, comptes…). Elle n'apparaît qu'aux profils qui ont le droit de modifier des données.</li>
+  <li><strong>Rechercher…</strong> : la recherche globale, expliquée plus bas.</li>
+  <li><strong>Votre profil</strong>, le bouton <strong>?</strong> du mode d'emploi, le bouton de <strong>thème</strong> clair ou sombre, et <strong>Déconnexion</strong>.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="accueil">
+<h2>La page d'accueil</h2>
+<p>Elle donne l'état de l'atelier en un coup d'œil. Chaque tuile ouvre la page correspondante :</p>
+<ul>
+  <li><strong>articles sous le mini</strong>, dont ceux qui n'ont encore aucune commande en cours ;</li>
+  <li><strong>commandes en cours</strong>, dont celles en retard ;</li>
+  <li><strong>articles à inventorier</strong>, dont le comptage est dû ;</li>
+  <li>le nombre d'<strong>articles</strong>, d'<strong>outils</strong> et de <strong>produits</strong>.</li>
+</ul>
+<p>En dessous, le tableau <strong>Sous le stock mini</strong> liste les premiers articles à commander, avec leur commande en cours éventuelle, et <strong>Derniers mouvements</strong> montre les dernières sorties, entrées et comptages, avec qui les a faits.</p>
+<p>Une tuile n'apparaît que si votre profil peut ouvrir la page qu'elle annonce.</p>
+</section>
+
+<section class="point-aide" id="recherche">
+<h2>La recherche</h2>
+<p>Tapez quelques lettres dans <strong>Rechercher…</strong> puis Entrée : la page de résultats cherche dans les <strong>articles</strong> (référence, désignation, emplacement), les <strong>outils</strong> et leurs sous-ensembles, les <strong>produits</strong> (référence, désignation, client) et les <strong>machines</strong>.</p>
+<ul>
+  <li>Les accents et les majuscules ne comptent pas : « porte lame » trouve « Porte-lame ».</li>
+  <li>Avec plusieurs mots, chaque résultat doit les contenir tous, dans n'importe quel ordre : « patin n10 ».</li>
+  <li>Sur la page de résultats, la liste se met à jour pendant que vous tapez.</li>
+</ul>
+<p>Les pages Stock, Commandes, Fournisseurs et Produits ont aussi leur propre champ de recherche, avec des filtres en plus.</p>
+</section>
+
+<section class="point-aide" id="petits-i">
+<h2>Le bouton ? et les petits « i »</h2>
+<p>Le bouton <span class="exemple-bouton-aide" aria-hidden="true">?</span> de la barre du haut ouvre le mode d'emploi à la page qui explique l'écran où vous êtes. Les petits <span class="info exemple" aria-hidden="true">i</span> placés à côté d'une case, d'une colonne ou d'un bouton ouvrent directement l'explication de cet élément, mise en évidence.</p>
+<p>Dans un formulaire en cours de saisie, le « i » s'ouvre dans un nouvel onglet pour ne pas perdre ce que vous avez tapé. Ailleurs, le bouton « Revenir à la page précédente » vous ramène où vous étiez.</p>
+</section>
+
+<section class="point-aide" id="fil-ariane">
+<h2>Le fil d'Ariane</h2>
+<p>Au-dessus du titre des pages de détail, une ligne comme « Produits et machines › N10 › Fiche sur MAD2 » rappelle où vous êtes. Chaque élément est un lien pour remonter d'un niveau.</p>
+</section>
+
+<section class="point-aide" id="theme">
+<h2>Thème clair ou sombre</h2>
+<p>Le bouton lune ou soleil bascule entre le thème clair et le thème sombre. Le choix est gardé par le navigateur du poste : il s'applique à toutes les pages, jusqu'au prochain changement. Sans choix, l'application suit le réglage de l'ordinateur.</p>
+</section>
+
+<section class="point-aide" id="telephone">
+<h2>Sur téléphone ou petit écran</h2>
+<p>Quand l'écran est étroit, le menu se replie derrière le bouton à trois traits, en haut à droite. Les tableaux s'affichent en fiches, une par ligne, avec le titre de chaque colonne devant sa valeur.</p>
+</section>
+
+<section class="point-aide" id="impression">
+<h2>Imprimer</h2>
+<p>Les pages faites pour le papier ont un bouton <strong>Imprimer</strong> : la liste À commander, une commande, la feuille de comptage, le rapport des écarts et la fiche de production. À l'impression, la barre du haut, les boutons et les formulaires disparaissent ; seules restent les informations utiles.</p>
+</section>
+
+<section class="point-aide" id="clavier">
+<h2>Au clavier</h2>
+<p>La touche Tab passe d'un lien ou d'un champ au suivant ; le premier appui fait apparaître « Aller au contenu », qui saute la barre du haut. Sur téléphone, Échap referme le menu.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>À commander et commandes</h1>
+<p class="sous-titre">De l'article sous le mini à l'entrée en stock de la livraison.</p>
+
+<section class="point-aide" id="a-commander">
+<h2>La liste « À commander »</h2>
+{% droit_requis "commandes_consulter" %}
+<p>Elle rassemble les articles dont le stock est <strong>inférieur ou égal au stock mini</strong>, regroupés par fournisseur préféré, avec son téléphone. Pour chaque article :</p>
+<ul>
+  <li>la référence à donner au fournisseur, ou le numéro de plan pour un design interne ;</li>
+  <li>le stock et le mini ;</li>
+  <li>les quantités <strong>en commande</strong> ;</li>
+  <li>le <strong>reste à commander</strong>, ou « couvert » quand les commandes en cours suffisent (voir <a href="{% url 'aide_sujet' 'stock' %}#reste-a-commander">reste à commander</a>) ;</li>
+  <li>le prix unitaire.</li>
+</ul>
+<p>Le bouton <strong>Imprimer</strong> sort la liste datée du jour, pour passer les commandes par téléphone.</p>
+</section>
+
+<section class="point-aide" id="preparer">
+<h2>Préparer une commande</h2>
+{% droit_requis "commandes_preparer" %}
+<p>Sous chaque fournisseur, <strong>Préparer la commande</strong> crée une commande « en attente » avec tous ses articles qui ne sont pas couverts, aux quantités restant à commander et à son prix. La commande s'ouvre : vérifiez-la, ajustez-la avec <strong>Modifier la commande</strong> si besoin, puis passez-la.</p>
+<p>Le bouton n'apparaît que s'il reste quelque chose à commander chez ce fournisseur.</p>
+</section>
+
+<section class="point-aide" id="etats">
+<h2>Les états d'une commande</h2>
+<ol class="etapes-aide">
+  <li><span class="etiquette">En attente</span> : préparée, pas encore envoyée au fournisseur.</li>
+  <li><span class="etiquette">Passée</span> : envoyée. La date de livraison prévue est connue ; au-delà, la commande est <strong>en retard</strong>.</li>
+  <li><span class="etiquette">Reçue</span> : le colis est arrivé mais n'est pas encore contrôlé ni rangé.</li>
+  <li><span class="etiquette">Réceptionnée</span> : les quantités livrées sont entrées en stock. La commande est terminée.</li>
+</ol>
+<p>Une commande en attente ou passée peut aussi être <span class="etiquette">Annulée</span>. Tant qu'elle est en attente, passée ou reçue, elle est « en cours » et ses quantités comptent dans « En commande ».</p>
+</section>
+
+<section class="point-aide" id="liste">
+<h2>Le suivi des commandes</h2>
+{% droit_requis "commandes_consulter" %}
+<p>Le menu <strong>Commandes</strong> affiche en haut le nombre de commandes en cours, en retard, reçues à réceptionner, et le montant en cours. Les filtres se combinent : recherche par numéro ou article, état (« En cours » par défaut, ou « Toutes »), fournisseur, et <strong>En retard seulement</strong>.</p>
+<p>Dans le tableau, <strong>Délai</strong> est le délai annoncé en jours, <strong>Livraison prévue</strong> la date attendue, et <strong>Reçue le</strong> indique entre parenthèses les jours de retard à la livraison.</p>
+</section>
+
+<section class="point-aide" id="passer">
+<h2>Passer la commande</h2>
+{% droit_requis "commandes_preparer" %}
+<p>Une fois la commande envoyée au fournisseur, ouvrez-la et utilisez <strong>Passer la commande</strong> :</p>
+<ul>
+  <li><strong>N° de confirmation du fournisseur</strong> : facultatif, utile pour le retrouver sur le bon de livraison ;</li>
+  <li><strong>Livraison prévue</strong> : laissez vide pour la calculer avec le délai le plus long de ses articles chez ce fournisseur, ou saisissez la date annoncée.</li>
+</ul>
+<p><strong>Marquer comme passée</strong> enregistre la date de passage et la date prévue.</p>
+</section>
+
+<section class="point-aide" id="recue">
+<h2>Marquer comme reçue</h2>
+{% droit_requis "commandes_receptionner" %}
+<p>Quand le colis arrive mais que personne n'a encore le temps de le contrôler, <strong>Marquer comme reçue</strong> note la date d'arrivée : la commande n'est plus en retard, et elle apparaît dans « reçues, à réceptionner ». Cette étape est facultative.</p>
+</section>
+
+<section class="point-aide" id="receptionner">
+<h2>Réceptionner et entrer en stock</h2>
+{% droit_requis "commandes_receptionner" %}
+<p>Au contrôle de la livraison, le tableau des lignes propose une colonne <strong>Quantité livrée</strong>, préremplie avec la quantité commandée. Corrigez-la si la livraison est partielle, puis <strong>Réceptionner et entrer en stock</strong> : chaque quantité livrée entre en stock, et la commande passe « réceptionnée ».</p>
+<p>Un manque reste affiché sur la ligne (« manque 2 ») : l'article repassera dans « À commander » si son stock est toujours sous le mini.</p>
+</section>
+
+<section class="point-aide" id="annuler">
+<h2>Annuler une commande</h2>
+{% droit_requis "commandes_preparer" %}
+<p>Possible tant que la commande est en attente ou passée. Ses quantités ne comptent plus dans « En commande ».</p>
+</section>
+
+<section class="point-aide" id="modifier">
+<h2>Modifier une commande</h2>
+{% droit_requis "commandes_preparer" %}
+<p><strong>Modifier la commande</strong> ouvre le paramétrage : on y change les lignes, les quantités, les prix (vide = prix du fournisseur), les dates et les notes. Le numéro est attribué automatiquement (CDE-année-numéro) s'il est laissé vide.</p>
+</section>
+{% endblock %}

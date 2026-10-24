@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% load inventaire %}
+{% load inventaire aide %}
 {% block titre %}Écarts d'inventaire – Gestion Atelier{% endblock %}
 {% block contenu %}
 <div class="fil"><a href="{% url 'inventaires' %}">Inventaires</a> › écarts</div>
-<h1>Écarts d'inventaire</h1>
+<h1>Écarts d'inventaire{% info "inventaires" "ecarts" "Le rapport des écarts" %}</h1>
 <p class="sous-titre">Différence entre la quantité comptée et le stock théorique à chaque comptage. Un écart négatif est un manquant. Les valeurs sont chiffrées au prix du fournisseur préféré.</p>
 <div class="grille">
   <div class="tuile"><div class="valeur">{{ resume.nombre_comptages }}</div><div class="libelle">comptages</div></div>

@@ -59,7 +59,12 @@
     var ligneEntete = tableau.rows[0];
     if (!ligneEntete || !ligneEntete.querySelector("th")) return;
     var titresColonnes = Array.prototype.map.call(ligneEntete.cells, function (cellule) {
-      return cellule.textContent.trim();
+      // Le petit « i » d'aide d'un titre de colonne ne fait pas partie du titre.
+      var copieSansAide = cellule.cloneNode(true);
+      copieSansAide.querySelectorAll("[data-info]").forEach(function (lienAide) {
+        lienAide.remove();
+      });
+      return copieSansAide.textContent.trim();
     });
     ligneEntete.classList.add("ligne-entete");
     Array.prototype.slice.call(tableau.rows, 1).forEach(function (ligne) {
@@ -235,4 +240,22 @@
     choix.addEventListener("change", afficherChampPlan);
   });
   afficherChampPlan();
+})();
+
+// Mode d'emploi : retour à la page d'où l'on vient, et petits « i » sans perte de saisie.
+(function () {
+  var boutonRevenir = document.querySelector('[data-action="revenir"]');
+  var vientDeLApplication = document.referrer && document.referrer.indexOf(window.location.origin) === 0;
+  if (boutonRevenir && vientDeLApplication && window.history.length > 1) {
+    boutonRevenir.hidden = false;
+    boutonRevenir.addEventListener("click", function () {
+      window.history.back();
+    });
+  }
+
+  // Dans un formulaire de saisie, l'aide s'ouvre dans un nouvel onglet pour garder ce qui est tapé.
+  document.querySelectorAll("form[method=post] a[data-info]").forEach(function (lienAide) {
+    lienAide.target = "_blank";
+    lienAide.rel = "noopener";
+  });
 })();

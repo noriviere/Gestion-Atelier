@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}Outillage – Gestion Atelier{% endblock %}
 {% block contenu %}
-<h1>Outillage</h1>
+<h1>Outillage{% info "outillage" "arborescence" "L'arborescence des outils" %}</h1>
 <p class="sous-titre">Arborescence des outils, de leurs sous-ensembles et des pièces d'usure montées.</p>
 {% if droits.outillage_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'nouvel_outil' %}">Nouvel outil</a></div>{% endif %}
 {% for arbre in arbres %}

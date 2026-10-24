@@ -1,0 +1,39 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>La démo en ligne</h1>
+<p class="sous-titre">La démo publiée sur Internet montre l'application avec des données fictives. Elle fonctionne entièrement dans votre navigateur : rien n'est envoyé.</p>
+
+<section class="point-aide" id="profils">
+<h2>Choisir un profil</h2>
+<p>La page d'entrée de la démo propose les cinq profils. Chacun ouvre l'application telle que la voit ce profil, avec ses menus et ses boutons. Pour en changer : <strong>Changer de profil</strong> dans le bandeau jaune, ou <strong>Profils</strong> dans la barre du haut.</p>
+<p>Sur la version installée, chacun se connecte avec son propre compte et voit directement son profil.</p>
+</section>
+
+<section class="point-aide" id="donnees">
+<h2>Les données fictives</h2>
+<p>Machines S1 à S8 (meules) et MAD1 et MAD2 (bandes), produits N2 à N12 avec chacun leur jeu d'outils (chargeur, outillage face, pince, outillage dos), pièces d'usure (patins, porte-lames, tiges, peignes) parfois communes à plusieurs produits, consommables (huile, bandes, meules), fournisseurs et quelques commandes.</p>
+</section>
+
+<section class="point-aide" id="simule">
+<h2>Ce qui est simulé</h2>
+<ul>
+  <li><strong>Sorties et entrées de stock</strong>, depuis un article ou depuis la fiche d'un outil, et <strong>comptages d'inventaire</strong> : le stock et les mouvements changent à l'écran et sont <strong>gardés dans ce navigateur</strong>, sur toutes les pages, jusqu'à la remise à zéro.</li>
+  <li><strong>Filtres et recherches</strong> : ils fonctionnent comme sur la version installée.</li>
+  <li><strong>Photos et documents</strong> ajoutés à une fiche : ils s'affichent dans la page, sans être envoyés ni gardés.</li>
+  <li><strong>Matrice produits et machines</strong> : changer l'état d'une case est visible dans la page, sans être gardé.</li>
+  <li><strong>Création et modification</strong> (articles, fournisseurs, outils, produits, fiches, commandes, droits) : le formulaire est vérifié puis un message confirme ce qui se passerait, sans rien garder.</li>
+  <li><strong>Import Excel</strong> et <strong>Paramétrage</strong> : un message explique ce qu'ils font sur la version installée.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="remise-a-zero">
+<h2>Remettre à zéro</h2>
+<p>Le bouton <strong>Remettre à zéro</strong> du bandeau jaune efface les stocks, mouvements et comptages simulés : la démo repart des données d'origine. Ils sont aussi effacés si vous videz les données du site dans votre navigateur.</p>
+</section>
+
+<section class="point-aide" id="mode-emploi">
+<h2>Le mode d'emploi dans la démo</h2>
+<p>Ce mode d'emploi est le même que sur la version installée. Le bouton <span class="exemple-bouton-aide" aria-hidden="true">?</span> et les petits « i » y fonctionnent de la même façon. Les mentions « votre profil l'a » correspondent au profil choisi.</p>
+</section>
+{% endblock %}

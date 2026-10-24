@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}Commandes – Gestion Atelier{% endblock %}
 {% block contenu %}
-<h1>Commandes</h1>
+<h1>Commandes{% info "commandes" "liste" "Le suivi des commandes" %}</h1>
 <p class="sous-titre">Suivi des commandes fournisseurs, de la préparation à l'entrée en stock.</p>
 <div class="grille">
   <div class="tuile"><div class="valeur">{{ nombre_en_cours }}</div><div class="libelle">commandes en cours</div></div>
@@ -25,7 +26,7 @@
   {% if droits.commandes_preparer %}<a class="bouton secondaire" href="{% url 'a_commander' %}">Préparer depuis « À commander »</a>{% endif %}
 </form>
 <div class="tableau"><table>
-  <tr><th>Numéro</th><th>Fournisseur</th><th>Articles</th><th class="nombre">Montant</th><th>Passée le</th><th class="nombre">Délai</th><th>Livraison prévue</th><th>Reçue le</th><th>État</th></tr>
+  <tr><th>Numéro</th><th>Fournisseur</th><th>Articles</th><th class="nombre">Montant</th><th>Passée le</th><th class="nombre">Délai</th><th>Livraison prévue{% info "commandes" "passer" "Livraison prévue" %}</th><th>Reçue le</th><th>État{% info "commandes" "etats" "États des commandes" %}</th></tr>
   {% for commande in commandes %}
   <tr data-etat="{{ commande.etat }}{% if commande.est_en_cours %} en_cours{% endif %}" data-fournisseur="{{ commande.fournisseur_id }}" data-retard="{% if commande.en_retard %}1{% endif %}">
     <td><a href="{{ commande.get_absolute_url }}">{{ commande.numero }}</a>{% if commande.numero_fournisseur %}<br><span class="discret">{{ commande.numero_fournisseur }}</span>{% endif %}</td>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titre %}{% if sujet %}{{ sujet.titre }} – {% endif %}Mode d'emploi – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="mode-emploi">
+  <nav class="sommaire-aide" aria-label="Sommaire du mode d'emploi">
+    <a href="{% url 'aide' %}"{% if not sujet %} aria-current="page"{% endif %}>Vue d'ensemble</a>
+    {% for autre_sujet in sujets %}<a href="{% url 'aide_sujet' autre_sujet.code %}"{% if autre_sujet.code == sujet.code %} aria-current="page"{% endif %}>{{ autre_sujet.titre }}</a>
+    {% endfor %}
+  </nav>
+  <article class="texte-aide">
+    <div class="haut-aide no-print">
+      {% if sujet %}<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'aide' %}">Mode d'emploi</a></li><li aria-current="page">{{ sujet.titre }}</li></ol></nav>{% else %}<span></span>{% endif %}
+      <button type="button" class="lien-bouton" data-action="revenir" hidden>← Revenir à la page précédente</button>
+    </div>
+    {% block texte %}{% endblock %}
+    {% if sujet %}
+    <nav class="pied-aide no-print" aria-label="Sujets voisins">
+      {% if precedent %}<a href="{% url 'aide_sujet' precedent.code %}">← {{ precedent.titre }}</a>{% else %}<a href="{% url 'aide' %}">← Vue d'ensemble</a>{% endif %}
+      {% if suivant %}<a href="{% url 'aide_sujet' suivant.code %}">{{ suivant.titre }} →</a>{% endif %}
+    </nav>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

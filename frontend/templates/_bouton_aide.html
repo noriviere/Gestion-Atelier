@@ -1,0 +1,1 @@
+<a class="bouton-aide" href="{% if sujet_aide_de_la_page %}{% url 'aide_sujet' sujet_aide_de_la_page %}{% else %}{% url 'aide' %}{% endif %}" title="Mode d'emploi{% if sujet_aide_de_la_page %} de cette page{% endif %}" aria-label="Mode d'emploi{% if sujet_aide_de_la_page %} de cette page{% endif %}">?</a>

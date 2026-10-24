@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static aide %}
 {% block titre %}Produits et machines – Gestion Atelier{% endblock %}
 {% block scripts %}<script src="{% static 'js/matrice.js' %}" defer></script>{% endblock %}
 {% block contenu %}
-<h1>Produits et machines</h1>
+<h1>Produits et machines{% info "produits" "matrice" "La matrice produits et machines" %}</h1>
 <p class="sous-titre">Une ligne par produit, une colonne par machine.
-  {% if droits.produits_modifier %}Cliquez une case pour changer son état, ouvrir sa fiche, la créer ou la copier d'une autre machine.{% else %}Cliquez une case programmée pour ouvrir sa fiche.{% endif %}</p>
+  {% if droits.produits_modifier %}Cliquez une case pour changer son état, ouvrir sa fiche, la créer ou la copier d'une autre machine.{% info "produits" "clic-case" "Cliquer sur une case" %}{% else %}Cliquez une case programmée pour ouvrir sa fiche.{% endif %}</p>
 
 <div class="grille grille-compacte">
   <div class="tuile"><div class="valeur">{{ totaux.produits }}</div><div class="libelle">produits</div></div>
@@ -18,7 +18,7 @@
 <form class="filtres" method="get">
   <input type="search" name="q" value="{{ recherche }}" placeholder="Référence, désignation, client" aria-label="Rechercher un produit">
   <select name="vue" aria-label="Produits affichés">{% for code, libelle in vues %}<option value="{{ code }}"{% if code == vue %} selected{% endif %}>{{ libelle }}</option>{% endfor %}</select>
-  <button class="bouton">Afficher</button>
+  <button class="bouton">Afficher</button>{% info "produits" "vues" "Filtrer la matrice" %}
   {% if droits.produits_modifier %}<a class="bouton secondaire" href="{% url 'nouveau_produit' %}">Nouveau produit</a>{% endif %}
 </form>
 
@@ -43,7 +43,7 @@
 </table>
 </div>
 
-<p class="legende">
+<p class="legende">{% info "produits" "etats" "Les états d'une case" %}
   <span class="pastille etat-programme">Programmé</span> le produit tourne sur la machine
   <span class="pastille etat-a_faire">À faire</span> à mettre au point, aucune machine programmée
   <span class="pastille etat-a_securiser">À sécuriser</span> à faire alors que le produit tourne déjà ailleurs

@@ -1,0 +1,137 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Stock et articles</h1>
+<p class="sous-titre">Un article est une pièce d'usure (patin, porte-lame, tige, peigne…) ou un consommable (huile, bandes, meules…). Son stock ne change que par des mouvements : sorties, entrées, comptages d'inventaire et réceptions de commande.</p>
+
+<section class="point-aide" id="liste">
+<h2>La liste du stock</h2>
+{% droit_requis "stock_consulter" %}
+<p>Le menu <strong>Stock</strong> liste tous les articles. Les filtres en haut se combinent :</p>
+<ul>
+  <li>le champ de recherche (référence, numéro de plan, désignation ou emplacement) ;</li>
+  <li>la <strong>catégorie</strong> : pièce d'usure ou consommable ;</li>
+  <li>l'<strong>origine</strong> : article acheté ou design interne ;</li>
+  <li>le <strong>type d'inventaire</strong> ;</li>
+  <li><strong>Sous le mini seulement</strong>, pour ne voir que les articles à commander.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="colonnes">
+<h2>Les colonnes Stock, Mini, Mini cde et En commande</h2>
+<ul>
+  <li><strong>Stock</strong> : la quantité en magasin. Elle s'affiche en rouge quand elle est au stock mini ou en dessous.</li>
+  <li><strong>Mini</strong> : le stock mini.</li>
+  <li><strong>Mini cde</strong> : la quantité mini de commande.</li>
+  <li><strong>En commande</strong> : les quantités déjà commandées et pas encore entrées en stock, avec le numéro de la commande.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="stock-actuel">
+<h2>Stock actuel</h2>
+<p>La quantité en magasin, dans l'unité de l'article. L'étiquette devient rouge, avec la mention « à commander », dès que le stock est inférieur ou égal au stock mini.</p>
+<p>On ne corrige pas le stock en modifiant l'article : il change par une sortie, une entrée, un comptage d'inventaire ou la réception d'une commande. Ainsi, chaque variation est tracée dans les mouvements.</p>
+</section>
+
+<section class="point-aide" id="stock-mini">
+<h2>Stock mini</h2>
+<p>Le seuil d'alerte. Quand le stock est <strong>inférieur ou égal</strong> au stock mini, l'article passe dans « À commander ». Choisissez-le pour couvrir la consommation pendant le délai du fournisseur.</p>
+</section>
+
+<section class="point-aide" id="mini-commande">
+<h2>Quantité mini de commande</h2>
+<p>La quantité que l'on commande au minimum : un conditionnement, un lot imposé par le fournisseur, ou simplement une quantité raisonnable. La quantité suggérée à la commande ramène le stock au niveau du mini, plus cette quantité :</p>
+<p class="formule">quantité suggérée = le plus grand de (mini de commande) et (stock mini − stock + mini de commande)</p>
+<p>Exemple : stock mini 10, mini de commande 20, stock 4 : on commande 10 − 4 + 20 = 26.</p>
+</section>
+
+<section class="point-aide" id="en-commande">
+<h2>En commande et stock prévisionnel</h2>
+<p><strong>En commande</strong> additionne les lignes des commandes en attente, passées ou reçues, c'est-à-dire pas encore entrées en stock. Le <strong>stock prévisionnel</strong> est le stock plus ces quantités.</p>
+</section>
+
+<section class="point-aide" id="reste-a-commander">
+<h2>Reste à commander et « couvert »</h2>
+<p>Pour un article sous le mini, l'application tient compte des commandes en cours :</p>
+<ul>
+  <li><strong>couvert</strong> : le stock prévisionnel dépasse le stock mini, les commandes en cours suffisent ;</li>
+  <li>sinon, le <strong>reste à commander</strong> applique la règle de la quantité suggérée au stock prévisionnel.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="frequence">
+<h2>Fréquence d'inventaire</h2>
+<p>Le nombre de jours entre deux comptages de l'article. Il est <strong>à compter</strong> quand son dernier comptage date de plus que cette fréquence, ou s'il n'a jamais été compté. Voir <a href="{% url 'aide_sujet' 'inventaires' %}">Inventaires et écarts</a>.</p>
+</section>
+
+<section class="point-aide" id="fiche-article">
+<h2>La fiche d'un article</h2>
+<p>Un clic sur une référence ouvre sa fiche. Elle rassemble :</p>
+<ul>
+  <li>le stock et les seuils, la quantité en commande et le dernier inventaire ;</li>
+  <li>les <strong>commandes en cours</strong> qui contiennent l'article ;</li>
+  <li>ses <strong>fournisseurs</strong>, avec la référence à commander, le prix et le délai, et le fournisseur préféré ;</li>
+  <li><strong>Utilisé par</strong> : les outils sur lesquels la pièce est montée et les fiches de production qui la consomment ;</li>
+  <li>l'historique des <strong>mouvements</strong>, avec le stock après chaque mouvement, la personne et le commentaire.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="mouvement">
+<h2>Sortie / entrée de stock</h2>
+{% droit_requis "stock_mouvements" %}
+<ul>
+  <li><strong>Sortie</strong> : vous prenez des pièces en magasin. Le stock baisse.</li>
+  <li><strong>Entrée (réception)</strong> : des pièces arrivent hors commande, ou reviennent en magasin. Le stock monte. Une livraison commandée s'entre plutôt depuis la commande, pour la solder.</li>
+</ul>
+<p>Saisissez la <strong>quantité</strong> (avec une virgule si besoin), un <strong>commentaire</strong> facultatif (« changement de série », « casse »…), puis <strong>Enregistrer</strong>. Le mouvement apparaît aussitôt dans l'historique.</p>
+<p>Pour une pièce montée sur un outil, la sortie peut aussi se faire depuis la fiche de l'outil : voir <a href="{% url 'aide_sujet' 'outillage' %}#sortie-piece">sortir une pièce remplacée</a>.</p>
+</section>
+
+<section class="point-aide" id="formulaire-article">
+<h2>Créer ou modifier un article</h2>
+{% droit_requis "stock_articles" %}
+<p>Bouton <strong>Nouvel article</strong> sur la liste du stock, ou <strong>Modifier l'article</strong> sur sa fiche. Les champs marqués * sont obligatoires.</p>
+<dl class="champs-aide">
+  <dt id="champ-reference">Référence *</dt><dd>Le code interne de l'article, unique. C'est lui qu'on tape dans la recherche.</dd>
+  <dt>Désignation *</dt><dd>Le nom en clair : « Patin taille M ».</dd>
+  <dt>Catégorie</dt><dd>Pièce d'usure (montée sur un outil) ou consommable (huile, bande, meule…).</dd>
+  <dt id="champ-origine">Origine</dt><dd><strong>Article acheté</strong> : commandé sur la référence du fournisseur. <strong>Design interne</strong> : fabriqué sur plan, commandé sur son numéro de plan.</dd>
+  <dt>Numéro de plan</dt><dd>Pour un design interne : il remplace la référence fournisseur dans les commandes.</dd>
+  <dt>Type d'inventaire</dt><dd>Le groupe d'articles comptés ensemble (par exemple un magasin ou une famille). Il donne la feuille de comptage.</dd>
+  <dt>Emplacement</dt><dd>Où trouver l'article en magasin. Les feuilles de comptage sont triées par emplacement.</dd>
+  <dt>Unité</dt><dd>pièce, litre, mètre…</dd>
+  <dt>Stock initial</dt><dd>À la création seulement : la quantité en magasin, enregistrée comme une première entrée.</dd>
+  <dt>Stock mini, mini de commande, fréquence d'inventaire</dt><dd>Voir plus haut : <a href="#stock-mini">stock mini</a>, <a href="#mini-commande">quantité mini de commande</a>, <a href="#frequence">fréquence</a>.</dd>
+</dl>
+</section>
+
+<section class="point-aide" id="fournisseurs-article">
+<h2>Les fournisseurs d'un article</h2>
+{% droit_requis "stock_articles" %}
+<p>Dans le formulaire de l'article, le tableau <strong>Fournisseurs</strong> a une ligne par fournisseur :</p>
+<ul>
+  <li><strong>Réf. fournisseur</strong> : la référence à reporter sur la commande (vide pour un design interne) ;</li>
+  <li><strong>Prix unitaire</strong> et <strong>délai</strong> en jours : ils servent à chiffrer les commandes, les écarts d'inventaire, et à calculer la date de livraison prévue ;</li>
+  <li><strong>Préféré</strong> : un seul par article. C'est chez lui que l'article apparaît dans « À commander » ;</li>
+  <li><strong>Retirer</strong> : enlève le fournisseur de l'article, pas de la liste des fournisseurs.</li>
+</ul>
+<p>Deux lignes vides permettent d'ajouter des fournisseurs ; enregistrez pour en obtenir d'autres. Un fournisseur absent de la liste se crée avec le lien « Créer un fournisseur ».</p>
+</section>
+
+<section class="point-aide" id="import">
+<h2>Importer depuis Excel</h2>
+{% droit_requis "stock_articles" %}
+<ol class="etapes-aide">
+  <li>Partez du <strong>modèle vide</strong>, ou de l'<strong>export</strong> des articles actuels pour une mise à jour en masse. Une ligne par article ; la page d'import explique chaque colonne et signale celles qui sont obligatoires.</li>
+  <li>Une référence déjà connue <strong>modifie</strong> l'article ; une nouvelle référence le <strong>crée</strong>.</li>
+  <li><strong>Voir l'aperçu</strong> : rien n'est encore enregistré. Le bilan compte les créations, les modifications, les lignes sans changement et les lignes en erreur, et le tableau détaille chaque ligne.</li>
+  <li><strong>Importer</strong> enregistre les créations et les modifications. Les lignes en erreur sont ignorées : corrigez le fichier et renvoyez-le.</li>
+</ol>
+</section>
+
+<section class="point-aide" id="export">
+<h2>Exporter vers Excel</h2>
+{% droit_requis "stock_consulter" %}
+<p>Télécharge tous les articles dans un fichier Excel, au même format que l'import : pratique pour travailler sur le tableur puis réimporter.</p>
+</section>
+{% endblock %}

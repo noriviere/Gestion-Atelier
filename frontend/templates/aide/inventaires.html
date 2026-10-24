@@ -1,0 +1,48 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Inventaires et écarts</h1>
+<p class="sous-titre">L'inventaire est tournant : au lieu de tout compter une fois par an, chaque article est recompté selon sa propre fréquence.</p>
+
+<section class="point-aide" id="principe">
+<h2>Le principe</h2>
+<ul>
+  <li>Chaque article appartient à un <strong>type d'inventaire</strong>, par exemple un magasin ou une famille de pièces.</li>
+  <li>Chaque article a sa <strong>fréquence d'inventaire</strong> en jours. Il est <strong>à compter</strong> quand son dernier comptage date de plus que cette fréquence, ou s'il n'a jamais été compté.</li>
+  <li>La page <strong>Inventaires</strong> donne, pour chaque type, le nombre d'articles et le nombre d'articles à compter.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="feuille">
+<h2>La feuille de comptage</h2>
+{% droit_requis "stock_consulter" %}
+<p><strong>Feuille à imprimer</strong> sort la liste des articles à compter du type, triée par emplacement, avec une case vide pour la quantité comptée et une ligne « Compté par ». Le bouton « Tous les articles » imprime tout le type, même ce qui n'est pas dû.</p>
+<p>La feuille ne montre pas le stock théorique, pour que le comptage reste impartial.</p>
+</section>
+
+<section class="point-aide" id="saisie">
+<h2>Saisir un comptage</h2>
+{% droit_requis "stock_comptages" %}
+<p><strong>Saisir un comptage</strong> ouvre le tableau des articles à compter du type. Pour chacun :</p>
+<ul>
+  <li>le <strong>stock théorique</strong>, c'est-à-dire ce que l'application attend ;</li>
+  <li>le <strong>dernier comptage</strong> ;</li>
+  <li>la <strong>quantité comptée</strong> à saisir. Laissez vide ce qui n'a pas été compté ;</li>
+  <li>l'<strong>écart</strong> s'affiche pendant la saisie : compté moins théorique, négatif pour un manquant.</li>
+</ul>
+<p><strong>Enregistrer les comptages</strong> remplace le stock de chaque article compté par la quantité comptée, note la date du comptage et garde l'écart dans les mouvements.</p>
+<p>« Afficher tous les articles » ajoute ceux qui ne sont pas encore dus, pour un comptage complet du type.</p>
+</section>
+
+<section class="point-aide" id="ecarts">
+<h2>Le rapport des écarts</h2>
+{% droit_requis "stock_consulter" %}
+<p>Bouton <strong>Écarts d'inventaire</strong>. En haut : le nombre de comptages, ceux avec un écart, le taux de comptages justes, la valeur des manquants et celle des surplus.</p>
+<ul>
+  <li>Filtres : période (30 jours, 3 mois, 12 mois), type d'inventaire, <strong>Écarts seulement</strong>.</li>
+  <li>Chaque ligne donne la date, le stock théorique, la quantité comptée, l'écart, sa <strong>valeur</strong> au prix du fournisseur préféré, et qui a compté.</li>
+  <li>Le rapport s'imprime.</li>
+</ul>
+<p>Des écarts répétés sur un même article signalent souvent des sorties oubliées : rappelez de les saisir au moment de prendre la pièce.</p>
+</section>
+{% endblock %}

@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "outillage",
     "produits",
     "commandes",
+    "aide",
 ]
 
 MIDDLEWARE = [
@@ -56,6 +57,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "comptes.context_processors.profil",
+                "aide.context_processors.aide",
             ],
         },
     },

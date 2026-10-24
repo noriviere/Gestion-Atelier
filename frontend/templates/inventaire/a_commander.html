@@ -1,13 +1,14 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}À commander – Gestion Atelier{% endblock %}
 {% block contenu %}
-<h1>À commander</h1>
+<h1>À commander{% info "commandes" "a-commander" "La liste À commander" %}</h1>
 <p class="sous-titre">Articles au stock mini ou en dessous, regroupés par fournisseur préféré. Les quantités en commande sont déduites du reste à commander. Imprimé le {% now "d/m/Y" %}.</p>
 <div class="actions"><button class="bouton" type="button" data-action="imprimer">Imprimer</button> <a class="bouton secondaire" href="{% url 'commandes' %}">Commandes en cours</a></div>
 {% for fournisseur, lignes_commande, reste_quelque_chose in commandes_par_fournisseur %}
 <h2>{% if fournisseur %}<a href="{{ fournisseur.get_absolute_url }}">{{ fournisseur }}</a>{% else %}Sans fournisseur préféré{% endif %}{% if fournisseur.telephone %} <span class="discret">· {{ fournisseur.telephone }}</span>{% endif %}</h2>
 <div class="tableau"><table>
-  <tr><th>Article</th><th>Réf. fournisseur ou plan</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>En commande</th><th class="nombre">Reste à commander</th><th class="nombre">Prix unit.</th></tr>
+  <tr><th>Article</th><th>Réf. fournisseur ou plan</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>En commande</th><th class="nombre">Reste à commander{% info "stock" "reste-a-commander" "Reste à commander" %}</th><th class="nombre">Prix unit.</th></tr>
   {% for article, lien_fournisseur in lignes_commande %}
   <tr><td><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> {{ article.designation }}</td>
     <td>{{ lien_fournisseur.reference_a_commander }}</td>
@@ -19,7 +20,7 @@
 </table></div>
 {% if droits.commandes_preparer and fournisseur and reste_quelque_chose %}
 <form method="post" action="{% url 'creer_commande' fournisseur.pk %}" class="actions" data-demo-message="Commande préparée chez {{ fournisseur.nom }} avec les quantités restant à commander. Sur la version installée, elle s'ouvre pour être vérifiée puis passée.">{% csrf_token %}
-  <button class="bouton secondaire" type="submit">Préparer la commande {{ fournisseur.nom }}</button>
+  <button class="bouton secondaire" type="submit">Préparer la commande {{ fournisseur.nom }}</button>{% info "commandes" "preparer" "Préparer une commande" %}
 </form>
 {% endif %}
 {% empty %}<p class="carte">Rien à commander pour l'instant.</p>{% endfor %}

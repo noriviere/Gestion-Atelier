@@ -1,0 +1,69 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Produits et machines</h1>
+<p class="sous-titre">La matrice montre d'un coup d'œil quel produit peut tourner sur quelle machine, et où il faut encore mettre au point ou sécuriser.</p>
+
+<section class="point-aide" id="matrice">
+<h2>La matrice</h2>
+{% droit_requis "produits_consulter" %}
+<p>Le menu <strong>Produits et machines</strong> affiche une ligne par produit et une colonne par machine. La dernière colonne, <strong>Prog.</strong>, compte les machines où le produit est programmé. Un clic sur le code d'une machine ouvre sa page ; un clic sur la référence d'un produit ouvre la page du produit.</p>
+<p>Les tuiles du haut comptent les produits, les couples produit et machine programmés, les produits sur une seule machine (non sécurisés), les produits sans aucune machine, et les cases à faire ou à sécuriser.</p>
+</section>
+
+<section class="point-aide" id="etats">
+<h2>Les états d'une case</h2>
+<ul class="legende-aide">
+  <li><span class="pastille etat-programme">Programmé</span> le produit tourne sur la machine. La case a une fiche de production.</li>
+  <li><span class="pastille etat-a_faire">À faire</span> à mettre au point, alors qu'aucune machine n'est programmée pour ce produit. La case a une fiche, en préparation.</li>
+  <li><span class="pastille etat-a_securiser">À sécuriser</span> une case « à faire » alors que le produit tourne déjà ailleurs : c'est une deuxième machine pour ne pas dépendre d'une seule.</li>
+  <li><span class="pastille etat-non_faisable">Non faisable</span> la machine ne convient pas à ce produit.</li>
+  <li><span class="pastille etat-vide">Vide</span> rien de prévu, mais possible.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="vues">
+<h2>Filtrer la matrice</h2>
+<p>Le champ de recherche porte sur la référence, la désignation et le client. La liste <strong>Tous les produits</strong> propose aussi :</p>
+<ul>
+  <li><strong>Une seule machine programmée</strong> : les produits à sécuriser en priorité ;</li>
+  <li><strong>Aucune machine programmée</strong> : les produits qui ne tournent nulle part ;</li>
+  <li><strong>Avec une machine à faire ou à sécuriser</strong> : le travail de mise au point en cours.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="clic-case">
+<h2>Cliquer sur une case</h2>
+<p>Sans droit de modification, un clic sur une case programmée ou à faire ouvre sa fiche de production.</p>
+{% droit_requis "produits_modifier" %}
+<p>Avec le droit de modification, le clic ouvre une fenêtre :</p>
+<ul>
+  <li><strong>État de la case</strong> : choisir Programmé, À faire, Non faisable ou Vide l'enregistre aussitôt, et la matrice se met à jour ;</li>
+  <li><strong>Ouvrir la fiche</strong> ou <strong>Modifier la fiche</strong> quand la case en a une ;</li>
+  <li><strong>Créer la fiche</strong> quand il n'y en a pas encore ;</li>
+  <li><strong>Partir de la fiche d'une autre machine</strong> : copie ses outils, consommables, paramètres et notes, pour n'ajuster que ce qui change.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="page-produit">
+<h2>La page d'un produit</h2>
+<p>Elle donne le client, les notes générales du produit, et ses <strong>fiches par machine</strong> avec leur état et leur cadence. Les machines non faisables sont rappelées en dessous, puis les documents qui concernent le produit sur toutes ses machines.</p>
+</section>
+
+<section class="point-aide" id="formulaire-produit">
+<h2>Créer ou modifier un produit</h2>
+{% droit_requis "produits_modifier" %}
+<p><strong>Nouveau produit</strong> sur la matrice, ou <strong>Modifier le produit</strong> sur sa page : référence (obligatoire et unique), désignation, client et notes. Les notes du produit s'affichent sur toutes ses fiches. Les cadences, outils et consommables se saisissent ensuite dans la fiche de chaque machine : bouton <strong>Ajouter une machine</strong>.</p>
+</section>
+
+<section class="point-aide" id="dupliquer">
+<h2>Dupliquer un produit</h2>
+{% droit_requis "produits_modifier" %}
+<p>En bas de la page du produit : saisissez la référence et la désignation du nouveau produit puis <strong>Dupliquer</strong>. Le nouveau produit reprend les notes, les documents et toutes les cases de la matrice, fiches comprises. Il ne reste qu'à ajuster ce qui diffère : pratique pour une variante.</p>
+</section>
+
+<section class="point-aide" id="page-machine">
+<h2>La page d'une machine</h2>
+<p>Un clic sur le code d'une machine, en tête de colonne de la matrice, liste les produits qui y ont une fiche, avec leur état et leur cadence, puis les produits non faisables sur cette machine. Les machines elles-mêmes se créent dans le Paramétrage.</p>
+</section>
+{% endblock %}

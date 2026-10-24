@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}Recherche – Gestion Atelier{% endblock %}
 {% block contenu %}
-<h1>Recherche</h1>
+<h1>Recherche{% info "navigation" "recherche" "La recherche" %}</h1>
 <p class="sous-titre">Articles, outils, produits et machines. Plusieurs mots : tous doivent apparaître.</p>
 <form class="formulaire-recherche" method="get" action="{% url 'recherche' %}" role="search">
   <label class="visuellement-cache" for="champ-recherche-page">Rechercher</label>

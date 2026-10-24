@@ -99,8 +99,9 @@ class Command(BaseCommand):
                 # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter,
                 # sauf pour les formulaires de consultation.
                 a_parcourir = attribut in ("href", "src") or (attribut == "action" and lien in FORMULAIRES_DE_CONSULTATION)
-                if a_parcourir and self.est_page(lien) and lien not in vues:
-                    a_voir.append(lien)
+                page = lien.split("#")[0]  # /aide/stock/#stock-mini : la page est /aide/stock/
+                if a_parcourir and self.est_page(page) and page not in vues:
+                    a_voir.append(page)
             cible.write_text(self.reecrire(html, fichier, dossier), encoding="utf-8")
         return len(vues)
 
@@ -124,7 +125,8 @@ class Command(BaseCommand):
                 return f'{attribut}="{relatif(lien.lstrip("/"))}"'
             if not self.est_page(lien) or (attribut == "action" and lien not in FORMULAIRES_DE_CONSULTATION):
                 return f'{attribut}="#"'
-            return f'{attribut}="{relatif(posixpath.join(dossier, chemin_statique(lien)))}"'
+            page, diese, ancre = lien.partition("#")
+            return f'{attribut}="{relatif(posixpath.join(dossier, chemin_statique(page)))}{diese}{ancre}"'
 
         return LIEN.sub(remplacer, html)
 

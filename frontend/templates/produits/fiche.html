@@ -1,14 +1,15 @@
 {% extends "base.html" %}
+{% load aide %}
 {% block titre %}Fiche {{ fabrication.produit.reference }} sur {{ fabrication.machine.code }}{% endblock %}
 {% block contenu %}
 <nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'produits' %}">Produits et machines</a></li><li><a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a></li><li aria-current="page">Fiche sur {{ fabrication.machine.code }}</li></ol></nav>
-<div class="actions"><button class="bouton" type="button" data-action="imprimer">Imprimer la fiche</button>
-  {% if droits.produits_modifier %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier la fiche</a>{% elif droits.produits_reglages %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier les réglages</a>{% endif %}</div>
+<div class="actions"><button class="bouton" type="button" data-action="imprimer">Imprimer la fiche</button>{% info "fiches" "imprimer" "Imprimer la fiche" %}
+  {% if droits.produits_modifier %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier la fiche</a>{% info "fiches" "modifier" "Modifier la fiche" %}{% elif droits.produits_reglages %}<a class="bouton secondaire" href="{% url 'modifier_fiche' fabrication.pk %}">Modifier les réglages</a>{% info "fiches" "reglages" "Modifier les réglages" %}{% endif %}</div>
 {% if droits.produits_modifier and autres_machines %}
 <form method="post" action="{% url 'dupliquer_fiche' fabrication.pk %}" class="filtres no-print" data-demo-message="Fiche copiée : sur la version installée, la copie s'ouvre pour ajuster la cadence et les paramètres.">{% csrf_token %}
   <label for="machine-copie">Copier cette fiche vers</label>
   <select id="machine-copie" name="machine">{% for machine in autres_machines %}<option value="{{ machine.pk }}">{{ machine.code }} – {{ machine.nom }}</option>{% endfor %}</select>
-  <button class="bouton secondaire" type="submit">Copier</button>
+  <button class="bouton secondaire" type="submit">Copier</button>{% info "fiches" "copier" "Copier vers une autre machine" %}
 </form>
 {% endif %}
 <div class="carte">
@@ -18,11 +19,11 @@
       <h1>{{ fabrication.produit.reference }} – {{ fabrication.produit.designation }}</h1>
       <div>Machine : <strong>{{ fabrication.machine }}</strong>{% if fabrication.produit.client %} · Client : {{ fabrication.produit.client }}{% endif %}</div>
     </div>
-    <div class="cadence"><div class="discret">Cadence</div><div class="valeur">{{ fabrication.cadence|floatformat:"-1"|default:"—" }}</div><div class="discret">pièces / heure</div></div>
+    <div class="cadence"><div class="discret">Cadence{% info "fiches" "contenu" "Ce que contient une fiche" %}</div><div class="valeur">{{ fabrication.cadence|floatformat:"-1"|default:"—" }}</div><div class="discret">pièces / heure</div></div>
   </div>
 
   {% if parametres %}
-  <h2>Paramètres de réglage</h2>
+  <h2>Paramètres de réglage{% info "fiches" "contenu" "Paramètres de réglage" %}</h2>
   <div class="grille-parametres">
     {% for parametre in parametres %}<div class="parametre"><div class="discret">{{ parametre.libelle }}</div><div class="valeur-parametre">{{ parametre.valeur }} <span class="unite">{{ parametre.unite }}</span></div></div>{% endfor %}
   </div>
@@ -45,7 +46,7 @@
   </section>
   {% endif %}
 
-  <h2>Outillages</h2>
+  <h2>Outillages{% info "outillage" "arborescence" "Outils et pièces d'usure" %}</h2>
   {% for arbre in arbres %}<ul class="arbre">{% include "outillage/_arbre.html" with noeud=arbre avec_stock=True %}</ul>
   {% empty %}<p class="discret">Aucun outillage renseigné.</p>{% endfor %}
 
@@ -69,7 +70,7 @@
 
   {% if droits.produits_documents_gerer %}
   <form method="post" action="{% url 'ajouter_document' fabrication.pk %}" enctype="multipart/form-data" class="depot-document no-print" data-simulation-locale>{% csrf_token %}
-    <h3>Ajouter une photo ou un document</h3>
+    <h3>Ajouter une photo ou un document{% info "fiches" "documents" "Ajouter une photo ou un document" %}</h3>
     <div class="champs-depot">
       <label class="zone-depot">{{ formulaire_document.fichier }}<span>Glissez un fichier ici ou cliquez pour choisir<br><span class="discret">Photo (JPG, PNG…), PDF, plan, tableur : 20 Mo maximum</span></span></label>
       <div>

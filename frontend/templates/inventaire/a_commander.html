@@ -7,10 +7,10 @@
 {% for fournisseur, lignes_commande, reste_quelque_chose in commandes_par_fournisseur %}
 <h2>{{ fournisseur|default:"Sans fournisseur préféré" }}{% if fournisseur.telephone %} <span class="discret">· {{ fournisseur.telephone }}</span>{% endif %}</h2>
 <div class="tableau"><table>
-  <tr><th>Article</th><th>Réf. fournisseur</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>En commande</th><th class="nombre">Reste à commander</th><th class="nombre">Prix unit.</th></tr>
+  <tr><th>Article</th><th>Réf. fournisseur ou plan</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th>En commande</th><th class="nombre">Reste à commander</th><th class="nombre">Prix unit.</th></tr>
   {% for article, lien_fournisseur in lignes_commande %}
   <tr><td><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> {{ article.designation }}</td>
-    <td>{{ lien_fournisseur.reference_fournisseur }}</td>
+    <td>{{ lien_fournisseur.reference_a_commander }}</td>
     <td class="nombre">{{ article.stock|floatformat:"-2" }}</td><td class="nombre">{{ article.stock_mini|floatformat:"-2" }}</td>
     <td>{% include "inventaire/_en_commande.html" %}{% if not article.lignes_en_cours %}<span class="discret">—</span>{% endif %}</td>
     <td class="nombre">{% if article.couvert_par_commande %}<span class="etiquette ok">couvert</span>{% else %}<strong>{{ article.reste_a_commander|floatformat:"-2" }}</strong> {{ article.unite }}{% endif %}</td>

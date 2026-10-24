@@ -83,10 +83,14 @@ def articles(request):
     if recherche:
         selection = selection.filter(
             Q(reference__icontains=recherche) | Q(designation__icontains=recherche) | Q(emplacement__icontains=recherche)
+            | Q(numero_plan__icontains=recherche)
         )
     categorie = request.GET.get("categorie", "")
     if categorie:
         selection = selection.filter(categorie=categorie)
+    origine = request.GET.get("origine", "")
+    if origine:
+        selection = selection.filter(origine=origine)
     type_inventaire_id = request.GET.get("type", "")
     if type_inventaire_id:
         selection = selection.filter(type_inventaire_id=type_inventaire_id)
@@ -99,6 +103,7 @@ def articles(request):
             "articles": renseigner_commandes_en_cours(selection),
             "types_inventaire": TypeInventaire.objects.all(),
             "categories": Article.CATEGORIES,
+            "origines": Article.ORIGINES,
             "filtres": request.GET,
         },
     )

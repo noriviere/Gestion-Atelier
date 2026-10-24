@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Sum
 from django.urls import reverse
@@ -40,10 +41,18 @@ class Article(models.Model):
     PIECE_USURE = "usure"
     CONSOMMABLE = "conso"
     CATEGORIES = [(PIECE_USURE, "Pièce d'usure"), (CONSOMMABLE, "Consommable")]
+    ACHAT = "achat"
+    DESIGN_INTERNE = "interne"
+    ORIGINES = [(ACHAT, "Article acheté"), (DESIGN_INTERNE, "Design interne")]
 
     reference = models.CharField(max_length=40, unique=True)
     designation = models.CharField(max_length=160)
     categorie = models.CharField(max_length=5, choices=CATEGORIES, default=PIECE_USURE)
+    origine = models.CharField(
+        max_length=7, choices=ORIGINES, default=ACHAT,
+        help_text="Acheté : identifié par la référence du fournisseur. Design interne : identifié par son numéro de plan.",
+    )
+    numero_plan = models.CharField("numéro de plan", max_length=60, blank=True)
     type_inventaire = models.ForeignKey(TypeInventaire, on_delete=models.PROTECT, related_name="articles")
     emplacement = models.CharField(max_length=60, blank=True)
     unite = models.CharField(max_length=20, default="pièce")
@@ -62,6 +71,16 @@ class Article(models.Model):
 
     def get_absolute_url(self):
         return reverse("article", args=[self.pk])
+
+    def clean(self):
+        if self.est_design_interne and not self.numero_plan.strip():
+            raise ValidationError({"numero_plan": "Un article de design interne doit avoir son numéro de plan."})
+        if not self.est_design_interne:
+            self.numero_plan = ""
+
+    @property
+    def est_design_interne(self):
+        return self.origine == self.DESIGN_INTERNE
 
     @property
     def a_commander(self):
@@ -118,7 +137,9 @@ class Article(models.Model):
 class ArticleFournisseur(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="liens_fournisseurs")
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE, related_name="liens_articles")
-    reference_fournisseur = models.CharField(max_length=60, blank=True)
+    reference_fournisseur = models.CharField(
+        max_length=60, blank=True, help_text="Pour un article acheté. Un design interne est commandé sur son numéro de plan."
+    )
     prix = models.DecimalField("prix unitaire (€)", max_digits=10, decimal_places=2, null=True, blank=True)
     delai = models.PositiveIntegerField("délai (jours)", null=True, blank=True)
     prefere = models.BooleanField("fournisseur préféré", default=False)
@@ -136,6 +157,13 @@ class ArticleFournisseur(models.Model):
 
     def __str__(self):
         return f"{self.article.reference} chez {self.fournisseur}"
+
+    @property
+    def reference_a_commander(self):
+        """Ce qui identifie la pièce auprès du fournisseur : le plan pour un design interne, sinon sa référence."""
+        if self.article.est_design_interne:
+            return f"Plan {self.article.numero_plan}"
+        return self.reference_fournisseur
 
 
 class Mouvement(models.Model):

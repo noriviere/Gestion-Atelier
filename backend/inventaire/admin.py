@@ -10,9 +10,10 @@ class ArticleFournisseurInline(admin.TabularInline):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ["reference", "designation", "categorie", "type_inventaire", "stock", "stock_mini", "mini_commande"]
-    list_filter = ["categorie", "type_inventaire"]
-    search_fields = ["reference", "designation"]
+    list_display = ["reference", "designation", "categorie", "origine", "numero_plan", "type_inventaire", "stock", "stock_mini",
+                    "mini_commande"]
+    list_filter = ["categorie", "origine", "type_inventaire"]
+    search_fields = ["reference", "designation", "numero_plan"]
     inlines = [ArticleFournisseurInline]
 
 

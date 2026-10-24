@@ -2,11 +2,12 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
-from inventaire.models import Mouvement
+from inventaire.models import Article, Mouvement
 from inventaire.views import articles_a_compter, lire_quantite, regrouper_par_fournisseur_prefere
 
 from .fabriques import creer_article, creer_type_inventaire, creer_utilisateur, lier_fournisseur
@@ -135,6 +136,31 @@ class FournisseurTests(TestCase):
                          ["Abrasifs", "Usinage Martin", None])
         self.assertEqual(commandes[1][1], [(patin, lien_patin)])
         self.assertEqual(commandes[2][1], [(huile, None)])
+
+
+class OrigineTests(TestCase):
+    def test_design_interne_commande_sur_son_numero_de_plan(self):
+        porte_lame = creer_article("PL-1", origine=Article.DESIGN_INTERNE, numero_plan="PL-1101 ind. B")
+        lien = lier_fournisseur(porte_lame, "Usinage Martin", prefere=True)
+        lien.reference_fournisseur = "UM-PL1"
+        self.assertEqual(lien.reference_a_commander, "Plan PL-1101 ind. B")
+
+    def test_article_achete_commande_sur_la_reference_fournisseur(self):
+        bande = creer_article("BAN-1")
+        lien = lier_fournisseur(bande, "Abrasifs", prefere=True)
+        lien.reference_fournisseur = "AI-B40"
+        self.assertEqual(lien.reference_a_commander, "AI-B40")
+
+    def test_design_interne_sans_plan_refuse(self):
+        article = creer_article("PL-2", origine=Article.DESIGN_INTERNE)
+        with self.assertRaises(ValidationError) as erreur:
+            article.full_clean()
+        self.assertIn("numero_plan", erreur.exception.message_dict)
+
+    def test_article_achete_n_a_pas_de_plan(self):
+        article = creer_article("BAN-2", numero_plan="oubli")
+        article.full_clean()
+        self.assertEqual(article.numero_plan, "")
 
 
 class LectureQuantiteTests(TestCase):

@@ -72,6 +72,8 @@ class Command(BaseCommand):
             articles[reference] = Article.objects.create(
                 reference=reference, designation=designation, categorie=categorie,
                 type_inventaire=types_inventaire[type_inventaire], emplacement=emplacement, unite=unite,
+                origine=Article.DESIGN_INTERNE if reference in donnees.PLANS else Article.ACHAT,
+                numero_plan=donnees.PLANS.get(reference, ""),
                 stock=stock, stock_mini=stock_mini, mini_commande=mini_commande,
                 frequence_inventaire=frequence_jours,
                 dernier_inventaire=aujourdhui - timedelta(days=inventorie_il_y_a_jours),

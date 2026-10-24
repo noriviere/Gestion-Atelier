@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titre %}Commandes – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Commandes</h1>
+<p class="sous-titre">Suivi des commandes fournisseurs, de la préparation à l'entrée en stock.</p>
+<div class="grille">
+  <div class="tuile"><div class="valeur">{{ nombre_en_cours }}</div><div class="libelle">commandes en cours</div></div>
+  <div class="tuile {% if nombre_en_retard %}alerte{% endif %}"><div class="valeur">{{ nombre_en_retard }}</div><div class="libelle">en retard</div></div>
+  <div class="tuile {% if nombre_a_receptionner %}attention{% endif %}"><div class="valeur">{{ nombre_a_receptionner }}</div><div class="libelle">reçues, à réceptionner</div></div>
+  <div class="tuile"><div class="valeur">{{ montant_en_cours|floatformat:"0g" }} €</div><div class="libelle">montant en cours</div></div>
+</div>
+
+<form class="filtres" method="get" data-filtrer-au-chargement>
+  <input type="search" name="q" value="{{ filtres.q }}" placeholder="Numéro, article">
+  <select name="etat">
+    <option value="en_cours" {% if etat_choisi == "en_cours" %}selected{% endif %}>En cours</option>
+    {% for code_etat, nom_etat in etats %}<option value="{{ code_etat }}" {% if etat_choisi == code_etat %}selected{% endif %}>{{ nom_etat }}</option>{% endfor %}
+    <option value="" {% if not etat_choisi %}selected{% endif %}>Toutes</option>
+  </select>
+  <select name="fournisseur"><option value="">Tous fournisseurs</option>
+    {% for fournisseur in fournisseurs %}<option value="{{ fournisseur.pk }}" {% if filtres.fournisseur == fournisseur.pk|stringformat:"s" %}selected{% endif %}>{{ fournisseur.nom }}</option>{% endfor %}
+  </select>
+  <label><input type="checkbox" name="retard" value="1" {% if filtres.retard %}checked{% endif %}> En retard seulement</label>
+  <button class="bouton" type="submit">Filtrer</button>
+  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'a_commander' %}">Préparer depuis « À commander »</a>{% endif %}
+</form>
+<div class="tableau"><table>
+  <tr><th>Numéro</th><th>Fournisseur</th><th>Articles</th><th class="nombre">Montant</th><th>Passée le</th><th class="nombre">Délai</th><th>Livraison prévue</th><th>Reçue le</th><th>État</th></tr>
+  {% for commande in commandes %}
+  <tr data-etat="{{ commande.etat }}{% if commande.est_en_cours %} en_cours{% endif %}" data-fournisseur="{{ commande.fournisseur_id }}" data-retard="{% if commande.en_retard %}1{% endif %}">
+    <td><a href="{{ commande.get_absolute_url }}">{{ commande.numero }}</a>{% if commande.numero_fournisseur %}<br><span class="discret">{{ commande.numero_fournisseur }}</span>{% endif %}</td>
+    <td>{{ commande.fournisseur }}</td>
+    <td>{% for ligne in commande.lignes.all %}{{ ligne.article.reference }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+    <td class="nombre">{{ commande.montant_total|floatformat:"2g" }} €</td>
+    <td>{{ commande.date_passage|date:"d/m/Y"|default:"—" }}</td>
+    <td class="nombre">{% if commande.delai_jours is not None %}{{ commande.delai_jours }} j{% endif %}</td>
+    <td>{{ commande.date_prevue|date:"d/m/Y"|default:"—" }}</td>
+    <td>{{ commande.date_reception|date:"d/m/Y"|default:"—" }}{% if commande.retard_a_la_livraison %} <span class="discret">(+{{ commande.retard_a_la_livraison }} j)</span>{% endif %}</td>
+    <td>{% include "commandes/_etat.html" %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="9">Aucune commande.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

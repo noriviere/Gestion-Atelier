@@ -33,9 +33,14 @@ LIEN = re.compile(r'(href|src|action)="(/[^"]*)"')
 
 
 def chemin_statique(url):
-    """/articles/?alerte=1 -> articles/alerte-1/index.html (chemin relatif au dossier du profil)."""
+    """/articles/?alerte=1 -> articles/alerte-1/index.html (chemin relatif au dossier du profil).
+
+    Un fichier à télécharger garde son nom : /articles/export.xlsx -> articles/export.xlsx.
+    """
     parties = urlsplit(url)
     chemin = parties.path.strip("/")
+    if posixpath.splitext(chemin)[1] and not parties.query:
+        return chemin
     for cle, valeur in parse_qsl(parties.query):
         chemin = posixpath.join(chemin, re.sub(r"[^\w-]", "_", f"{cle}-{valeur}"))
     return posixpath.join(chemin, "index.html") if chemin else "index.html"
@@ -76,14 +81,17 @@ class Command(BaseCommand):
             if reponse.status_code != 200:
                 self.stderr.write(f"{dossier}{url} : {reponse.status_code}")
                 continue
-            html = reponse.content.decode()
             fichier = posixpath.join(dossier, chemin_statique(url))
+            cible = sortie / fichier
+            cible.parent.mkdir(parents=True, exist_ok=True)
+            if not reponse["Content-Type"].startswith("text/html"):
+                cible.write_bytes(reponse.content)
+                continue
+            html = reponse.content.decode()
             for attribut, lien in LIEN.findall(html):
                 # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter.
                 if attribut != "action" and self.est_page(lien) and lien not in vues:
                     a_voir.append(lien)
-            cible = sortie / fichier
-            cible.parent.mkdir(parents=True, exist_ok=True)
             cible.write_text(self.reecrire(html, fichier, dossier), encoding="utf-8")
         return len(vues)
 

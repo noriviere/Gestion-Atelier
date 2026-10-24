@@ -129,6 +129,7 @@ class ExportStatiqueTests(TestCase):
         self.assertEqual(chemin_statique("/"), "index.html")
         self.assertEqual(chemin_statique("/articles/12/"), "articles/12/index.html")
         self.assertEqual(chemin_statique("/inventaires/3/?tous=1"), "inventaires/3/tous-1/index.html")
+        self.assertEqual(chemin_statique("/articles/export.xlsx"), "articles/export.xlsx")
 
     def test_export_un_jeu_de_pages_par_profil(self):
         with tempfile.TemporaryDirectory() as dossier:
@@ -141,3 +142,6 @@ class ExportStatiqueTests(TestCase):
             self.assertIn('href="../static/css/atelier.css"', accueil_operateur)
             self.assertNotIn('href="/', accueil_operateur)
             self.assertIn("Paramétrage", (racine / "methode" / "index.html").read_text())
+            self.assertTrue((racine / "operateur" / "articles" / "export.xlsx").read_bytes().startswith(b"PK"))
+            self.assertIn("Enregistrer les comptages", (racine / "intendant" / "inventaires" / str(TypeInventaire.objects.first().pk) / "index.html").read_text())
+            self.assertTrue((racine / "methode" / "articles" / "nouveau" / "index.html").exists())

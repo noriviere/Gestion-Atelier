@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, F, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -16,6 +17,7 @@ from comptes.decorators import modification_requise
 from outillage.models import Outil
 from produits.models import Produit
 
+from . import excel
 from .forms import ArticleForm, FournisseurForm, LiensFournisseursFormSet, MouvementForm
 from .models import Article, Fournisseur, Mouvement, TypeInventaire
 
@@ -346,3 +348,56 @@ def fournisseur_formulaire(request, pk=None):
         "inventaire/fournisseur_formulaire.html",
         {"fournisseur": fournisseur if pk else None, "form": formulaire},
     )
+
+
+def reponse_excel(contenu, nom_fichier):
+    reponse = HttpResponse(contenu, content_type=excel.TYPE_XLSX)
+    reponse["Content-Disposition"] = f'attachment; filename="{nom_fichier}"'
+    return reponse
+
+
+def export_articles(request):
+    articles = Article.objects.select_related("type_inventaire").prefetch_related("liens_fournisseurs__fournisseur")
+    nom_fichier = f"articles-{timezone.localdate():%Y-%m-%d}.xlsx"
+    return reponse_excel(excel.exporter_articles(articles), nom_fichier)
+
+
+def modele_import(request):
+    return reponse_excel(excel.exporter_articles([]), "modele-import-articles.xlsx")
+
+
+CLE_SESSION_IMPORT = "import_articles"
+
+
+@modification_requise
+def import_articles(request):
+    """Étape 1 : envoi du fichier et aperçu, sans rien enregistrer. Étape 2 : confirmation de l'aperçu."""
+    if request.method == "POST" and request.POST.get("etape") == "confirmer":
+        lignes_lues = request.session.pop(CLE_SESSION_IMPORT, None)
+        if lignes_lues is None:
+            messages.error(request, "Aperçu expiré : renvoyez le fichier.")
+            return redirect("import_articles")
+        # Nouvelle analyse : les articles ont pu changer depuis l'aperçu.
+        nombre_crees, nombre_modifies = excel.appliquer_import(excel.analyser_import(lignes_lues), request.user)
+        messages.success(request, f"Import terminé : {nombre_crees} article(s) créé(s), {nombre_modifies} modifié(s).")
+        return redirect("articles")
+
+    analyse = None
+    if request.method == "POST":
+        fichier = request.FILES.get("fichier")
+        if fichier is None:
+            messages.error(request, "Choisissez un fichier Excel (.xlsx).")
+        else:
+            try:
+                lignes_lues = excel.lire_classeur(fichier)
+            except excel.FichierIllisible as erreur:
+                messages.error(request, str(erreur))
+            else:
+                request.session[CLE_SESSION_IMPORT] = lignes_lues
+                analyse = excel.analyser_import(lignes_lues)
+    bilan = None
+    if analyse is not None:
+        bilan = {action: sum(1 for ligne in analyse if ligne.action == action)
+                 for action in ("creation", "modification", "inchange", "erreur")}
+    return render(request, "inventaire/import_articles.html",
+                  {"analyse": analyse, "bilan": bilan, "colonnes": excel.COLONNES})

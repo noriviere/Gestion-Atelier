@@ -91,9 +91,9 @@ h2 { font-size: 18px; margin: 28px 0 10px; }
 /* 3. En-tête et navigation ------------------------------------------------ */
 header.barre { background: var(--barre); color: #fff; display: flex; align-items: center; gap: 16px; padding: 0 24px; flex-wrap: wrap; position: sticky; top: 0; z-index: 10; }
 header.barre .logo { font-weight: 700; font-size: 17px; padding: 14px 0; color: #fff; }
-header.barre nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
-header.barre nav a { position: relative; color: var(--barre-texte); padding: 16px 9px; font-size: 14px; white-space: nowrap; transition: color var(--duree) ease; }
-header.barre nav a::after { content: ""; position: absolute; left: 9px; right: 9px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: #6ea1ff; transform: scaleX(0); transition: transform 250ms var(--courbe); }
+header.barre nav { display: flex; gap: 2px; flex: 1; flex-wrap: wrap; }
+header.barre nav a { position: relative; color: var(--barre-texte); padding: 16px 7px; font-size: 14px; white-space: nowrap; transition: color var(--duree) ease; }
+header.barre nav a::after { content: ""; position: absolute; left: 7px; right: 7px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: #6ea1ff; transform: scaleX(0); transition: transform 250ms var(--courbe); }
 header.barre nav a:hover, header.barre nav a.actif { color: #fff; text-decoration: none; }
 header.barre nav a:hover::after, header.barre nav a.actif::after { transform: scaleX(1); }
 header.barre .utilisateur { font-size: 13px; color: var(--barre-texte); display: flex; gap: 12px; align-items: center; }

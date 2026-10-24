@@ -16,7 +16,9 @@
   </select>
   <label><input type="checkbox" name="alerte" value="1" {% if filtres.alerte %}checked{% endif %}> Sous le mini seulement</label>
   <button class="bouton" type="submit">Filtrer</button>
-  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'article_nouveau' %}">Nouvel article</a>{% endif %}
+  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'article_nouveau' %}">Nouvel article</a>
+  <a class="bouton secondaire" href="{% url 'import_articles' %}">Importer depuis Excel</a>{% endif %}
+  <a class="bouton secondaire" href="{% url 'export_articles' %}">Exporter vers Excel</a>
 </form>
 <div class="tableau"><table>
   <tr><th>Référence</th><th>Désignation</th><th>Catégorie</th><th>Type d'inventaire</th><th>Emplacement</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th class="nombre">Mini cde</th><th>En commande</th></tr>

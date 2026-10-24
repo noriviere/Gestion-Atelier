@@ -34,6 +34,9 @@ class ArticleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             del self.fields["stock_initial"]
+            # 4 plutôt que 4.00 dans les champs de quantité.
+            for nom_champ in ("stock_mini", "mini_commande"):
+                self.initial[nom_champ] = getattr(self.instance, nom_champ).normalize()
 
 
 class LienFournisseurFormSetBase(forms.BaseInlineFormSet):

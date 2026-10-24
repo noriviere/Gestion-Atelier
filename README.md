@@ -1,14 +1,18 @@
 # Gestion Atelier
 
 Application web de gestion des données d'atelier : stock de pièces d'usure et de consommables,
-arborescence d'outillage, fiches produit par machine, avec trois niveaux d'accès.
+arborescence d'outillage, fiches produit par machine, avec quatre niveaux d'accès.
 
 Cette version est une **démo** avec des données fictives, destinée à présenter le projet.
 
 ## Ce que montre la démo
 
 - **Stock** : articles avec type d'inventaire, emplacement, stock mini et quantité mini de commande,
-  plusieurs fournisseurs dont un préféré, sorties et entrées de stock.
+  plusieurs fournisseurs dont un préféré, sorties et entrées de stock. Chaque article est soit acheté
+  (commandé sur la référence du fournisseur), soit un design interne (commandé sur son numéro de plan).
+  Création et modification des articles et des fournisseurs dans l'application (profils Admin et Méthode).
+- **Import et export Excel** : export de tous les articles, modèle vide, import avec aperçu des créations,
+  modifications et erreurs avant tout enregistrement.
 - **À commander** : articles sous le stock mini, regroupés par fournisseur préféré, imprimable.
 - **Commandes** : suivi des commandes fournisseurs (numéro, n° fournisseur, prix, délai, dates,
   état en attente / passée / reçue / réceptionnée / annulée), retards signalés, filtres par état,
@@ -16,12 +20,15 @@ Cette version est une **démo** avec des données fictives, destinée à présen
   livrées entrent en stock (livraison partielle possible). Dans le stock, la fiche article, l'accueil
   et « À commander », un article bas en stock affiche ses commandes en cours.
 - **Inventaires tournants** : fréquence de comptage par article, feuille de comptage imprimable
-  par type d'inventaire, saisie des quantités comptées qui corrige le stock.
+  par type d'inventaire, saisie des quantités comptées qui corrige le stock (profil Intendant).
+  L'écart avec le stock théorique s'affiche pendant la saisie et dans le rapport des écarts
+  (par période et type, chiffré au prix du fournisseur préféré).
 - **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
 - **Produits** : un produit par machine avec cadence, outillages, consommables et notes,
   affiché sous forme de fiche imprimable.
-- **Profils** : `Admin`, `Méthode et management` (paramétrage via le menu Paramétrage),
-  `Régleur et opérateur` (consultation, mouvements de stock, comptages).
+- **Profils** : `Admin`, `Méthode et management` (paramétrage, articles et fournisseurs),
+  `Intendant` (comptages d'inventaire, mouvements de stock), `Régleur et opérateur` (consultation,
+  mouvements de stock).
 
 Comptes de démonstration, tous avec le mot de passe `demo` :
 `admin`, `methode`, `chef`, `regleur`, `intendante`, `operateur`.
@@ -31,7 +38,7 @@ Comptes de démonstration, tous avec le mot de passe `demo` :
 Une version statique de la démo est publiée sur GitHub Pages :
 https://noriviere.github.io/Gestion-Atelier/
 
-On y choisit un profil (Admin, Méthode et management, Régleur et opérateur) pour voir l'application
+On y choisit un profil (Admin, Méthode et management, Intendant, Régleur et opérateur) pour voir l'application
 avec ses droits. Les sorties de stock, comptages et filtres sont simulés dans le navigateur :
 rien n'est enregistré. Le site est régénéré automatiquement à chaque modification de `main`
 (workflow `.github/workflows/pages.yml`, commande `python manage.py exporter_statique`).

@@ -184,7 +184,7 @@ html[data-theme="sombre"] .bouton:not(.secondaire) { color: #0b0e13; }
 .champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 18px; }
 .champ { margin: 0 0 10px; }
 .champ label { display: block; font-weight: 600; margin-bottom: 4px; }
-.champ input, .champ select, .champ textarea { width: 100%; }
+.champ input:not([type="checkbox"]):not([type="radio"]), .champ select, .champ textarea { width: 100%; }
 .champ-large { grid-column: 1 / -1; }
 .errorlist { list-style: none; margin: 4px 0 0; padding: 0; color: var(--alerte); font-size: 13px; }
 table.pieces-outil select { width: 100%; }

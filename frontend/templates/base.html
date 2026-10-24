@@ -1,0 +1,43 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titre %}Gestion Atelier{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/atelier.css' %}">
+  {# Chargé avant l'affichage pour appliquer le thème choisi sans clignotement. #}
+  <script src="{% static 'js/theme.js' %}"></script>
+  <script src="{% static 'js/atelier.js' %}" defer></script>
+  {% if demo_statique %}<script src="{% static 'js/demo.js' %}" defer></script>{% endif %}
+</head>
+<body>
+{% if demo_statique %}<div class="bandeau-demo">Démo en ligne avec des données fictives : les saisies sont simulées et rien n'est enregistré. <a href="/__profils__">Changer de profil</a></div>{% endif %}
+{% if user.is_authenticated %}
+<header class="barre">
+  <a class="logo" href="{% url 'accueil' %}">Gestion Atelier</a>
+  {% with page_courante=request.resolver_match.url_name %}
+  <nav>
+    <a href="{% url 'accueil' %}" class="{% if page_courante == 'accueil' %}actif{% endif %}">Accueil</a>
+    <a href="{% url 'articles' %}" class="{% if page_courante == 'articles' or page_courante == 'article' %}actif{% endif %}">Stock</a>
+    <a href="{% url 'a_commander' %}" class="{% if page_courante == 'a_commander' %}actif{% endif %}">À commander</a>
+    <a href="{% url 'inventaires' %}" class="{% if page_courante == 'inventaires' or page_courante == 'comptage' %}actif{% endif %}">Inventaires</a>
+    <a href="{% url 'outils' %}" class="{% if page_courante == 'outils' or page_courante == 'outil' %}actif{% endif %}">Outillage</a>
+    <a href="{% url 'produits' %}" class="{% if page_courante == 'produits' or page_courante == 'produit' or page_courante == 'fiche' %}actif{% endif %}">Produits</a>
+    <a href="{% url 'machines' %}" class="{% if page_courante == 'machines' or page_courante == 'machine' %}actif{% endif %}">Machines</a>
+    {% if peut_modifier %}<a href="{% if demo_statique %}#{% else %}{% url 'admin:index' %}{% endif %}" data-demo-parametrage>Paramétrage</a>{% endif %}
+  </nav>
+  {% endwith %}
+  <div class="utilisateur">
+    <span class="nom-utilisateur">{{ user.get_full_name|default:user.username }}</span>
+    <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>
+    {% include "_bouton_theme.html" %}
+    {% if demo_statique %}<a class="bouton-sortie" href="/__profils__">Profils</a>{% else %}<form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit">Déconnexion</button></form>{% endif %}
+  </div>
+</header>
+{% endif %}
+<main>
+  {% if messages %}<ul class="messages">{% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}</ul>{% endif %}
+  {% block contenu %}{% endblock %}
+</main>
+</body>
+</html>

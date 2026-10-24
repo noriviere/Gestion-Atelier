@@ -1,0 +1,12 @@
+<li>
+  <a class="noeud-outil" href="{{ noeud.outil.get_absolute_url }}">{{ noeud.outil.code }} – {{ noeud.outil.nom }}</a>
+  {% if noeud.pieces or noeud.sous_ensembles %}
+  <ul>
+    {% for piece_montee in noeud.pieces %}
+    <li class="noeud-piece">{{ piece_montee.quantite }} × <a href="{{ piece_montee.article.get_absolute_url }}">{{ piece_montee.article.reference }}</a> {{ piece_montee.article.designation }}
+      {% if avec_stock %}{% if piece_montee.article.a_commander %}<span class="etiquette alerte">stock {{ piece_montee.article.stock|floatformat:"-2" }}</span>{% else %}<span class="etiquette ok">stock {{ piece_montee.article.stock|floatformat:"-2" }}</span>{% endif %}{% endif %}</li>
+    {% endfor %}
+    {% for sous_ensemble in noeud.sous_ensembles %}{% include "outillage/_arbre.html" with noeud=sous_ensemble %}{% endfor %}
+  </ul>
+  {% endif %}
+</li>

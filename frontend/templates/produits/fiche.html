@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titre %}Fiche {{ fabrication.produit.reference }} sur {{ fabrication.machine.code }}{% endblock %}
+{% block contenu %}
+<div class="fil no-print"><a href="{% url 'produits' %}">Produits</a> › <a href="{{ fabrication.produit.get_absolute_url }}">{{ fabrication.produit.reference }}</a> › {{ fabrication.machine.code }}</div>
+<div class="actions"><button class="bouton" type="button" data-action="imprimer">Imprimer la fiche</button>
+  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'admin:produits_produitmachine_change' fabrication.pk %}">Modifier la fiche</a>{% endif %}</div>
+<div class="carte">
+  <div class="fiche-entete">
+    <div>
+      <div class="discret">FICHE PRODUCTION</div>
+      <h1>{{ fabrication.produit.reference }} – {{ fabrication.produit.designation }}</h1>
+      <div>Machine : <strong>{{ fabrication.machine }}</strong>{% if fabrication.produit.client %} · Client : {{ fabrication.produit.client }}{% endif %}</div>
+    </div>
+    <div class="cadence"><div class="discret">Cadence</div><div class="valeur">{{ fabrication.cadence|floatformat:"-1"|default:"—" }}</div><div class="discret">pièces / heure</div></div>
+  </div>
+
+  {% if fabrication.notes or fabrication.produit.notes %}
+  <h2>Notes de production</h2>
+  <div class="notes">{% if fabrication.notes %}{{ fabrication.notes }}{% endif %}{% if fabrication.notes and fabrication.produit.notes %}
+
+{% endif %}{% if fabrication.produit.notes %}{{ fabrication.produit.notes }}{% endif %}</div>
+  {% endif %}
+
+  <h2>Outillages</h2>
+  {% for arbre in arbres %}<ul class="arbre">{% include "outillage/_arbre.html" with noeud=arbre avec_stock=True %}</ul>
+  {% empty %}<p class="discret">Aucun outillage renseigné.</p>{% endfor %}
+
+  <h2>Consommables</h2>
+  <table>
+    <tr><th>Article</th><th>Quantité / fréquence</th><th class="nombre">Stock</th><th>Emplacement</th></tr>
+    {% for consommation in consommations %}
+    <tr><td><a href="{{ consommation.article.get_absolute_url }}">{{ consommation.article.reference }}</a> {{ consommation.article.designation }}</td><td>{{ consommation.quantite }}</td>
+      <td class="nombre">{% if consommation.article.a_commander %}<span class="etiquette alerte">{{ consommation.article.stock|floatformat:"-2" }}</span>{% else %}{{ consommation.article.stock|floatformat:"-2" }}{% endif %} {{ consommation.article.unite }}</td>
+      <td>{{ consommation.article.emplacement }}</td></tr>
+    {% empty %}<tr><td colspan="4">Aucun consommable renseigné.</td></tr>{% endfor %}
+  </table>
+  <p class="discret impression-seule">Imprimé le {% now "d/m/Y à H:i" %} depuis Gestion Atelier.</p>
+</div>
+{% endblock %}

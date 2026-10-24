@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titre %}Inventaires – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Inventaires tournants</h1>
+<p class="sous-titre">Chaque article a un type d'inventaire et sa propre fréquence de comptage.</p>
+<div class="tableau"><table>
+  <tr><th>Type d'inventaire</th><th class="nombre">Articles</th><th class="nombre">À compter</th><th></th></tr>
+  {% for resume in resumes_par_type %}
+  <tr><td><strong>{{ resume.type_inventaire.nom }}</strong><br><span class="discret">{{ resume.type_inventaire.description }}</span></td>
+    <td class="nombre">{{ resume.nombre_articles }}</td>
+    <td class="nombre">{% if resume.nombre_a_compter %}<span class="etiquette attention">{{ resume.nombre_a_compter }}</span>{% else %}<span class="etiquette ok">0</span>{% endif %}</td>
+    <td><a href="{% url 'comptage' resume.type_inventaire.pk %}">Saisir un comptage</a> · <a href="{% url 'feuille_comptage' resume.type_inventaire.pk %}">Feuille à imprimer</a></td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

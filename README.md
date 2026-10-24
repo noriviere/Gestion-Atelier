@@ -68,16 +68,29 @@ simples. Après modification, `python manage.py charger_demo` efface et recharge
 ## Tests
 
 ```bash
-python manage.py test tests
+python manage.py test
 ```
+
+Les tests sont dans `backend/tests/` : règles de stock et d'inventaire, outillage et fiches produit,
+profils et droits, pages et export statique.
 
 ## Organisation du code
 
-| Dossier | Contenu |
-| --- | --- |
-| `comptes/` | Profils d'accès, connexion obligatoire, commande `charger_demo` |
-| `inventaire/` | Fournisseurs, articles, mouvements, inventaires |
-| `outillage/` | Outils, sous-ensembles et pièces montées |
-| `produits/` | Machines, produits, fiches produit sur machine |
-| `demo/` | Données fictives |
-| `templates/`, `static/` | Gabarit commun et feuille de style |
+```
+backend/                 Code Python (Django)
+  config/                Réglages, adresses, lanceur de tests
+  comptes/               Profils d'accès, connexion obligatoire, commandes charger_demo et exporter_statique
+  inventaire/            Fournisseurs, articles, mouvements, inventaires
+  outillage/             Outils, sous-ensembles et pièces montées
+  produits/              Machines, produits, fiches produit sur machine
+  demo/                  Données fictives de la démo
+  tests/                 Tests unitaires
+frontend/                Interface
+  templates/             Gabarits HTML, un dossier par module
+  static/css/            Feuille de style (thème clair et sombre, animations)
+  static/js/             JavaScript : thème, impression, simulation de la démo en ligne
+manage.py                Point d'entrée Django (à la racine)
+```
+
+Le thème clair ou sombre suit le réglage de l'ordinateur ; le bouton en haut à droite permet de le changer,
+et le choix est mémorisé dans le navigateur.

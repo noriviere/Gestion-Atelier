@@ -1,0 +1,51 @@
+"""Les trois niveaux d'accès et leurs droits."""
+from django.contrib.auth.models import AnonymousUser, Group
+from django.test import TestCase
+
+from comptes import roles
+
+from .fabriques import creer_utilisateur
+
+
+class ProfilsTests(TestCase):
+    def test_superutilisateur_est_admin(self):
+        administrateur = creer_utilisateur("admin", superutilisateur=True)
+        self.assertEqual(roles.profil(administrateur), roles.ADMIN)
+        self.assertTrue(roles.peut_modifier(administrateur))
+
+    def test_methode_peut_modifier_et_mouvementer(self):
+        methodiste = creer_utilisateur("methode", roles.METHODE)
+        self.assertEqual(roles.profil(methodiste), roles.METHODE)
+        self.assertTrue(roles.peut_modifier(methodiste))
+        self.assertTrue(roles.peut_mouvementer(methodiste))
+
+    def test_atelier_mouvemente_sans_modifier(self):
+        operateur = creer_utilisateur("operateur", roles.ATELIER)
+        self.assertFalse(roles.peut_modifier(operateur))
+        self.assertTrue(roles.peut_mouvementer(operateur))
+
+    def test_le_profil_le_plus_eleve_l_emporte(self):
+        chef = creer_utilisateur("chef", roles.ATELIER)
+        chef.groups.add(Group.objects.get(name=roles.METHODE))
+        self.assertEqual(roles.profil(chef), roles.METHODE)
+
+    def test_sans_groupe_ni_connexion_aucun_droit(self):
+        sans_profil = creer_utilisateur("inconnu")
+        self.assertIsNone(roles.profil(sans_profil))
+        self.assertFalse(roles.peut_mouvementer(sans_profil))
+        self.assertIsNone(roles.profil(AnonymousUser()))
+
+
+class PermissionsDesGroupesTests(TestCase):
+    def test_atelier_ne_peut_que_consulter_et_saisir_des_mouvements(self):
+        operateur = creer_utilisateur("operateur", roles.ATELIER)
+        self.assertTrue(operateur.has_perm("inventaire.view_article"))
+        self.assertTrue(operateur.has_perm("inventaire.add_mouvement"))
+        self.assertFalse(operateur.has_perm("inventaire.change_article"))
+        self.assertFalse(operateur.has_perm("produits.delete_produit"))
+
+    def test_methode_a_tous_les_droits_metier_mais_pas_sur_les_comptes(self):
+        methodiste = creer_utilisateur("methode", roles.METHODE)
+        self.assertTrue(methodiste.has_perm("outillage.change_outil"))
+        self.assertTrue(methodiste.has_perm("produits.delete_produitmachine"))
+        self.assertFalse(methodiste.has_perm("auth.change_user"))

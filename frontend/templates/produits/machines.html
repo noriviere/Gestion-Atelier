@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block titre %}Machines – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Machines</h1>
+<p class="sous-titre">Les produits fabriqués sur chaque machine.</p>
+<div class="grille">
+  {% for machine in machines %}
+  <a class="tuile" href="{{ machine.get_absolute_url }}"><div class="code-machine">{{ machine.code }}</div><div>{{ machine.nom }}</div><div class="libelle">{{ machine.fabrications.count }} produit{{ machine.fabrications.count|pluralize }}</div></a>
+  {% empty %}<p>Aucune machine.</p>{% endfor %}
+</div>
+{% endblock %}

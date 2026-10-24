@@ -6,4 +6,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN DJANGO_DEBUG=0 python manage.py collectstatic --noinput
 EXPOSE 8000
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi --bind 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --chdir backend config.wsgi --bind 0.0.0.0:8000"]

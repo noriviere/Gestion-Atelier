@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titre %}Stock – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Stock</h1>
+<p class="sous-titre">Pièces d'usure et consommables.</p>
+<form class="filtres" method="get">
+  <input type="search" name="q" value="{{ filtres.q }}" placeholder="Référence, désignation, emplacement">
+  <select name="categorie"><option value="">Toutes catégories</option>
+    {% for code_categorie, nom_categorie in categories %}<option value="{{ code_categorie }}" {% if filtres.categorie == code_categorie %}selected{% endif %}>{{ nom_categorie }}</option>{% endfor %}
+  </select>
+  <select name="type"><option value="">Tous types d'inventaire</option>
+    {% for type_inventaire in types_inventaire %}<option value="{{ type_inventaire.pk }}" {% if filtres.type == type_inventaire.pk|stringformat:"s" %}selected{% endif %}>{{ type_inventaire.nom }}</option>{% endfor %}
+  </select>
+  <label><input type="checkbox" name="alerte" value="1" {% if filtres.alerte %}checked{% endif %}> Sous le mini seulement</label>
+  <button class="bouton" type="submit">Filtrer</button>
+  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'admin:inventaire_article_add' %}">Nouvel article</a>{% endif %}
+</form>
+<div class="tableau"><table>
+  <tr><th>Référence</th><th>Désignation</th><th>Catégorie</th><th>Type d'inventaire</th><th>Emplacement</th><th class="nombre">Stock</th><th class="nombre">Mini</th><th class="nombre">Mini cde</th></tr>
+  {% for article in articles %}
+  <tr data-categorie="{{ article.categorie }}" data-type="{{ article.type_inventaire_id }}" data-alerte="{% if article.a_commander %}1{% endif %}">
+    <td><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a></td>
+    <td>{{ article.designation }}</td>
+    <td><span class="etiquette">{{ article.get_categorie_display }}</span></td>
+    <td>{{ article.type_inventaire }}</td>
+    <td>{{ article.emplacement }}</td>
+    <td class="nombre">{% if article.a_commander %}<span class="etiquette alerte">{{ article.stock|floatformat:"-2" }}</span>{% else %}{{ article.stock|floatformat:"-2" }}{% endif %}</td>
+    <td class="nombre">{{ article.stock_mini|floatformat:"-2" }}</td>
+    <td class="nombre">{{ article.mini_commande|floatformat:"-2" }}</td>
+  </tr>
+  {% empty %}<tr><td colspan="8">Aucun article.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

@@ -30,7 +30,7 @@ def peut_mouvementer(user):
     return profil(user) is not None
 
 
-APPS_METIER = ["inventaire", "outillage", "produits"]
+APPS_METIER = ["inventaire", "outillage", "produits", "commandes"]
 
 
 def configurer_permissions(**kwargs):

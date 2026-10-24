@@ -27,6 +27,10 @@ PROFILS = [
      "Consulte les fiches, saisit les sorties de stock et les comptages d'inventaire."),
 ]
 
+# Formulaires de consultation (méthode GET) : leur page est exportée et le formulaire y mène.
+# Les autres formulaires envoient des saisies, simulées par demo.js.
+FORMULAIRES_DE_CONSULTATION = ("/recherche/",)
+
 LIEN = re.compile(r'(href|src|action)="(/[^"]*)"')
 
 
@@ -76,8 +80,10 @@ class Command(BaseCommand):
                 continue
             html = reponse.content.decode()
             fichier = posixpath.join(dossier, chemin_statique(url))
-            for _, lien in LIEN.findall(html):
-                if self.est_page(lien) and lien not in vues:
+            for attribut, lien in LIEN.findall(html):
+                # Les formulaires envoient des saisies : leur adresse n'est pas une page à exporter.
+                envoie_une_saisie = attribut == "action" and lien not in FORMULAIRES_DE_CONSULTATION
+                if not envoie_une_saisie and self.est_page(lien) and lien not in vues:
                     a_voir.append(lien)
             cible = sortie / fichier
             cible.parent.mkdir(parents=True, exist_ok=True)
@@ -102,7 +108,7 @@ class Command(BaseCommand):
                 return f'{attribut}="{relatif("index.html")}"'
             if lien.startswith(settings.STATIC_URL if settings.STATIC_URL.startswith("/") else "/" + settings.STATIC_URL):
                 return f'{attribut}="{relatif(lien.lstrip("/"))}"'
-            if not self.est_page(lien):
+            if not self.est_page(lien) or (attribut == "action" and lien not in FORMULAIRES_DE_CONSULTATION):
                 return f'{attribut}="#"'
             return f'{attribut}="{relatif(posixpath.join(dossier, chemin_statique(lien)))}"'
 

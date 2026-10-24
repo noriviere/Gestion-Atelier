@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from commandes.models import Commande, renseigner_commandes_en_cours
 from comptes import roles
 from outillage.models import Outil
 from produits.models import Produit
@@ -57,13 +58,17 @@ def lire_quantite(texte):
 
 
 def accueil(request):
-    liste_a_commander = list(articles_sous_le_mini())
+    liste_a_commander = renseigner_commandes_en_cours(articles_sous_le_mini())
+    commandes_en_cours = Commande.objects.en_cours().prefetch_related("lignes")
     return render(
         request,
         "inventaire/accueil.html",
         {
             "articles_a_commander": liste_a_commander[:8],
             "nombre_a_commander": len(liste_a_commander),
+            "nombre_non_couverts": sum(1 for article in liste_a_commander if not article.couvert_par_commande),
+            "nombre_commandes_en_cours": len(commandes_en_cours),
+            "nombre_commandes_en_retard": sum(1 for commande in commandes_en_cours if commande.en_retard),
             "nombre_inventaires_dus": sum(1 for article in Article.objects.all() if article.inventaire_du),
             "nombre_articles": Article.objects.count(),
             "nombre_outils": Outil.objects.filter(parent__isnull=True).count(),
@@ -101,7 +106,7 @@ def articles(request):
         request,
         "inventaire/articles.html",
         {
-            "articles": selection,
+            "articles": renseigner_commandes_en_cours(selection),
             "types_inventaire": TypeInventaire.objects.all(),
             "categories": Article.CATEGORIES,
             "filtres": request.GET,
@@ -135,16 +140,19 @@ def article(request, pk):
             "liens_outils": article.liens_outils.select_related("outil"),
             "consommations": article.consommations.select_related("fabrication__produit", "fabrication__machine"),
             "mouvements": article.mouvements.select_related("utilisateur")[:15],
+            "lignes_en_cours": renseigner_commandes_en_cours([article])[0].lignes_en_cours,
         },
     )
 
 
 def a_commander(request):
-    return render(
-        request,
-        "inventaire/a_commander.html",
-        {"commandes_par_fournisseur": regrouper_par_fournisseur_prefere(articles_sous_le_mini())},
-    )
+    commandes_par_fournisseur = [
+        (fournisseur, lignes_commande, any(article.reste_a_commander > 0 for article, _ in lignes_commande))
+        for fournisseur, lignes_commande in regrouper_par_fournisseur_prefere(
+            renseigner_commandes_en_cours(articles_sous_le_mini())
+        )
+    ]
+    return render(request, "inventaire/a_commander.html", {"commandes_par_fournisseur": commandes_par_fournisseur})
 
 
 def inventaires(request):

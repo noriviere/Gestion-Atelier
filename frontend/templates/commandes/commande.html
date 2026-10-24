@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block titre %}{{ commande.numero }} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'commandes' %}">Commandes</a> › {{ commande.numero }}</div>
+<h1>{{ commande.numero }} – {{ commande.fournisseur }}</h1>
+<p class="sous-titre">{% include "commandes/_etat.html" %}{% if commande.fournisseur.telephone %} · {{ commande.fournisseur.contact }} {{ commande.fournisseur.telephone }}{% endif %}</p>
+<div class="actions">
+  <button class="bouton secondaire" type="button" data-action="imprimer">Imprimer</button>
+  {% if peut_modifier %}<a class="bouton secondaire" href="{% url 'admin:commandes_commande_change' commande.pk %}">Modifier la commande</a>{% endif %}
+</div>
+
+<div class="deux-colonnes">
+  <div>
+    <div class="carte">
+      <dl class="infos">
+        <dt>État</dt><dd>{{ commande.get_etat_display }}</dd>
+        <dt>N° fournisseur</dt><dd>{{ commande.numero_fournisseur|default:"—" }}</dd>
+        <dt>Créée le</dt><dd>{{ commande.date_creation|date:"d/m/Y" }}{% if commande.cree_par %} par {{ commande.cree_par.get_full_name|default:commande.cree_par.username }}{% endif %}</dd>
+        <dt>Passée le</dt><dd>{{ commande.date_passage|date:"d/m/Y"|default:"—" }}</dd>
+        <dt>Délai</dt><dd>{% if commande.delai_jours is not None %}{{ commande.delai_jours }} jours{% else %}—{% endif %}</dd>
+        <dt>Livraison prévue</dt><dd>{{ commande.date_prevue|date:"d/m/Y"|default:"—" }}{% if commande.en_retard %} <span class="etiquette alerte">en retard de {{ commande.jours_de_retard }} j</span>{% endif %}</dd>
+        <dt>Reçue le</dt><dd>{{ commande.date_reception|date:"d/m/Y"|default:"—" }}{% if commande.retard_a_la_livraison %} <span class="etiquette attention">{{ commande.retard_a_la_livraison }} j de retard</span>{% endif %}</dd>
+        <dt>Entrée en stock le</dt><dd>{{ commande.date_entree_stock|date:"d/m/Y"|default:"—" }}</dd>
+        <dt>Montant</dt><dd>{{ commande.montant_total|floatformat:"2g" }} €</dd>
+      </dl>
+      {% if commande.notes %}<div class="notes">{{ commande.notes }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div>
+    {% if peut_passer %}
+    <div class="carte">
+      <h2 class="titre-carte">Passer la commande</h2>
+      <form method="post" data-demo-message="Commande passée : la livraison prévue est calculée avec le délai du fournisseur.">{% csrf_token %}
+        <input type="hidden" name="action" value="passee">
+        <p><label for="numero_fournisseur">N° de confirmation du fournisseur</label><br><input id="numero_fournisseur" name="numero_fournisseur" value="{{ commande.numero_fournisseur }}"></p>
+        <p><label for="date_prevue">Livraison prévue</label><br><input id="date_prevue" type="date" name="date_prevue" value="{{ commande.date_prevue|date:'Y-m-d' }}"><br><span class="discret">Laisser vide pour la calculer avec le délai du fournisseur.</span></p>
+        <button class="bouton" type="submit">Marquer comme passée</button>
+      </form>
+    </div>
+    {% endif %}
+    {% if peut_marquer_recue %}
+    <div class="carte">
+      <h2 class="titre-carte">Livraison arrivée</h2>
+      <form method="post" data-demo-message="Commande marquée reçue : elle reste à contrôler et à entrer en stock.">{% csrf_token %}
+        <input type="hidden" name="action" value="recue">
+        <p class="discret">Le colis est arrivé mais n'est pas encore contrôlé ni rangé.</p>
+        <button class="bouton secondaire" type="submit">Marquer comme reçue</button>
+      </form>
+    </div>
+    {% endif %}
+    {% if peut_annuler %}
+    <form method="post" class="actions" data-demo-message="Commande annulée.">{% csrf_token %}
+      <input type="hidden" name="action" value="annulee">
+      <button class="bouton secondaire" type="submit">Annuler la commande</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<h2>Lignes</h2>
+<form method="post" data-demo-message="Commande réceptionnée : les quantités livrées sont entrées en stock.">{% csrf_token %}
+<input type="hidden" name="action" value="receptionnee">
+<div class="tableau"><table>
+  <tr><th>Article</th><th class="nombre">Stock actuel</th><th class="nombre">Quantité</th><th class="nombre">Prix unit.</th><th class="nombre">Montant</th><th class="nombre">{% if peut_receptionner %}Quantité livrée{% else %}Reçu{% endif %}</th></tr>
+  {% for ligne in lignes %}
+  <tr><td><a href="{{ ligne.article.get_absolute_url }}">{{ ligne.article.reference }}</a> {{ ligne.article.designation }}</td>
+    <td class="nombre">{{ ligne.article.stock|floatformat:"-2" }}</td>
+    <td class="nombre">{{ ligne.quantite|floatformat:"-2" }} {{ ligne.article.unite }}</td>
+    <td class="nombre">{% if ligne.prix_unitaire is not None %}{{ ligne.prix_unitaire }} €{% endif %}</td>
+    <td class="nombre">{% if ligne.montant is not None %}{{ ligne.montant|floatformat:"2g" }} €{% endif %}</td>
+    <td class="nombre">{% if peut_receptionner %}<input class="compte" name="recu_{{ ligne.pk }}" value="{{ ligne.quantite|floatformat:'-2' }}" inputmode="decimal" aria-label="Quantité livrée {{ ligne.article.reference }}">{% elif ligne.quantite_recue is not None %}{{ ligne.quantite_recue|floatformat:"-2" }}{% if ligne.manquant %} <span class="etiquette alerte">manque {{ ligne.manquant|floatformat:"-2" }}</span>{% endif %}{% else %}—{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="6">Aucune ligne.</td></tr>{% endfor %}
+</table></div>
+{% if peut_receptionner %}<div class="actions"><button class="bouton" type="submit">Réceptionner et entrer en stock</button> <span class="discret">Corrigez les quantités en cas de livraison partielle.</span></div>{% endif %}
+</form>
+{% endblock %}

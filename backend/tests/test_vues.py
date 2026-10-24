@@ -7,6 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from comptes.management.commands.exporter_statique import chemin_statique
+from commandes.models import Commande
 from inventaire.models import Article, TypeInventaire
 from produits.models import ProduitMachine
 
@@ -25,7 +26,8 @@ class PagesDemoTests(TestCase):
         for adresse in ["/", "/articles/", f"/articles/{article.pk}/", "/a-commander/", "/inventaires/",
                         f"/inventaires/{type_inventaire.pk}/", f"/inventaires/{type_inventaire.pk}/?tous=1",
                         f"/inventaires/{type_inventaire.pk}/feuille/", "/outils/", "/produits/",
-                        "/produits/machines/"]:
+                        "/produits/machines/", "/commandes/", "/commandes/?etat=&retard=1",
+                        *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
 
     def test_connexion_obligatoire(self):
@@ -83,6 +85,20 @@ class PagesDemoTests(TestCase):
         self.assertContains(reponse, '<nav class="fil no-print" aria-label="Fil d\'Ariane">')
         self.assertContains(reponse, f'<a href="{fabrication.produit.get_absolute_url()}">{fabrication.produit.reference}</a>')
         self.assertContains(reponse, f'<li aria-current="page">Fiche sur {fabrication.machine.code}</li>')
+
+
+    def test_stock_bas_avec_commande_en_cours_est_signale(self):
+        self.client.login(username="operateur", password="demo")
+        porte_lame = Article.objects.get(reference="PL-M")
+        reponse = self.client.get(f"/articles/{porte_lame.pk}/")
+        self.assertContains(reponse, "couvert par les commandes en cours")
+        self.assertContains(reponse, "en retard")
+
+    def test_a_commander_propose_de_preparer_les_commandes_restantes(self):
+        self.client.login(username="methode", password="demo")
+        reponse = self.client.get("/a-commander/")
+        self.assertContains(reponse, "Préparer la commande Usinage Martin")
+        self.assertContains(reponse, "couvert")
 
 
 class ExportStatiqueTests(TestCase):

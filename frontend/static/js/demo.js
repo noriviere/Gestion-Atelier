@@ -85,7 +85,10 @@
   document.querySelectorAll("form[method=post]").forEach(function (formulaire) {
     formulaire.addEventListener("submit", function (evenement) {
       evenement.preventDefault();
-      if (zoneStock && formulaire.querySelector("[name=quantite]")) {
+      if (formulaire.dataset.demoMessage) {
+        // Commandes : le changement d'état est seulement annoncé.
+        afficherMessage(formulaire.dataset.demoMessage + MENTION_DEMO);
+      } else if (zoneStock && formulaire.querySelector("[name=quantite]")) {
         simulerMouvementDeStock(formulaire, zoneStock);
       } else {
         simulerComptage(formulaire);
@@ -99,7 +102,7 @@
     if (!tableau) return;
     var champRecherche = formulaire.querySelector("[type=search]");
     var listesDeroulantes = formulaire.querySelectorAll("select");
-    var caseSousLeMini = formulaire.querySelector("[name=alerte]");
+    var casesACocher = formulaire.querySelectorAll("[type=checkbox]");
 
     function filtrerLignes(evenement) {
       if (evenement) evenement.preventDefault();
@@ -107,13 +110,19 @@
       Array.prototype.slice.call(tableau.rows, 1).forEach(function (ligne) {
         var visible = !texteRecherche || ligne.textContent.toLowerCase().indexOf(texteRecherche) !== -1;
         listesDeroulantes.forEach(function (liste) {
-          if (liste.value && ligne.dataset[liste.name] !== liste.value) visible = false;
+          // Une ligne peut porter plusieurs valeurs séparées par des espaces (ex. « passee en_cours »).
+          var valeursDeLaLigne = (ligne.dataset[liste.name] || "").split(" ");
+          if (liste.value && valeursDeLaLigne.indexOf(liste.value) === -1) visible = false;
         });
-        if (caseSousLeMini && caseSousLeMini.checked && ligne.dataset.alerte !== "1") visible = false;
+        casesACocher.forEach(function (caseACocher) {
+          if (caseACocher.checked && ligne.dataset[caseACocher.name] !== "1") visible = false;
+        });
         ligne.hidden = !visible;
       });
     }
 
+    // La page exportée contient toutes les lignes : le filtre par défaut est appliqué à l'ouverture.
+    if (formulaire.hasAttribute("data-filtrer-au-chargement")) filtrerLignes();
     formulaire.addEventListener("submit", filtrerLignes);
     formulaire.addEventListener("change", filtrerLignes);
     formulaire.addEventListener("input", filtrerLignes);

@@ -109,10 +109,11 @@ header.barre .recherche-barre { margin: 0; }
 header.barre .recherche-barre input { width: 150px; padding: 5px 10px; font-size: 13px; color: #fff; background: rgba(255, 255, 255, 0.08); border-color: var(--barre-bord); transition: width 250ms var(--courbe), background-color var(--duree) ease; }
 header.barre .recherche-barre input::placeholder { color: var(--barre-texte); }
 header.barre .recherche-barre input:focus { width: 220px; background: rgba(255, 255, 255, 0.14); border-color: #6ea1ff; box-shadow: none; }
-@media (max-width: 1400px) {
-  header.barre nav a { padding-left: 7px; padding-right: 7px; }
-  header.barre nav a::after { left: 7px; right: 7px; }
-  header.barre .recherche-barre input { width: 120px; }
+@media (max-width: 1600px) {
+  header.barre nav { gap: 2px; }
+  header.barre nav a { padding-left: 6px; padding-right: 6px; }
+  header.barre nav a::after { left: 6px; right: 6px; }
+  header.barre .recherche-barre input { width: 110px; }
   header.barre .recherche-barre input:focus { width: 160px; }
 }
 .bandeau-demo { background: var(--attention-fond); color: var(--attention); text-align: center; padding: 8px 16px; font-size: 14px; border-bottom: 1px solid var(--notes-bord); }
@@ -169,6 +170,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 input.compte { width: 90px; text-align: right; }
 form.filtres { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.grille + form.filtres { margin-top: 18px; }
 .bouton, button.bouton { display: inline-block; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font: inherit; cursor: pointer; transition: filter var(--duree) ease, transform 120ms ease, box-shadow var(--duree) ease; }
 html[data-theme="sombre"] .bouton:not(.secondaire) { color: #0b0e13; }
 .bouton:hover { text-decoration: none; filter: brightness(1.08); box-shadow: var(--ombre-survol); }
@@ -251,7 +253,7 @@ main > *:nth-child(n + 5) { animation-delay: 160ms; }
 }
 
 /* 9. Téléphone et petits écrans ----------------------------------------------
-   En dessous de 1300 px : menu repliable. En dessous de 760 px : tableaux en fiches, tuiles sur deux colonnes. */
+   En dessous de 1360 px : menu repliable. En dessous de 760 px : tableaux en fiches, tuiles sur deux colonnes. */
 .commandes-mobile, .texte-ecran-etroit { display: none; }
 .menu-principal { display: contents; }
 .bouton-menu { display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 38px; height: 38px; padding: 0 9px; border: 1px solid var(--barre-bord); border-radius: 8px; background: transparent; cursor: pointer; }
@@ -260,8 +262,8 @@ header.menu-ouvert .bouton-menu span:nth-child(1) { transform: translateY(6px) r
 header.menu-ouvert .bouton-menu span:nth-child(2) { opacity: 0; }
 header.menu-ouvert .bouton-menu span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-/* Barre du haut : le menu se replie sous 1300 px, où ses entrées et la recherche ne tiennent plus sur une ligne. */
-@media (max-width: 1300px) {
+/* Barre du haut : le menu se replie sous 1360 px, où ses entrées et la recherche ne tiennent plus sur une ligne. */
+@media (max-width: 1360px) {
   .theme-ecran-large { display: none; }
   header.barre { padding: 0 16px; gap: 0; justify-content: space-between; }
   header.barre .logo { padding: 12px 0; }

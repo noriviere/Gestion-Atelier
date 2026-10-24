@@ -2,8 +2,10 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.db import models, transaction
+from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 
 class Fournisseur(models.Model):
@@ -71,6 +73,30 @@ class Article(models.Model):
         if not self.a_commander:
             return 0
         return max(self.mini_commande, self.stock_mini - self.stock + self.mini_commande)
+
+    @cached_property
+    def quantite_en_commande(self):
+        """Quantité commandée et pas encore entrée en stock (commandes en attente, passées ou reçues)."""
+        from commandes.models import LigneCommande  # import local : l'application commandes dépend d'inventaire
+
+        total = LigneCommande.objects.en_cours().filter(article=self).aggregate(total=Sum("quantite"))["total"]
+        return total or 0
+
+    @property
+    def stock_previsionnel(self):
+        return self.stock + self.quantite_en_commande
+
+    @property
+    def couvert_par_commande(self):
+        """Sous le mini, mais les commandes en cours le remonteront au-dessus."""
+        return self.a_commander and self.stock_previsionnel > self.stock_mini
+
+    @property
+    def reste_a_commander(self):
+        """Quantité à commander en plus des commandes en cours."""
+        if not self.a_commander or self.couvert_par_commande:
+            return 0
+        return max(self.mini_commande, self.stock_mini - self.stock_previsionnel + self.mini_commande)
 
     @property
     def prochain_inventaire(self):

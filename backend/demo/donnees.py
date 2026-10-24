@@ -169,3 +169,19 @@ MOUVEMENTS = [
     ("HUI-01", "sortie", 1, "operateur", "S2"),
     ("MEU-300", "sortie", 1, "regleur", "S7 changement de meule"),
 ]
+
+COMMANDES = [
+    # fournisseur, état (attente / passee / recue / receptionnee / annulee), créée il y a N jours,
+    # passée il y a N jours, livraison prévue dans N jours (négatif : date dépassée), reçue il y a N jours,
+    # n° de confirmation du fournisseur, lignes [(référence article, quantité commandée, quantité reçue)], notes
+    # Les dates vides valent None. Rangées de la plus ancienne à la plus récente : la numérotation suit cet ordre.
+    ("Usinage Martin", "annulee", 70, None, None, None, "", [("PEI-N4", 4, None)], "Doublon avec une commande passée par téléphone."),
+    ("Mécanique Précision Sud", "receptionnee", 45, 44, -34, 33, "AR-58122", [("TIG-P", 24, 20)], "Livraison partielle : 4 tiges en reliquat."),
+    ("Usinage Martin", "passee", 26, 25, -10, None, "UM-2026-311", [("PL-M", 4, None), ("PL-N11", 2, None), ("PL-N12", 2, None)],
+     "Relancé par téléphone, nouvelle date non confirmée."),
+    ("Abrasifs Industriels", "receptionnee", 21, 20, -15, 15, "AI-77045", [("BAN-120", 50, 50)], ""),
+    ("Mécanique Précision Sud", "recue", 13, 12, -2, 1, "AR-58301", [("PAT-M", 20, None)], "Colis au quai, à contrôler."),
+    ("Lubrifiants de l'Ouest", "passee", 7, 6, -2, None, "", [("HUI-01", 6, None)], ""),
+    ("Meules et Bandes Diffusion", "passee", 5, 4, 6, None, "MBD-4410", [("MEU-300", 4, None)], ""),
+    ("Abrasifs Industriels", "attente", 0, None, None, None, "", [("BAN-80", 50, None)], "À regrouper avec le prochain besoin en bandes."),
+]

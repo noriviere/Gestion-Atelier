@@ -9,6 +9,7 @@ from django.test import TestCase
 from comptes.management.commands.exporter_statique import chemin_statique
 from commandes.models import Commande
 from inventaire.models import Article, TypeInventaire
+from produits.models import ProduitMachine
 
 SORTIE_MUETTE = open("/dev/null", "w")
 
@@ -68,6 +69,22 @@ class PagesDemoTests(TestCase):
         porte_lame.refresh_from_db()
         self.assertEqual(porte_lame.stock, Decimal("5"))
         self.assertFalse(porte_lame.inventaire_du)
+
+    def test_menu_signale_la_page_courante_aux_lecteurs_d_ecran(self):
+        self.client.login(username="operateur", password="demo")
+        reponse = self.client.get("/outils/")
+        self.assertContains(reponse, 'href="/outils/" class="actif" aria-current="page"', html=False)
+        self.assertContains(reponse, 'aria-current="page"', count=1)
+        self.assertContains(reponse, 'href="#contenu"')
+        self.assertContains(reponse, '<main id="contenu"')
+
+    def test_fil_d_ariane_de_la_fiche_remonte_au_produit(self):
+        self.client.login(username="operateur", password="demo")
+        fabrication = ProduitMachine.objects.select_related("produit", "machine").first()
+        reponse = self.client.get(fabrication.get_absolute_url())
+        self.assertContains(reponse, '<nav class="fil no-print" aria-label="Fil d\'Ariane">')
+        self.assertContains(reponse, f'<a href="{fabrication.produit.get_absolute_url()}">{fabrication.produit.reference}</a>')
+        self.assertContains(reponse, f'<li aria-current="page">Fiche sur {fabrication.machine.code}</li>')
 
 
     def test_stock_bas_avec_commande_en_cours_est_signale(self):

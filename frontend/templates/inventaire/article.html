@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}{{ article.reference }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'articles' %}">Stock</a> › {{ article.reference }}</div>
+<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'articles' %}">Stock</a></li><li aria-current="page">{{ article.reference }}</li></ol></nav>
 <h1>{{ article.reference }} – {{ article.designation }}</h1>
 <p class="sous-titre">{{ article.get_categorie_display }} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
 {% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:inventaire_article_change' article.pk %}">Modifier l'article</a></div>{% endif %}

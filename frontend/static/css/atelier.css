@@ -84,6 +84,9 @@ h2 { font-size: 18px; margin: 28px 0 10px; }
 .sous-titre { color: var(--discret); margin: 0 0 20px; }
 .discret { color: var(--discret); font-size: 13px; }
 .fil { font-size: 13px; color: var(--discret); margin-bottom: 6px; }
+.fil ol { list-style: none; display: flex; flex-wrap: wrap; margin: 0; padding: 0; }
+.fil li + li::before { content: "›"; margin: 0 7px; color: var(--discret); }
+.fil li[aria-current] { color: var(--texte); }
 .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .deux-colonnes { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
 @media (max-width: 900px) { .deux-colonnes { grid-template-columns: 1fr; } }
@@ -101,7 +104,18 @@ header.barre .utilisateur form { margin: 0; }
 header.barre .utilisateur button[type="submit"], header.barre .utilisateur a.bouton-sortie { background: none; border: 1px solid var(--barre-bord); color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; transition: border-color var(--duree) ease, background-color var(--duree) ease; }
 header.barre .utilisateur button[type="submit"]:hover, header.barre .utilisateur a.bouton-sortie:hover { border-color: #8fa0c0; background: rgba(255, 255, 255, 0.06); text-decoration: none; }
 .badge-profil { background: var(--badge); padding: 3px 8px; border-radius: 10px; }
-@media (max-width: 1360px) { header.barre .nom-utilisateur { display: none; } }
+@media (max-width: 1600px) { header.barre .nom-utilisateur { display: none; } }
+header.barre .recherche-barre { margin: 0; }
+header.barre .recherche-barre input { width: 150px; padding: 5px 10px; font-size: 13px; color: #fff; background: rgba(255, 255, 255, 0.08); border-color: var(--barre-bord); transition: width 250ms var(--courbe), background-color var(--duree) ease; }
+header.barre .recherche-barre input::placeholder { color: var(--barre-texte); }
+header.barre .recherche-barre input:focus { width: 220px; background: rgba(255, 255, 255, 0.14); border-color: #6ea1ff; box-shadow: none; }
+@media (max-width: 1600px) {
+  header.barre nav { gap: 2px; }
+  header.barre nav a { padding-left: 6px; padding-right: 6px; }
+  header.barre nav a::after { left: 6px; right: 6px; }
+  header.barre .recherche-barre input { width: 110px; }
+  header.barre .recherche-barre input:focus { width: 160px; }
+}
 .bandeau-demo { background: var(--attention-fond); color: var(--attention); text-align: center; padding: 8px 16px; font-size: 14px; border-bottom: 1px solid var(--notes-bord); }
 .bandeau-demo a { color: inherit; font-weight: 600; text-decoration: underline; }
 
@@ -164,7 +178,20 @@ html[data-theme="sombre"] .bouton:not(.secondaire) { color: #0b0e13; }
 .bouton.secondaire { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
 .bouton.secondaire:hover { background: var(--accent-doux); }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 20px; }
+.visuellement-cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+form.formulaire-recherche { display: flex; gap: 10px; margin-bottom: 8px; }
+form.formulaire-recherche input { flex: 1; min-width: 0; max-width: 480px; }
+.resultats-recherche { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; align-items: start; }
+.groupe-resultats h2 { margin-top: 0; font-size: 16px; }
+.groupe-resultats ul { list-style: none; margin: 0; padding: 0; }
+.groupe-resultats li { padding: 4px 0; border-top: 1px solid var(--bord); }
+.groupe-resultats li:first-child { border-top: 0; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Lien « Aller au contenu » : invisible jusqu'à ce qu'il reçoive le focus au clavier. */
+.lien-evitement { position: absolute; left: 12px; top: -60px; z-index: 20; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 0 0 6px 6px; transition: top var(--duree) ease; }
+.lien-evitement:focus { top: 0; text-decoration: none; }
+html[data-theme="sombre"] .lien-evitement { color: #0b0e13; }
+main:focus { outline: none; }
 
 /* 6. Pages particulières -------------------------------------------------- */
 ul.arbre, ul.arbre ul { list-style: none; margin: 0; padding-left: 22px; border-left: 2px solid var(--bord); }
@@ -226,7 +253,7 @@ main > *:nth-child(n + 5) { animation-delay: 160ms; }
 }
 
 /* 9. Téléphone et petits écrans ----------------------------------------------
-   En dessous de 760 px : menu repliable, tableaux en fiches, tuiles sur deux colonnes. */
+   En dessous de 1360 px : menu repliable. En dessous de 760 px : tableaux en fiches, tuiles sur deux colonnes. */
 .commandes-mobile, .texte-ecran-etroit { display: none; }
 .menu-principal { display: contents; }
 .bouton-menu { display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 38px; height: 38px; padding: 0 9px; border: 1px solid var(--barre-bord); border-radius: 8px; background: transparent; cursor: pointer; }
@@ -235,15 +262,9 @@ header.menu-ouvert .bouton-menu span:nth-child(1) { transform: translateY(6px) r
 header.menu-ouvert .bouton-menu span:nth-child(2) { opacity: 0; }
 header.menu-ouvert .bouton-menu span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-@media (max-width: 760px) {
-  body { font-size: 15px; }
-  main { padding: 16px; }
-  h1 { font-size: 21px; }
-  h2 { font-size: 17px; margin-top: 22px; }
-  .bandeau-demo { font-size: 13px; padding: 6px 12px; }
-  .texte-ecran-large, .theme-ecran-large { display: none; }
-  .texte-ecran-etroit { display: inline; }
-
+/* Barre du haut : le menu se replie sous 1360 px, où ses entrées et la recherche ne tiennent plus sur une ligne. */
+@media (max-width: 1360px) {
+  .theme-ecran-large { display: none; }
   header.barre { padding: 0 16px; gap: 0; justify-content: space-between; }
   header.barre .logo { padding: 12px 0; }
   .commandes-mobile { display: flex; align-items: center; gap: 10px; }
@@ -255,6 +276,19 @@ header.menu-ouvert .bouton-menu span:nth-child(3) { transform: translateY(-6px) 
   header.barre nav a:hover::after, header.barre nav a.actif::after { transform: scaleY(1); }
   header.barre nav a.actif { padding-left: 12px; }
   header.barre .utilisateur { padding-top: 12px; flex-wrap: wrap; }
+  header.barre .recherche-barre { padding-top: 12px; }
+  header.barre .recherche-barre input, header.barre .recherche-barre input:focus { width: 100%; font-size: 16px; padding: 8px 12px; }
+}
+
+@media (max-width: 760px) {
+  body { font-size: 15px; }
+  main { padding: 16px; }
+  h1 { font-size: 21px; }
+  h2 { font-size: 17px; margin-top: 22px; }
+  .bandeau-demo { font-size: 13px; padding: 6px 12px; }
+  .texte-ecran-large { display: none; }
+  .texte-ecran-etroit { display: inline; }
+
 
   .grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .tuile { padding: 12px 14px; }

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}Comptage {{ type_inventaire }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'inventaires' %}">Inventaires</a> › {{ type_inventaire }}</div>
+<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'inventaires' %}">Inventaires</a></li><li aria-current="page">{{ type_inventaire }}</li></ol></nav>
 <h1>Comptage : {{ type_inventaire }}</h1>
 <p class="sous-titre">{% if tous_les_articles %}Tous les articles du type.{% else %}Articles dont le comptage est dû.{% endif %} Laissez vide ce qui n'a pas été compté.</p>
 <div class="actions">

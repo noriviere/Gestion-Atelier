@@ -8,7 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from commandes.models import Commande, LigneCommande
-from comptes.roles import ADMIN, METHODE, configurer_permissions
+from comptes.roles import ADMIN, configurer_permissions
 from demo import donnees, fichiers
 from inventaire.models import Article, ArticleFournisseur, Fournisseur, Mouvement, TypeInventaire
 from outillage.models import Outil, PieceOutil
@@ -23,7 +23,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         self.effacer_donnees_metier()
-        configurer_permissions()
+        configurer_permissions(reinitialiser=True)
         comptes = self.creer_comptes()
         articles = self.creer_stock()
         outils = self.creer_outillage(articles)
@@ -51,8 +51,8 @@ class Command(BaseCommand):
             utilisateur, _ = User.objects.get_or_create(username=identifiant)
             utilisateur.first_name, utilisateur.last_name = prenom, nom
             utilisateur.is_superuser = profil == ADMIN
-            # L'accès à l'interface d'administration sert au paramétrage : réservé à Admin et Méthode.
-            utilisateur.is_staff = profil in (ADMIN, METHODE)
+            # L'administration s'ouvre selon les droits du profil (page « Droits »), voir config/urls.py.
+            utilisateur.is_staff = profil == ADMIN
             utilisateur.set_password(MOT_DE_PASSE_DEMO)
             utilisateur.save()
             utilisateur.groups.set([Group.objects.get(name=profil)])

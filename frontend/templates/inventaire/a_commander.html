@@ -17,7 +17,7 @@
     <td class="nombre">{% if lien_fournisseur.prix %}{{ lien_fournisseur.prix }} €{% endif %}</td></tr>
   {% endfor %}
 </table></div>
-{% if peut_modifier and fournisseur and reste_quelque_chose %}
+{% if droits.commandes_preparer and fournisseur and reste_quelque_chose %}
 <form method="post" action="{% url 'creer_commande' fournisseur.pk %}" class="actions" data-demo-message="Commande préparée chez {{ fournisseur.nom }} avec les quantités restant à commander. Sur la version installée, elle s'ouvre pour être vérifiée puis passée.">{% csrf_token %}
   <button class="bouton secondaire" type="submit">Préparer la commande {{ fournisseur.nom }}</button>
 </form>

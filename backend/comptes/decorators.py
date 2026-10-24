@@ -5,32 +5,16 @@ from django.core.exceptions import PermissionDenied
 from . import roles
 
 
-def documents_autorises(vue):
-    """Photos et documents des fiches : Admin, Méthode et management, régleurs."""
-    @wraps(vue)
-    def enveloppe(request, *args, **kwargs):
-        if not roles.peut_documenter(request.user):
-            raise PermissionDenied
-        return vue(request, *args, **kwargs)
+def droit_requis(code):
+    """Refuse la vue (403) à qui n'a pas la sous-fonction `code` du catalogue des droits (comptes/droits.py)."""
 
-    return enveloppe
+    def decorateur(vue):
+        @wraps(vue)
+        def enveloppe(request, *args, **kwargs):
+            if not roles.a_le_droit(request.user, code):
+                raise PermissionDenied
+            return vue(request, *args, **kwargs)
 
+        return enveloppe
 
-def modification_requise(vue):
-    @wraps(vue)
-    def enveloppe(request, *args, **kwargs):
-        if not roles.peut_modifier(request.user):
-            raise PermissionDenied
-        return vue(request, *args, **kwargs)
-
-    return enveloppe
-
-
-def mouvement_requis(vue):
-    @wraps(vue)
-    def enveloppe(request, *args, **kwargs):
-        if not roles.peut_mouvementer(request.user):
-            raise PermissionDenied
-        return vue(request, *args, **kwargs)
-
-    return enveloppe
+    return decorateur

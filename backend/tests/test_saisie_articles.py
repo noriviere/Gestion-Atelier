@@ -100,14 +100,21 @@ class SaisieArticleTests(TestCase):
 
 
 class DroitsDeSaisieTests(TestCase):
-    def test_atelier_et_intendant_ne_modifient_pas_les_articles(self):
+    def test_l_atelier_ne_modifie_pas_les_articles(self):
         article = creer_article()
-        for identifiant, profil in (("operateur", roles.ATELIER), ("intendante", roles.INTENDANT)):
+        for identifiant, profil in (("operateur", roles.OPERATEUR), ("regleur", roles.REGLEUR)):
             self.client.force_login(creer_utilisateur(identifiant, profil))
             self.assertEqual(self.client.get("/articles/nouveau/").status_code, 403)
             self.assertEqual(self.client.get(f"/articles/{article.pk}/modifier/").status_code, 403)
             self.assertEqual(self.client.get("/fournisseurs/nouveau/").status_code, 403)
             self.assertEqual(self.client.get("/fournisseurs/").status_code, 200)
+
+    def test_l_intendant_gere_articles_et_fournisseurs(self):
+        article = creer_article()
+        self.client.force_login(creer_utilisateur("intendante", roles.INTENDANT))
+        self.assertEqual(self.client.get("/articles/nouveau/").status_code, 200)
+        self.assertEqual(self.client.get(f"/articles/{article.pk}/modifier/").status_code, 200)
+        self.assertEqual(self.client.get("/fournisseurs/nouveau/").status_code, 200)
 
 
 class SaisieFournisseurTests(TestCase):

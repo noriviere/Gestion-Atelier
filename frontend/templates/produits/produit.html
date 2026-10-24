@@ -4,7 +4,7 @@
 <nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'produits' %}">Produits et machines</a></li><li aria-current="page">{{ produit.reference }}</li></ol></nav>
 <h1>{{ produit.reference }} – {{ produit.designation }}</h1>
 <p class="sous-titre">{% if produit.client %}Client : {{ produit.client }}{% endif %}</p>
-{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'modifier_produit' produit.pk %}">Modifier le produit</a> <a class="bouton secondaire" href="{% url 'nouvelle_fiche' produit.pk %}">Ajouter une machine</a></div>{% endif %}
+{% if droits.produits_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'modifier_produit' produit.pk %}">Modifier le produit</a> <a class="bouton secondaire" href="{% url 'nouvelle_fiche' produit.pk %}">Ajouter une machine</a></div>{% endif %}
 {% if produit.notes %}<div class="notes">{{ produit.notes }}</div>{% endif %}
 
 <h2>Fiches par machine</h2>
@@ -16,13 +16,13 @@
 </table></div>
 {% if non_faisables %}<p class="discret">Non faisable sur : {% for machine in non_faisables %}{{ machine.code }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
 
-{% if documents %}
+{% if documents and droits.produits_documents_voir %}
 <h2>Documents du produit</h2>
 <ul class="liste-documents">{% for document in documents %}<li><a href="{{ document.get_absolute_url }}" target="_blank" rel="noopener"><span class="etiquette">{{ document.extension|upper }}</span> {{ document.titre }}</a></li>{% endfor %}</ul>
-<p class="discret">Ces documents apparaissent sur toutes les fiches du produit. Les photos et documents s'ajoutent depuis une fiche (Méthode et management, régleurs).</p>
+<p class="discret">Ces documents apparaissent sur toutes les fiches du produit. Les photos et documents s'ajoutent depuis une fiche.</p>
 {% endif %}
 
-{% if peut_modifier %}
+{% if droits.produits_modifier %}
 <h2>Dupliquer le produit</h2>
 <form method="post" action="{% url 'dupliquer_produit' produit.pk %}" class="carte" data-demo-message="Produit dupliqué avec ses fiches, paramètres, consommables et documents.">{% csrf_token %}
   <p class="discret">Crée un nouveau produit avec les mêmes notes, documents et cases de la matrice (fiches comprises). Il ne reste qu'à ajuster ce qui diffère.</p>

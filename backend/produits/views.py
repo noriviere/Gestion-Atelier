@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.db import transaction
 from django.http import FileResponse, Http404, JsonResponse
@@ -7,11 +8,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from comptes.decorators import documents_autorises, modification_requise
+from comptes import roles
 from outillage.views import construire_arbre
 
 from . import matrice
-from .forms import (ConsommationsFormSet, DocumentForm, DuplicationProduitForm, FicheForm, ProduitForm,
+from .forms import (ConsommationsFormSet, DocumentForm, DuplicationProduitForm, FicheForm, ProduitForm, ReglagesForm,
                     formset_parametres)
 from .models import Document, Machine, Produit, ProduitMachine
 
@@ -56,7 +57,6 @@ def reponse_case(case):
 
 
 @require_POST
-@modification_requise
 def changer_etat(request):
     produit = get_object_or_404(Produit, pk=request.POST.get("produit"))
     machine = get_object_or_404(Machine, pk=request.POST.get("machine"))
@@ -96,7 +96,6 @@ def produit(request, pk):
     )
 
 
-@modification_requise
 def modifier_produit(request, pk=None):
     produit = get_object_or_404(Produit, pk=pk) if pk else Produit()
     formulaire = ProduitForm(request.POST or None, instance=produit)
@@ -108,7 +107,6 @@ def modifier_produit(request, pk=None):
 
 
 @require_POST
-@modification_requise
 def dupliquer_produit(request, pk):
     produit = get_object_or_404(Produit, pk=pk)
     formulaire = DuplicationProduitForm(request.POST)
@@ -180,9 +178,14 @@ def enregistrer_parametres_dans_l_ordre(parametres, fabrication):
         ordre += 1
 
 
-@modification_requise
 def modifier_fiche(request, pk=None, produit_pk=None):
-    """Création (depuis un produit, avec ?machine=) et modification d'une fiche, avec paramètres et consommables."""
+    """Création (depuis un produit, avec ?machine=) et modification d'une fiche, avec paramètres et consommables.
+
+    Avec le seul droit « réglages », on ne modifie que les paramètres et les notes d'une fiche existante.
+    """
+    fiche_complete = roles.a_le_droit(request.user, "produits_modifier")
+    if not fiche_complete and not (pk and roles.a_le_droit(request.user, "produits_reglages")):
+        raise PermissionDenied
     if pk:
         fabrication = get_object_or_404(ProduitMachine.objects.select_related("produit", "machine"), pk=pk)
     else:
@@ -204,28 +207,30 @@ def modifier_fiche(request, pk=None, produit_pk=None):
     ParametresFormSet = formset_parametres(len(lignes_de_depart) or 1)
 
     donnees = request.POST if request.method == "POST" else None
-    formulaire = FicheForm(donnees, instance=fabrication)
+    formulaire = (FicheForm if fiche_complete else ReglagesForm)(donnees, instance=fabrication)
     parametres = ParametresFormSet(donnees, instance=fabrication, prefix="parametres", initial=lignes_de_depart)
-    consommations = ConsommationsFormSet(donnees, instance=fabrication, prefix="consommations")
-    if donnees is not None and formulaire.is_valid() and parametres.is_valid() and consommations.is_valid():
+    consommations = ConsommationsFormSet(donnees, instance=fabrication, prefix="consommations") if fiche_complete else None
+    if (donnees is not None and formulaire.is_valid() and parametres.is_valid()
+            and (consommations is None or consommations.is_valid())):
         with transaction.atomic():
             fabrication = formulaire.save()
-            parametres.instance = consommations.instance = fabrication
+            parametres.instance = fabrication
             enregistrer_parametres_dans_l_ordre(parametres, fabrication)
-            consommations.save()
+            if consommations is not None:
+                consommations.instance = fabrication
+                consommations.save()
         messages.success(request, f"Fiche {fabrication} enregistrée.")
         return redirect(fabrication)
     return render(
         request,
         "produits/fiche_formulaire.html",
-        {"fabrication": fabrication, "formulaire": formulaire, "parametres": parametres,
+        {"fabrication": fabrication, "formulaire": formulaire, "fiche_complete": fiche_complete, "parametres": parametres,
          "consommations": consommations, "parametres_repris": bool(lignes_de_depart),
          "titres_parametres": ["Paramètre", "Valeur", "Unité"], "titres_consommations": ["Article", "Quantité / fréquence"]},
     )
 
 
 @require_POST
-@modification_requise
 def dupliquer_fiche(request, pk):
     source = get_object_or_404(ProduitMachine.objects.select_related("produit", "machine"), pk=pk)
     machine = get_object_or_404(Machine, pk=request.POST.get("machine"))
@@ -241,7 +246,6 @@ def dupliquer_fiche(request, pk):
 
 
 @require_POST
-@documents_autorises
 def ajouter_document(request, pk):
     fabrication = get_object_or_404(ProduitMachine.objects.select_related("produit"), pk=pk)
     formulaire = DocumentForm(request.POST, request.FILES)
@@ -259,7 +263,6 @@ def ajouter_document(request, pk):
 
 
 @require_POST
-@documents_autorises
 def supprimer_document(request, pk):
     document = get_object_or_404(Document, pk=pk)
     retour = request.POST.get("retour") or document.produit.get_absolute_url()

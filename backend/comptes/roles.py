@@ -1,4 +1,5 @@
-"""Les niveaux d'accès de l'application, portés par des groupes Django."""
+"""Les profils de l'application, portés par des groupes Django, et leurs droits."""
+from .droits import BLOCS, DEFAUTS, FONCTIONS, TOUS_LES_CODES
 
 ADMIN = "Admin"
 METHODE = "Méthode et management"
@@ -9,8 +10,10 @@ OPERATEUR = "Opérateur"
 ATELIER = OPERATEUR
 ANCIEN_NOM_ATELIER = "Régleur et opérateur"
 
-# Du plus haut au plus bas : un utilisateur dans plusieurs groupes a le profil le plus élevé.
+# Du plus haut au plus bas : un utilisateur dans plusieurs groupes affiche le profil le plus élevé.
 GROUPES = [ADMIN, METHODE, INTENDANT, REGLEUR, OPERATEUR]
+# Profils dont les droits se règlent sur la page « Droits » (Admin a toujours tout).
+PROFILS_REGLABLES = [METHODE, INTENDANT, REGLEUR, OPERATEUR]
 
 
 def profil(user):
@@ -26,50 +29,86 @@ def profil(user):
     return None
 
 
-def peut_modifier(user):
-    """Admin et Méthode et management créent et modifient les données de référence."""
-    return profil(user) in (ADMIN, METHODE)
+def droits(user):
+    """Ensemble des codes de sous-fonctions de l'utilisateur, mis en cache sur l'objet user."""
+    if not user.is_authenticated:
+        return frozenset()
+    if not hasattr(user, "_droits_atelier"):
+        from .models import Droit
+
+        if user.is_superuser or user.groups.filter(name=ADMIN).exists():
+            codes = TOUS_LES_CODES
+        else:
+            codes = Droit.objects.filter(profil__user=user).values_list("code", flat=True)
+        user._droits_atelier = frozenset(codes)
+    return user._droits_atelier
 
 
-def peut_documenter(user):
-    """Ajouter ou retirer les photos et documents des fiches : Admin, Méthode et management, et les régleurs."""
-    return profil(user) in (ADMIN, METHODE, REGLEUR)
+def a_le_droit(user, code):
+    if code not in FONCTIONS:
+        raise ValueError(f"Droit inconnu : {code}")
+    return code in droits(user)
 
 
-def peut_mouvementer(user):
-    """Tous les profils peuvent saisir une sortie ou une entrée de stock."""
-    return profil(user) is not None
+def acces_parametrage(user):
+    """L'administration Django s'ouvre dès qu'une sous-fonction permet d'y modifier des données."""
+    return any(".change_" in permission for code in droits(user) for permission in FONCTIONS[code].permissions_django)
 
 
-def peut_compter(user):
-    """Les comptages d'inventaire corrigent le stock : réservés à l'intendant, avec Admin et Méthode et management."""
-    return profil(user) in (ADMIN, METHODE, INTENDANT)
+def tableau_des_droits():
+    """Pour la page « Droits » : les blocs et, pour chaque profil réglable, ses codes accordés."""
+    from django.contrib.auth.models import Group
+
+    profils = list(Group.objects.filter(name__in=PROFILS_REGLABLES).prefetch_related("droits"))
+    profils.sort(key=lambda groupe: PROFILS_REGLABLES.index(groupe.name))
+    return BLOCS, [(groupe, {droit.code for droit in groupe.droits.all()}) for groupe in profils]
 
 
-APPS_METIER = ["inventaire", "outillage", "produits", "commandes"]
+def enregistrer_droits(codes_par_profil):
+    """Remplace les droits des profils donnés ({Group: codes}) et met à jour leurs permissions Django."""
+    from .models import Droit
+
+    for groupe, codes in codes_par_profil.items():
+        codes = {code for code in codes if code in FONCTIONS}
+        groupe.droits.exclude(code__in=codes).delete()
+        deja = set(groupe.droits.values_list("code", flat=True))
+        Droit.objects.bulk_create([Droit(profil=groupe, code=code) for code in codes - deja])
+        synchroniser_permissions(groupe)
 
 
-def configurer_permissions(**kwargs):
-    """Méthode et management : droits complets sur les données métier, via l'admin Django.
+def synchroniser_permissions(groupe):
+    """Les permissions Django du groupe découlent de ses droits (écrans de l'administration)."""
+    from django.contrib.auth.models import Permission
 
-    Intendant : lecture, saisie des mouvements de stock et des comptages d'inventaire.
-    Régleur : lecture, saisie des mouvements de stock, photos et documents des fiches.
-    Opérateur : lecture, plus la saisie des mouvements de stock.
-    Les comptages d'inventaire, propres à l'intendant, sont contrôlés par peut_compter.
+    noms = {
+        nom
+        for code in groupe.droits.values_list("code", flat=True)
+        if code in FONCTIONS
+        for nom in FONCTIONS[code].permissions_django
+    }
+    permissions = Permission.objects.none()
+    for nom in noms:
+        app, codename = nom.split(".")
+        permissions |= Permission.objects.filter(content_type__app_label=app, codename=codename)
+    groupe.permissions.set(permissions)
+
+
+def configurer_permissions(reinitialiser=False, **kwargs):
+    """Crée les profils manquants avec leurs droits de départ, puis aligne les permissions Django.
+
+    Les droits déjà réglés sur la page « Droits » ne sont pas touchés, sauf avec reinitialiser=True.
     """
-    from django.contrib.auth.models import Group, Permission
+    from django.contrib.auth.models import Group
+
+    from .models import Droit
 
     # L'ancien groupe commun « Régleur et opérateur » devient le groupe Opérateur, avec ses membres.
     if not Group.objects.filter(name=OPERATEUR).exists():
         Group.objects.filter(name=ANCIEN_NOM_ATELIER).update(name=OPERATEUR)
-
-    metier = Permission.objects.filter(content_type__app_label__in=APPS_METIER)
-    methode, _ = Group.objects.get_or_create(name=METHODE)
-    methode.permissions.set(metier)
-    lecture_et_mouvements = metier.filter(codename__startswith="view_") | metier.filter(codename="add_mouvement")
-    for nom in (INTENDANT, OPERATEUR):
-        groupe, _ = Group.objects.get_or_create(name=nom)
-        groupe.permissions.set(lecture_et_mouvements)
-    regleur, _ = Group.objects.get_or_create(name=REGLEUR)
-    regleur.permissions.set(lecture_et_mouvements | metier.filter(codename__in=["add_document", "delete_document"]))
     Group.objects.get_or_create(name=ADMIN)
+    for nom in PROFILS_REGLABLES:
+        groupe, cree = Group.objects.get_or_create(name=nom)
+        if cree or reinitialiser:
+            groupe.droits.all().delete()
+            Droit.objects.bulk_create([Droit(profil=groupe, code=code) for code in DEFAUTS[nom]])
+        synchroniser_permissions(groupe)

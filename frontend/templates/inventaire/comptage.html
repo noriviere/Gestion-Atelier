@@ -3,7 +3,7 @@
 {% block contenu %}
 <nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'inventaires' %}">Inventaires</a></li><li aria-current="page">{{ type_inventaire }}</li></ol></nav>
 <h1>Comptage : {{ type_inventaire }}</h1>
-<p class="sous-titre">{% if tous_les_articles %}Tous les articles du type.{% else %}Articles dont le comptage est dû.{% endif %} {% if peut_compter %}Laissez vide ce qui n'a pas été compté.{% else %}La saisie des comptages est réservée à l'intendant.{% endif %}</p>
+<p class="sous-titre">{% if tous_les_articles %}Tous les articles du type.{% else %}Articles dont le comptage est dû.{% endif %} {% if droits.stock_comptages %}Laissez vide ce qui n'a pas été compté.{% else %}La saisie des comptages est réservée à l'intendant.{% endif %}</p>
 <div class="actions">
   <a class="bouton secondaire" href="{% url 'ecarts' %}?type={{ type_inventaire.pk }}">Écarts de ce type</a>
   <a class="bouton secondaire" href="{% url 'feuille_comptage' type_inventaire.pk %}{% if tous_les_articles %}?tous=1{% endif %}">Feuille à imprimer</a>
@@ -11,15 +11,15 @@
 </div>
 <form method="post" data-demo="comptage">{% csrf_token %}
 <div class="tableau"><table>
-  <tr><th>Emplacement</th><th>Article</th><th class="nombre">Stock théorique</th><th>Dernier comptage</th><th class="nombre">Quantité comptée</th>{% if peut_compter %}<th class="nombre">Écart</th>{% endif %}</tr>
+  <tr><th>Emplacement</th><th>Article</th><th class="nombre">Stock théorique</th><th>Dernier comptage</th><th class="nombre">Quantité comptée</th>{% if droits.stock_comptages %}<th class="nombre">Écart</th>{% endif %}</tr>
   {% for article in articles %}
   <tr><td>{{ article.emplacement }}</td><td><a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> {{ article.designation }}</td>
     <td class="nombre">{% include "inventaire/_stock.html" with unite=True %}</td>
     <td data-dernier-comptage="{{ article.pk }}">{{ article.dernier_inventaire|date:"d/m/Y"|default:"jamais" }}</td>
-    <td class="nombre">{% if peut_compter %}<input class="compte" name="compte_{{ article.pk }}" inputmode="decimal" data-article="{{ article.pk }}" data-stock-theorique="{{ article.stock|stringformat:'s' }}" aria-label="Quantité comptée {{ article.reference }}">{% else %}<span class="discret">—</span>{% endif %}</td>
-    {% if peut_compter %}<td class="nombre ecart-saisi"></td>{% endif %}</tr>
+    <td class="nombre">{% if droits.stock_comptages %}<input class="compte" name="compte_{{ article.pk }}" inputmode="decimal" data-article="{{ article.pk }}" data-stock-theorique="{{ article.stock|stringformat:'s' }}" aria-label="Quantité comptée {{ article.reference }}">{% else %}<span class="discret">—</span>{% endif %}</td>
+    {% if droits.stock_comptages %}<td class="nombre ecart-saisi"></td>{% endif %}</tr>
   {% empty %}<tr><td colspan="6">Aucun article à compter.</td></tr>{% endfor %}
 </table></div>
-{% if articles and peut_compter %}<button class="bouton" type="submit">Enregistrer les comptages</button>{% endif %}
+{% if articles and droits.stock_comptages %}<button class="bouton" type="submit">Enregistrer les comptages</button>{% endif %}
 </form>
 {% endblock %}

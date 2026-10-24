@@ -13,7 +13,6 @@ from django.utils import timezone
 
 from commandes.models import Commande, renseigner_commandes_en_cours
 from comptes import roles
-from comptes.decorators import modification_requise
 from outillage.models import Outil
 from produits.models import Produit
 
@@ -155,7 +154,7 @@ def article(request, pk):
     article = get_object_or_404(Article.objects.select_related("type_inventaire"), pk=pk)
     formulaire = MouvementForm(request.POST or None)
     if request.method == "POST":
-        if not roles.peut_mouvementer(request.user):
+        if not roles.a_le_droit(request.user, "stock_mouvements"):
             raise PermissionDenied
         if formulaire.is_valid():
             Mouvement.enregistrer(
@@ -208,7 +207,7 @@ def comptage(request, pk):
     type_inventaire = get_object_or_404(TypeInventaire, pk=pk)
     tous_les_articles = bool(request.GET.get("tous"))
     if request.method == "POST":
-        if not roles.peut_compter(request.user):
+        if not roles.a_le_droit(request.user, "stock_comptages"):
             raise PermissionDenied
         comptages = []
         for article in type_inventaire.articles.all():
@@ -298,7 +297,6 @@ def ecarts(request):
     )
 
 
-@modification_requise
 def article_formulaire(request, pk=None):
     article = get_object_or_404(Article, pk=pk) if pk else Article()
     formulaire = ArticleForm(request.POST or None, instance=article)
@@ -345,7 +343,6 @@ def fournisseur(request, pk):
     )
 
 
-@modification_requise
 def fournisseur_formulaire(request, pk=None):
     fournisseur = get_object_or_404(Fournisseur, pk=pk) if pk else Fournisseur()
     formulaire = FournisseurForm(request.POST or None, instance=fournisseur)
@@ -379,7 +376,6 @@ def modele_import(request):
 CLE_SESSION_IMPORT = "import_articles"
 
 
-@modification_requise
 def import_articles(request):
     """Étape 1 : envoi du fichier et aperçu, sans rien enregistrer. Étape 2 : confirmation de l'aperçu."""
     if request.method == "POST" and request.POST.get("etape") == "confirmer":

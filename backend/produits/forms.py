@@ -54,6 +54,15 @@ class FicheForm(forms.ModelForm):
         return machine
 
 
+class ReglagesForm(forms.ModelForm):
+    """Droit « réglages » seul : les notes de la fiche, avec les paramètres saisis à côté."""
+
+    class Meta:
+        model = ProduitMachine
+        fields = ["notes"]
+        widgets = {"notes": forms.Textarea(attrs={"rows": 5})}
+
+
 class ParametreForm(forms.ModelForm):
     class Meta:
         model = Parametre

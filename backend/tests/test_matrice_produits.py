@@ -196,6 +196,18 @@ class PagesProduitsTests(TestCase):
                          [("Vitesse meule", "33", 0), ("Avance", "120", 1)])
         self.assertEqual(self.fiche.consommations.get().article, self.huile)
 
+    def test_le_regleur_modifie_seulement_parametres_et_notes(self):
+        self.client.force_login(creer_utilisateur("regleur", REGLEUR))
+        self.assertContains(self.client.get(self.fiche.get_absolute_url()), "Modifier les réglages")
+        reponse = self.client.post(f"/produits/fiche/{self.fiche.pk}/modifier/", self.donnees_fiche(cadence="999"))
+        self.assertRedirects(reponse, self.fiche.get_absolute_url())
+        self.fiche.refresh_from_db()
+        self.assertEqual(self.fiche.cadence, 480)
+        self.assertEqual(self.fiche.notes, "Nouvelle note")
+        self.assertEqual([parametre.valeur for parametre in self.fiche.parametres.all()], ["33", "120"])
+        self.assertFalse(self.fiche.consommations.exists())
+        self.assertEqual(self.client.get(f"/produits/{self.produit.pk}/fiche/nouvelle/?machine={self.s2.pk}").status_code, 403)
+
     def test_retirer_un_parametre(self):
         self.client.force_login(self.methode)
         self.client.post(f"/produits/fiche/{self.fiche.pk}/modifier/",
@@ -250,9 +262,12 @@ class PagesProduitsTests(TestCase):
         self.assertEqual(photo.fabrication, self.fiche)
         self.assertEqual(photo.ajoute_par, self.methode)
         self.assertContains(self.client.get(self.fiche.get_absolute_url()), f'src="{photo.get_absolute_url()}"')
-        self.client.force_login(self.operateur)
+        self.client.force_login(creer_utilisateur("regleur", REGLEUR))
         reponse = self.client.get(photo.get_absolute_url())
         self.assertEqual(b"".join(reponse.streaming_content), b"\x89PNG\r\n\x1a\n")
+        self.client.force_login(self.operateur)
+        self.assertNotContains(self.client.get(self.fiche.get_absolute_url()), f'src="{photo.get_absolute_url()}"')
+        self.assertEqual(self.client.get(photo.get_absolute_url()).status_code, 403)
         self.client.force_login(self.methode)
         chemin = photo.fichier.name
         self.client.post(f"/produits/documents/{photo.pk}/supprimer/", {"retour": self.fiche.get_absolute_url()})

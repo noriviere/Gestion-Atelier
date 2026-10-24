@@ -147,6 +147,10 @@ tr:last-child td { border-bottom: 0; }
 th { font-size: 13px; color: var(--discret); font-weight: 600; background: var(--entete-tableau); }
 tr td { transition: background-color 120ms ease; }
 tr:hover td { background: var(--carte-survol); }
+td.case-droit, th.case-droit { text-align: center; width: 1%; white-space: nowrap; padding-left: 14px; padding-right: 14px; }
+.tableau-droits .ligne-bloc td { font-weight: 700; background: var(--entete-tableau); }
+.tableau-droits .ligne-fonction td:first-child { padding-left: 26px; }
+.tableau-droits input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; }
 td.nombre, th.nombre { text-align: right; font-variant-numeric: tabular-nums; }
 .etiquette { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--entete-tableau); color: var(--discret); white-space: nowrap; }
 .etiquette.alerte { background: var(--alerte-fond); color: var(--alerte); font-weight: 600; }
@@ -426,6 +430,8 @@ header.menu-ouvert .bouton-menu span:nth-child(3) { transform: translateY(-6px) 
   main table td:first-child[data-titre] { flex-wrap: wrap; justify-content: flex-start; gap: 4px 12px; }
   main table td:first-child[data-titre] > :first-child { flex-shrink: 0; }
   main table td:empty { display: none; }
+  main table td.case-droit { width: 100%; text-align: left; white-space: normal; }
+  .tableau-droits .ligne-fonction td:first-child { padding-left: 0; }
   tr:hover td { background: transparent; }
   .carte table tr { box-shadow: none; }
   input.compte { width: 110px; }

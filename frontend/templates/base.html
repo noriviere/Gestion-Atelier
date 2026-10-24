@@ -33,12 +33,12 @@
     <label class="visuellement-cache" for="champ-recherche-barre">Rechercher un article, un outil, un produit ou une machine</label>
     <input type="search" id="champ-recherche-barre" name="q" placeholder="Rechercher…">
   </form>
-  <div class="utilisateur">
-    <span class="nom-utilisateur">{{ user.get_full_name|default:user.username }}</span>
+  <div class="utilisateur">{% with nom=user.get_full_name|default:user.username %}
+    <span class="nom-utilisateur">{{ nom }}</span>
     <span class="badge-profil">{{ profil|default:"Sans profil" }}</span>
     <span class="theme-ecran-large">{% include "_bouton_aide.html" %}{% include "_bouton_theme.html" %}</span>
-    {% if demo_statique %}<a class="bouton-sortie" href="/__profils__" title="Connecté : {{ user.get_full_name|default:user.username }} – {{ profil|default:'sans profil' }}">Profils</a>{% else %}<form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit" title="Connecté : {{ user.get_full_name|default:user.username }} – {{ profil|default:'sans profil' }}">Déconnexion</button></form>{% endif %}
-  </div>
+    {% if demo_statique %}<a class="bouton-sortie" href="/__profils__" title="Connecté : {{ nom }} – {{ profil|default:'sans profil' }}">Profils</a>{% else %}<form method="post" action="{% url 'deconnexion' %}">{% csrf_token %}<button type="submit" title="Connecté : {{ nom }} – {{ profil|default:'sans profil' }}">Déconnexion</button></form>{% endif %}
+  {% endwith %}</div>
   </div>
 </header>
 {% endif %}

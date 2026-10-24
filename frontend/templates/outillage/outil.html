@@ -2,7 +2,7 @@
 {% load aide %}
 {% block titre %}{{ outil.code }} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'outils' %}">Outillage</a></li>{% for ancetre in chemin %}{% if forloop.last %}<li aria-current="page">{{ ancetre.code }}</li>{% else %}<li><a href="{{ ancetre.get_absolute_url }}">{{ ancetre.code }}</a></li>{% endif %}{% endfor %}</ol></nav>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'outils' %}">Outillage</a></li>{% for ancetre in chemin %}{% if forloop.last %}<li aria-current="page">{{ ancetre.code }}</li>{% else %}<li><a href="{{ ancetre.get_absolute_url }}">{{ ancetre.code }}</a></li>{% endif %}{% endfor %}</ol></nav>
 <h1>{{ outil.code }} – {{ outil.nom }}</h1>
 <p class="sous-titre">{% if outil.parent %}Sous-ensemble de {{ outil.parent }}{% else %}Outil{% endif %}</p>
 {% if droits.outillage_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'modifier_outil' outil.pk %}">Modifier l'outil et ses pièces</a> <a class="bouton secondaire" href="{% url 'nouvel_outil' %}?parent={{ outil.pk }}">Ajouter un sous-ensemble</a></div>{% endif %}

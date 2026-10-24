@@ -9,7 +9,6 @@ sont copiés tels quels à côté des pages.
 import posixpath
 import re
 import shutil
-from html import escape
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
 
@@ -134,9 +133,6 @@ class Command(BaseCommand):
         return LIEN.sub(remplacer, html)
 
     def page_profils(self):
-        cartes = "".join(
-            f'<a class="tuile" href="{dossier}/index.html"><h2>{escape(titre)}</h2>'
-            f'<div class="libelle">{escape(description)}</div></a>'
-            for dossier, _, titre, description in PROFILS
-        )
-        return render_to_string("profils_demo.html", {"cartes": cartes})
+        profils = [{"dossier": dossier, "titre": titre, "description": description}
+                   for dossier, _, titre, description in PROFILS]
+        return render_to_string("profils_demo.html", {"profils": profils})

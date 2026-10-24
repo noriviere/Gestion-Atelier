@@ -2,14 +2,14 @@
 {% load aide %}
 {% block titre %}{% if outil.pk %}Modifier {{ outil.code }}{% else %}Nouvel outil{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'outils' %}">Outillage</a>{% for ancetre in outil.chemin %}{% if ancetre.pk %} › <a href="{{ ancetre.get_absolute_url }}">{{ ancetre.code }}</a>{% endif %}{% endfor %} › {% if outil.pk %}Modifier{% else %}Nouvel outil{% endif %}</div>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'outils' %}">Outillage</a></li>{% for ancetre in outil.chemin %}{% if ancetre.pk %}<li><a href="{{ ancetre.get_absolute_url }}">{{ ancetre.code }}</a></li>{% endif %}{% endfor %}<li aria-current="page">{% if outil.pk %}Modifier{% else %}Nouvel outil{% endif %}</li></ol></nav>
 <h1>{% if outil.pk %}Modifier {{ outil.code }} – {{ outil.nom }}{% else %}Nouvel outil ou sous-ensemble{% endif %}</h1>
 <p class="sous-titre">Les pièces d'usure sont choisies parmi les articles du stock ; une même pièce peut être montée sur plusieurs outils.</p>
 <form method="post" class="formulaire-outil" data-demo="outil">{% csrf_token %}
   {{ form.non_field_errors }}
   <div class="carte">
     <div class="champs">
-      {% for champ in form %}<p class="champ{% if champ.name == 'description' %} champ-large{% endif %}">{{ champ.label_tag }}{{ champ }}{{ champ.errors }}</p>{% endfor %}
+      {% for champ in form %}{% if champ.name == "description" %}{% include "_champ.html" with classe="champ-large" %}{% else %}{% include "_champ.html" %}{% endif %}{% endfor %}
     </div>
   </div>
   <h2>Pièces d'usure montées{% info "outillage" "modifier" "Créer ou modifier un outil" %}</h2>

@@ -24,20 +24,7 @@
   var lienCreer = dialogue.querySelector('[data-role="creer"]');
   var caseOuverte = null;
 
-  function annoncer(texte, estUneErreur) {
-    var zonePrincipale = document.querySelector("main");
-    var listeMessages = zonePrincipale.querySelector("ul.messages");
-    if (!listeMessages) {
-      listeMessages = document.createElement("ul");
-      listeMessages.className = "messages";
-      zonePrincipale.insertBefore(listeMessages, zonePrincipale.firstChild);
-    }
-    listeMessages.innerHTML = "";
-    var message = document.createElement("li");
-    if (estUneErreur) message.className = "error";
-    message.textContent = texte;
-    listeMessages.appendChild(message);
-  }
+  var annoncer = window.Atelier.afficherMessage;
 
   // « À faire » devient « à sécuriser » quand le produit est déjà programmé sur une autre machine ;
   // « possible » s'affiche comme une case vide. Même règle que backend/produits/matrice.py.

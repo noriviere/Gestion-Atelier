@@ -69,12 +69,12 @@
   </ul>
 
   {% if droits.produits_documents_gerer %}
-  <form method="post" action="{% url 'ajouter_document' fabrication.pk %}" enctype="multipart/form-data" class="depot-document no-print" data-simulation-locale>{% csrf_token %}
+  <form method="post" action="{% url 'ajouter_document' fabrication.pk %}" enctype="multipart/form-data" class="depot-document no-print">{% csrf_token %}
     <h3>Ajouter une photo ou un document{% info "fiches" "documents" "Ajouter une photo ou un document" %}</h3>
     <div class="champs-depot">
       <label class="zone-depot">{{ formulaire_document.fichier }}<span>Glissez un fichier ici ou cliquez pour choisir<br><span class="discret">Photo (JPG, PNG…), PDF, plan, tableur : 20 Mo maximum</span></span></label>
       <div>
-        <p><label for="{{ formulaire_document.titre.id_for_label }}">Titre</label><br>{{ formulaire_document.titre }}</p>
+        {% include "_champ.html" with champ=formulaire_document.titre %}
         <fieldset class="sans-cadre"><legend>{{ formulaire_document.portee.label }}</legend>{{ formulaire_document.portee }}</fieldset>
         <button class="bouton" type="submit">Ajouter</button>
       </div>

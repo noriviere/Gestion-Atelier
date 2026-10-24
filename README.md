@@ -62,6 +62,7 @@ et filtres sont simulés dans le navigateur : les stocks et mouvements saisis so
 navigateur et repris sur toutes les pages, jusqu'au bouton « Remettre à zéro ». La création et la
 modification d'outils sont vérifiées puis confirmées, sans être conservées. Rien n'est envoyé. Le site est régénéré automatiquement à chaque modification de `main`
 (workflow `.github/workflows/pages.yml`, commande `python manage.py exporter_statique`).
+À chaque PR, `.github/workflows/tests.yml` lance aussi les tests sur PostgreSQL, la base de la version installée.
 
 ## Lancer la démo sur un PC (Python 3.11 ou plus)
 

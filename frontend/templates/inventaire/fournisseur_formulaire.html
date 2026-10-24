@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block titre %}{% if fournisseur %}Modifier {{ fournisseur.nom }}{% else %}Nouveau fournisseur{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
-<div class="fil"><a href="{% url 'fournisseurs' %}">Fournisseurs</a> › {% if fournisseur %}<a href="{{ fournisseur.get_absolute_url }}">{{ fournisseur.nom }}</a> › modifier{% else %}nouveau{% endif %}</div>
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'fournisseurs' %}">Fournisseurs</a></li>{% if fournisseur %}<li><a href="{{ fournisseur.get_absolute_url }}">{{ fournisseur.nom }}</a></li><li aria-current="page">Modifier</li>{% else %}<li aria-current="page">Nouveau fournisseur</li>{% endif %}</ol></nav>
 <h1>{% if fournisseur %}Modifier {{ fournisseur.nom }}{% else %}Nouveau fournisseur{% endif %}</h1>
 <p class="sous-titre">Les articles se rattachent au fournisseur depuis la fiche de chaque article.</p>
 <form method="post" class="formulaire" data-demo-message="Fournisseur enregistré.">{% csrf_token %}

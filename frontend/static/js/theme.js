@@ -1,7 +1,10 @@
 // Applique le thème (clair ou sombre) avant l'affichage de la page, pour éviter un clignotement.
 // Choix enregistré dans le navigateur ; à défaut, on suit le réglage du système.
+// Espace commun aux scripts de l'application (complété par atelier.js) : évite les variables globales en vrac.
+window.Atelier = { CLE_THEME: "gestion-atelier-theme" };
+
 (function appliquerThemeEnregistre() {
-  var CLE_THEME = "gestion-atelier-theme";
+  var CLE_THEME = window.Atelier.CLE_THEME;
   var themeEnregistre = null;
   try {
     themeEnregistre = window.localStorage.getItem(CLE_THEME);

@@ -181,11 +181,11 @@
     });
   });
 
-  // Le paramétrage des articles, produits et comptes passe par l'administration, absente de la démo statique.
+  // Le paramétrage des comptes et des listes de référence passe par l'administration, absente de la démo statique.
   document.querySelectorAll("[data-demo-parametrage]").forEach(function (lien) {
     lien.addEventListener("click", function (evenement) {
       evenement.preventDefault();
-      afficherMessage("Démo : le paramétrage (articles, produits, comptes) se fait dans l'interface " +
+      afficherMessage("Démo : le paramétrage (comptes, types d'inventaire, listes de référence) se fait dans l'interface " +
         "d'administration, disponible sur la version installée.");
     });
   });
@@ -234,14 +234,24 @@
       afficherMessage("Quantité illisible : « " + illisibles[0].value + " ».", true);
       return;
     }
+    var ecarts = [];
     champsRemplis.forEach(function (champ) {
-      enregistrerMouvement(champ.dataset.article, "Comptage d'inventaire", lireNombre(champ.value));
+      var quantiteComptee = lireNombre(champ.value);
+      var ecart = Math.round((quantiteComptee - stockActuel(champ.dataset.article)) * 100) / 100;
+      if (ecart) {
+        var reference = champ.closest("tr").querySelector("a").textContent.trim();
+        ecarts.push(reference + " " + (ecart > 0 ? "+" : "−") + formaterNombre(Math.abs(ecart)));
+      }
+      enregistrerMouvement(champ.dataset.article, "Comptage d'inventaire", quantiteComptee);
       document.querySelectorAll('[data-dernier-comptage="' + champ.dataset.article + '"]').forEach(function (cellule) {
         cellule.textContent = etatDemo.comptages[champ.dataset.article];
       });
+      champ.dataset.stockTheorique = quantiteComptee;
       champ.value = "";
+      champ.dispatchEvent(new Event("input"));
     });
-    afficherMessage(champsRemplis.length + " comptage(s) enregistré(s), stocks corrigés." + MENTION_DEMO);
+    var bilanEcarts = ecarts.length ? " " + ecarts.length + " écart(s) : " + ecarts.join(", ") + "." : " Aucun écart.";
+    afficherMessage(champsRemplis.length + " comptage(s) enregistré(s), stocks corrigés." + bilanEcarts + MENTION_DEMO);
   }
 
   // Dépôt d'une photo ou d'un document sur une fiche : le fichier choisi s'affiche, sans être envoyé.
@@ -346,8 +356,10 @@
       } else if (formulaire.dataset.demoMessage) {
         // Commandes : le changement d'état est seulement annoncé.
         afficherMessage(formulaire.dataset.demoMessage + " (Démo : rien n'est enregistré.)");
-      } else {
+      } else if (simulations[formulaire.dataset.demo]) {
         simulations[formulaire.dataset.demo](formulaire);
+      } else {
+        afficherMessage("Démo : cette saisie n'est possible que sur la version installée.");
       }
     });
   });

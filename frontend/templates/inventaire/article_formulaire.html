@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titre %}{% if article %}Modifier {{ article.reference }}{% else %}Nouvel article{% endif %} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'articles' %}">Stock</a> › {% if article %}<a href="{{ article.get_absolute_url }}">{{ article.reference }}</a> › modifier{% else %}nouvel article{% endif %}</div>
+<h1>{% if article %}Modifier {{ article.reference }}{% else %}Nouvel article{% endif %}</h1>
+<p class="sous-titre">{% if article %}Le stock ne se modifie pas ici : il change par les sorties, les entrées et les comptages d'inventaire.{% else %}Pièce d'usure ou consommable, acheté ou de design interne.{% endif %}</p>
+<form method="post" class="formulaire" data-demo-message="Article enregistré.">{% csrf_token %}
+  {% for erreur in form.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+  <div class="carte">
+    <h2 class="titre-carte">Identification</h2>
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form.reference %}
+      {% include "_champ.html" with champ=form.designation classe="large" %}
+      {% include "_champ.html" with champ=form.categorie %}
+      {% include "_champ.html" with champ=form.origine %}
+      {% include "_champ.html" with champ=form.numero_plan classe="champ-plan" %}
+    </div>
+  </div>
+  <div class="carte">
+    <h2 class="titre-carte">Stockage et seuils</h2>
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form.type_inventaire %}
+      {% include "_champ.html" with champ=form.emplacement %}
+      {% include "_champ.html" with champ=form.unite %}
+      {% if form.stock_initial %}{% include "_champ.html" with champ=form.stock_initial %}{% endif %}
+      {% include "_champ.html" with champ=form.stock_mini %}
+      {% include "_champ.html" with champ=form.mini_commande %}
+      {% include "_champ.html" with champ=form.frequence_inventaire %}
+    </div>
+  </div>
+  <div class="carte">
+    <h2 class="titre-carte">Fournisseurs</h2>
+    <p class="discret">Un design interne est commandé sur son numéro de plan : la référence fournisseur peut rester vide. <a href="{% url 'fournisseur_nouveau' %}">Créer un fournisseur</a></p>
+    {{ liens_fournisseurs.management_form }}
+    {% for erreur in liens_fournisseurs.non_form_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+    <div class="tableau"><table>
+      <tr><th>Fournisseur</th><th>Réf. fournisseur</th><th class="nombre">Prix unitaire (€)</th><th class="nombre">Délai (jours)</th><th>Préféré</th><th>Retirer</th></tr>
+      {% for lien in liens_fournisseurs %}
+      <tr>{% for champ_cache in lien.hidden_fields %}{{ champ_cache }}{% endfor %}
+        <td>{{ lien.fournisseur }}{% for erreur in lien.fournisseur.errors %}<span class="erreur">{{ erreur }}</span>{% endfor %}{% for erreur in lien.non_field_errors %}<span class="erreur">{{ erreur }}</span>{% endfor %}</td>
+        <td>{{ lien.reference_fournisseur }}</td>
+        <td class="nombre">{{ lien.prix }}{% for erreur in lien.prix.errors %}<span class="erreur">{{ erreur }}</span>{% endfor %}</td>
+        <td class="nombre">{{ lien.delai }}</td>
+        <td>{{ lien.prefere }}</td>
+        <td>{% if lien.instance.pk %}{{ lien.DELETE }}{% endif %}</td></tr>
+      {% endfor %}
+    </table></div>
+    <p class="discret">Deux lignes vides permettent d'ajouter des fournisseurs ; enregistrez pour en ajouter d'autres.</p>
+  </div>
+  <div class="actions"><button class="bouton" type="submit">Enregistrer</button> <a class="bouton secondaire" href="{% if article %}{{ article.get_absolute_url }}{% else %}{% url 'articles' %}{% endif %}">Annuler</a></div>
+</form>
+{% endblock %}

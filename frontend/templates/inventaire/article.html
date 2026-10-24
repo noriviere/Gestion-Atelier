@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load inventaire %}
 {% block titre %}{{ article.reference }} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <nav class="fil" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'articles' %}">Stock</a></li><li aria-current="page">{{ article.reference }}</li></ol></nav>
 <h1>{{ article.reference }} – {{ article.designation }}</h1>
-<p class="sous-titre">{{ article.get_categorie_display }} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
-{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'admin:inventaire_article_change' article.pk %}">Modifier l'article</a></div>{% endif %}
+<p class="sous-titre">{{ article.get_categorie_display }} · {% if article.est_design_interne %}design interne, plan {{ article.numero_plan }}{% else %}article acheté{% endif %} · {{ article.type_inventaire }}{% if article.emplacement %} · emplacement {{ article.emplacement }}{% endif %}</p>
+{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'article_modifier' article.pk %}">Modifier l'article</a></div>{% endif %}
 
 <div class="deux-colonnes">
   <div>
@@ -34,10 +35,10 @@
 
     <h2>Fournisseurs</h2>
     <div class="tableau"><table>
-      <tr><th>Fournisseur</th><th>Réf. fournisseur</th><th class="nombre">Prix</th><th class="nombre">Délai</th></tr>
+      <tr><th>Fournisseur</th><th>{% if article.est_design_interne %}Commandé sur{% else %}Réf. fournisseur{% endif %}</th><th class="nombre">Prix</th><th class="nombre">Délai</th></tr>
       {% for lien_fournisseur in liens_fournisseurs %}
-      <tr><td>{{ lien_fournisseur.fournisseur }} {% if lien_fournisseur.prefere %}<span class="etiquette prefere">préféré</span>{% endif %}</td>
-        <td>{{ lien_fournisseur.reference_fournisseur }}</td><td class="nombre">{% if lien_fournisseur.prix %}{{ lien_fournisseur.prix }} €{% endif %}</td>
+      <tr><td><a href="{{ lien_fournisseur.fournisseur.get_absolute_url }}">{{ lien_fournisseur.fournisseur }}</a> {% if lien_fournisseur.prefere %}<span class="etiquette prefere">préféré</span>{% endif %}</td>
+        <td>{{ lien_fournisseur.reference_a_commander }}</td><td class="nombre">{% if lien_fournisseur.prix %}{{ lien_fournisseur.prix }} €{% endif %}</td>
         <td class="nombre">{% if lien_fournisseur.delai %}{{ lien_fournisseur.delai }} j{% endif %}</td></tr>
       {% empty %}<tr><td colspan="4">Aucun fournisseur renseigné.</td></tr>{% endfor %}
     </table></div>
@@ -65,7 +66,7 @@
     <h2>Mouvements</h2>
     <div class="carte" data-liste-mouvements="{{ article.pk }}">
       {% for mouvement in mouvements %}
-      <div class="ligne-mouvement"><strong>{{ mouvement.get_type_display }}</strong> {{ mouvement.quantite|floatformat:"-2" }} → stock {{ mouvement.stock_apres|floatformat:"-2" }}<br>
+      <div class="ligne-mouvement"><strong>{{ mouvement.get_type_display }}</strong> {{ mouvement.quantite|floatformat:"-2" }} → stock {{ mouvement.stock_apres|floatformat:"-2" }}{% if mouvement.ecart is not None %} · écart {% include "inventaire/_ecart.html" with ecart=mouvement.ecart %}{% endif %}<br>
         <span class="discret">{{ mouvement.date|date:"d/m/Y H:i" }} · {{ mouvement.utilisateur|default:"—" }}{% if mouvement.commentaire %} · {{ mouvement.commentaire }}{% endif %}</span></div>
       {% empty %}<span class="discret">Aucun mouvement.</span>{% endfor %}
     </div>

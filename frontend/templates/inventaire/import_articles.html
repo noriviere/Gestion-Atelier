@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titre %}Importer des articles – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'articles' %}">Stock</a> › import Excel</div>
+<h1>Importer des articles depuis Excel</h1>
+{% if analyse is None %}
+<p class="sous-titre">Pour la reprise de vos fichiers existants ou une mise à jour en masse. Rien n'est enregistré avant d'avoir vu l'aperçu.</p>
+<div class="deux-colonnes">
+  <div class="carte">
+    <h2 class="titre-carte">1. Préparer le fichier</h2>
+    <p>Partez du <a href="{% url 'modele_import' %}">modèle vide</a> ou de l'<a href="{% url 'export_articles' %}">export des articles actuels</a>. Une ligne par article ; une référence déjà connue modifie l'article, une nouvelle le crée.</p>
+    <div class="tableau"><table>
+      <tr><th>Colonne</th><th>Explication</th></tr>
+      {% for cle, titre, obligatoire, explication in colonnes %}
+      <tr><td>{% if obligatoire %}<strong>{{ titre }}</strong>{% else %}{{ titre }}{% endif %}</td><td>{% if obligatoire %}<span class="etiquette prefere">obligatoire</span> {% endif %}{{ explication }}</td></tr>
+      {% endfor %}
+    </table></div>
+  </div>
+  <div class="carte">
+    <h2 class="titre-carte">2. Envoyer le fichier</h2>
+    <form method="post" enctype="multipart/form-data" class="formulaire" data-demo-message="Sur la version installée, le fichier est contrôlé et un aperçu des créations et modifications s'affiche avant tout enregistrement.">{% csrf_token %}
+      <div class="champ"><label for="fichier">Fichier Excel (.xlsx)</label><input type="file" id="fichier" name="fichier" accept=".xlsx"></div>
+      <div class="actions"><button class="bouton" type="submit">Voir l'aperçu</button></div>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="sous-titre">Aperçu : rien n'est encore enregistré. Les lignes en erreur seront ignorées ; corrigez le fichier et renvoyez-le pour les importer.</p>
+<div class="grille">
+  <div class="tuile"><div class="valeur">{{ bilan.creation }}</div><div class="libelle">articles créés</div></div>
+  <div class="tuile"><div class="valeur">{{ bilan.modification }}</div><div class="libelle">articles modifiés</div></div>
+  <div class="tuile"><div class="valeur">{{ bilan.inchange }}</div><div class="libelle">sans changement</div></div>
+  <div class="tuile {% if bilan.erreur %}alerte{% endif %}"><div class="valeur">{{ bilan.erreur }}</div><div class="libelle">lignes en erreur</div></div>
+</div>
+<form method="post" class="actions">{% csrf_token %}
+  <input type="hidden" name="etape" value="confirmer">
+  {% if bilan.creation or bilan.modification %}<button class="bouton" type="submit">Importer {{ bilan.creation|add:bilan.modification }} article{{ bilan.creation|add:bilan.modification|pluralize }}</button>{% endif %}
+  <a class="bouton secondaire" href="{% url 'import_articles' %}">Envoyer un autre fichier</a>
+</form>
+<div class="tableau"><table>
+  <tr><th class="nombre">Ligne</th><th>Référence</th><th>Résultat</th><th>Détail</th></tr>
+  {% for ligne in analyse %}
+  <tr><td class="nombre">{{ ligne.numero }}</td>
+    <td>{% if ligne.article %}<a href="{{ ligne.article.get_absolute_url }}">{{ ligne.reference }}</a>{% else %}{{ ligne.reference|default:"—" }}{% endif %}</td>
+    <td>{% if ligne.action == "erreur" %}<span class="etiquette alerte">erreur</span>{% elif ligne.action == "creation" %}<span class="etiquette ok">création</span>{% elif ligne.action == "modification" %}<span class="etiquette attention">modification</span>{% else %}<span class="etiquette">sans changement</span>{% endif %}</td>
+    <td>{% for erreur in ligne.erreurs %}<span class="erreur">{{ erreur }}</span>{% endfor %}
+      {% if ligne.changements %}<div>Modifié : {{ ligne.changements|join:", " }}</div>{% endif %}
+      {% for remarque in ligne.remarques %}<div class="discret">{{ remarque }}</div>{% endfor %}</td></tr>
+  {% endfor %}
+</table></div>
+{% endif %}
+{% endblock %}

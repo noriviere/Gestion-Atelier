@@ -6,10 +6,11 @@ from . import roles
 # nom de l'entrée : (libellé, page de destination, pages où l'entrée est signalée comme courante)
 ENTREES = {
     "accueil": ("Accueil", "accueil", {"accueil"}),
-    "stock": ("Stock", "articles", {"articles", "article"}),
+    "stock": ("Stock", "articles", {"articles", "article", "article_nouveau", "article_modifier", "import_articles"}),
     "a_commander": ("À commander", "a_commander", {"a_commander"}),
     "commandes": ("Commandes", "commandes", {"commandes", "commande"}),
-    "inventaires": ("Inventaires", "inventaires", {"inventaires", "comptage", "feuille_comptage"}),
+    "fournisseurs": ("Fournisseurs", "fournisseurs", {"fournisseurs", "fournisseur", "fournisseur_nouveau", "fournisseur_modifier"}),
+    "inventaires": ("Inventaires", "inventaires", {"inventaires", "comptage", "feuille_comptage", "ecarts"}),
     "outillage": ("Outillage", "outils", {"outils", "outil"}),
     "produits": ("Produits et machines", "produits", {
         "produits", "produit", "fiche", "machine", "nouveau_produit", "modifier_produit", "nouvelle_fiche",
@@ -17,8 +18,8 @@ ENTREES = {
     }),
 }
 
-# Bureau (admin, méthode et management) : le stock et les commandes d'abord.
-ORDRE_BUREAU = ["accueil", "stock", "a_commander", "commandes", "inventaires", "outillage", "produits"]
+# Bureau (admin, méthode et management, intendant) : le stock et les commandes d'abord.
+ORDRE_BUREAU = ["accueil", "stock", "a_commander", "commandes", "fournisseurs", "inventaires", "outillage", "produits"]
 # Atelier : les fiches de production d'abord ; il suit les commandes (réceptions) mais ne les prépare pas.
 ORDRE_ATELIER = ["accueil", "produits", "outillage", "stock", "inventaires", "commandes"]
 

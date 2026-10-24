@@ -64,7 +64,7 @@
 <div class="tableau"><table>
   <tr><th>Article</th><th class="nombre">Stock actuel</th><th class="nombre">Quantité</th><th class="nombre">Prix unit.</th><th class="nombre">Montant</th><th class="nombre">{% if peut_receptionner %}Quantité livrée{% else %}Reçu{% endif %}</th></tr>
   {% for ligne in lignes %}
-  <tr><td><a href="{{ ligne.article.get_absolute_url }}">{{ ligne.article.reference }}</a> {{ ligne.article.designation }}</td>
+  <tr><td><a href="{{ ligne.article.get_absolute_url }}">{{ ligne.article.reference }}</a> {{ ligne.article.designation }}{% with reference_a_commander=ligne.lien_fournisseur.reference_a_commander %}{% if reference_a_commander %}<br><span class="discret">{{ reference_a_commander }}</span>{% endif %}{% endwith %}</td>
     <td class="nombre">{{ ligne.article.stock|floatformat:"-2" }}</td>
     <td class="nombre">{{ ligne.quantite|floatformat:"-2" }} {{ ligne.article.unite }}</td>
     <td class="nombre">{% if ligne.prix_unitaire is not None %}{{ ligne.prix_unitaire }} €{% endif %}</td>

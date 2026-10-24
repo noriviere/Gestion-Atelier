@@ -193,3 +193,46 @@
   champRecherche.addEventListener("input", filtrerResultats);
   filtrerResultats();
 })();
+
+// Comptage d'inventaire : écart avec le stock théorique, affiché pendant la saisie.
+(function () {
+  function lireNombre(texte) {
+    return parseFloat(String(texte).replace(",", "."));
+  }
+
+  function afficherEcart(champ) {
+    var celluleEcart = champ.closest("tr").querySelector(".ecart-saisi");
+    if (!celluleEcart) return;
+    var quantiteComptee = lireNombre(champ.value);
+    celluleEcart.innerHTML = "";
+    if (champ.value.trim() === "" || isNaN(quantiteComptee)) return;
+    var ecart = Math.round((quantiteComptee - lireNombre(champ.dataset.stockTheorique)) * 100) / 100;
+    var etiquette = document.createElement("span");
+    etiquette.className = "etiquette " + (ecart < 0 ? "alerte" : ecart > 0 ? "attention" : "ok");
+    etiquette.textContent = (ecart > 0 ? "+" : ecart < 0 ? "−" : "") + Math.abs(ecart).toLocaleString("fr-FR");
+    celluleEcart.appendChild(etiquette);
+  }
+
+  document.querySelectorAll("input.compte[data-stock-theorique]").forEach(function (champ) {
+    champ.addEventListener("input", function () {
+      afficherEcart(champ);
+    });
+  });
+})();
+
+// Fiche article : le numéro de plan n'est demandé que pour un design interne.
+(function () {
+  var choixOrigine = document.querySelectorAll('input[name="origine"]');
+  var champPlan = document.querySelector(".champ-plan");
+  if (!choixOrigine.length || !champPlan) return;
+
+  function afficherChampPlan() {
+    var origineChoisie = document.querySelector('input[name="origine"]:checked');
+    champPlan.hidden = !origineChoisie || origineChoisie.value !== "interne";
+  }
+
+  choixOrigine.forEach(function (choix) {
+    choix.addEventListener("change", afficherChampPlan);
+  });
+  afficherChampPlan();
+})();

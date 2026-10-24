@@ -24,10 +24,12 @@ PROFILS = [
     ("admin", "admin", "Admin", "Tous les droits, dont la gestion des comptes et des listes de référence."),
     ("methode", "methode", "Méthode et management",
      "Crée et modifie articles, outils, produits et seuils ; consulte tout."),
+    ("intendant", "intendante", "Intendant",
+     "Saisit les comptages d'inventaire tournant et les mouvements de stock ; consulte tout."),
     ("regleur", "regleur", "Régleur",
-     "Consulte les fiches, ajoute photos et documents, saisit les sorties de stock et les comptages."),
+     "Consulte les fiches, ajoute photos et documents, saisit les sorties de stock."),
     ("operateur", "operateur", "Opérateur",
-     "Consulte les fiches, saisit les sorties de stock et les comptages d'inventaire."),
+     "Consulte les fiches et saisit les sorties de stock."),
 ]
 
 # Formulaires de consultation (méthode GET) : leur page est exportée et le formulaire y mène.
@@ -44,7 +46,7 @@ def chemin_statique(url):
     """
     parties = urlsplit(url)
     chemin = parties.path.strip("/")
-    if "." in posixpath.basename(chemin):
+    if "." in posixpath.basename(chemin) and not parties.query:
         return chemin
     for cle, valeur in parse_qsl(parties.query):
         chemin = posixpath.join(chemin, re.sub(r"[^\w-]", "_", f"{cle}-{valeur}"))

@@ -26,12 +26,21 @@ class PagesDemoTests(TestCase):
         type_inventaire = TypeInventaire.objects.first()
         for adresse in ["/", "/articles/", f"/articles/{article.pk}/", "/a-commander/", "/inventaires/",
                         f"/inventaires/{type_inventaire.pk}/", f"/inventaires/{type_inventaire.pk}/?tous=1",
-                        f"/inventaires/{type_inventaire.pk}/feuille/", "/outils/", "/produits/",
+                        f"/inventaires/{type_inventaire.pk}/feuille/", "/inventaires/ecarts/",
+                        f"/inventaires/ecarts/?type={type_inventaire.pk}", "/outils/", "/produits/",
                         "/produits/?vue=non_securise&q=N1", *[f"/produits/machines/{machine.pk}/" for machine in Machine.objects.all()],
                         *[f"/produits/{produit.pk}/" for produit in Produit.objects.all()],
                         *[fabrication.get_absolute_url() for fabrication in ProduitMachine.objects.filter(etat__in=ProduitMachine.ETATS_AVEC_FICHE)],
                         *[document.get_absolute_url() for document in Document.objects.all()[:3]], "/commandes/", "/commandes/?etat=&retard=1",
                         *[f"/commandes/{commande.pk}/" for commande in Commande.objects.all()]]:
+            self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
+
+    def test_pages_de_saisie_repondent_pour_methode(self):
+        self.client.login(username="methode", password="demo")
+        article = Article.objects.get(reference="PL-M")
+        fournisseur = article.fournisseur_prefere
+        for adresse in ["/articles/nouveau/", f"/articles/{article.pk}/modifier/", "/fournisseurs/", "/fournisseurs/nouveau/",
+                        f"/fournisseurs/{fournisseur.pk}/", f"/fournisseurs/{fournisseur.pk}/modifier/"]:
             self.assertEqual(self.client.get(adresse).status_code, 200, adresse)
 
     def test_connexion_obligatoire(self):
@@ -74,6 +83,34 @@ class PagesDemoTests(TestCase):
         self.assertEqual(porte_lame.stock, Decimal("5"))
         self.assertFalse(porte_lame.inventaire_du)
 
+    def test_comptage_annonce_les_ecarts(self):
+        self.client.login(username="intendante", password="demo")
+        porte_lame = Article.objects.get(reference="PL-M")
+        reponse = self.client.post(f"/inventaires/{porte_lame.type_inventaire_id}/", {f"compte_{porte_lame.pk}": "1"},
+                                   follow=True)
+        self.assertContains(reponse, "1 écart(s) : PL-M −2.")
+        rapport = self.client.get("/inventaires/ecarts/")
+        self.assertIn(porte_lame, [comptage.article for comptage in rapport.context["comptages"]])
+
+    def test_rapport_des_ecarts_filtre_la_periode_et_les_ecarts(self):
+        self.client.login(username="operateur", password="demo")
+        sur_un_mois = self.client.get("/inventaires/ecarts/", {"periode": "30", "ecart": "1"}).context
+        self.assertTrue(all(comptage.ecart for comptage in sur_un_mois["comptages"]))
+        self.assertEqual({comptage.article.reference for comptage in sur_un_mois["comptages"]}, {"BAN-40", "TIG-M", "PAT-P"})
+        tous_sur_trois_mois = self.client.get("/inventaires/ecarts/", {"periode": "90"}).context
+        self.assertEqual(len(tous_sur_trois_mois["comptages"]), tous_sur_trois_mois["resume"]["nombre_comptages"])
+        self.assertGreater(tous_sur_trois_mois["resume"]["nombre_comptages"], tous_sur_trois_mois["resume"]["nombre_ecarts"])
+
+    def test_operateur_ne_saisit_pas_de_comptage(self):
+        self.client.login(username="operateur", password="demo")
+        porte_lame = Article.objects.get(reference="PL-M")
+        page = self.client.get(f"/inventaires/{porte_lame.type_inventaire_id}/")
+        self.assertNotContains(page, "Enregistrer les comptages")
+        reponse = self.client.post(f"/inventaires/{porte_lame.type_inventaire_id}/", {f"compte_{porte_lame.pk}": "5"})
+        self.assertEqual(reponse.status_code, 403)
+        porte_lame.refresh_from_db()
+        self.assertEqual(porte_lame.stock, Decimal("3"))
+
     def test_menu_signale_la_page_courante_aux_lecteurs_d_ecran(self):
         self.client.login(username="operateur", password="demo")
         reponse = self.client.get("/outils/")
@@ -114,6 +151,7 @@ class ExportStatiqueTests(TestCase):
         self.assertEqual(chemin_statique("/"), "index.html")
         self.assertEqual(chemin_statique("/articles/12/"), "articles/12/index.html")
         self.assertEqual(chemin_statique("/inventaires/3/?tous=1"), "inventaires/3/tous-1/index.html")
+        self.assertEqual(chemin_statique("/articles/export.xlsx"), "articles/export.xlsx")
         self.assertEqual(chemin_statique("/produits/documents/4/plan-N2.pdf"), "produits/documents/4/plan-N2.pdf")
 
     def test_export_un_jeu_de_pages_par_profil(self):
@@ -127,6 +165,9 @@ class ExportStatiqueTests(TestCase):
             self.assertIn('href="../static/css/atelier.css"', accueil_operateur)
             self.assertNotIn('href="/', accueil_operateur)
             self.assertIn("Paramétrage", (racine / "methode" / "index.html").read_text())
+            self.assertTrue((racine / "operateur" / "articles" / "export.xlsx").read_bytes().startswith(b"PK"))
+            self.assertIn("Enregistrer les comptages", (racine / "intendant" / "inventaires" / str(TypeInventaire.objects.first().pk) / "index.html").read_text())
+            self.assertTrue((racine / "methode" / "articles" / "nouveau" / "index.html").exists())
             outil = Outil.objects.get(code="OUT-N7")
             self.assertTrue((racine / "methode" / "outils" / str(outil.pk) / "modifier" / "index.html").exists())
             self.assertTrue((racine / "methode" / "outils" / "nouveau" / f"parent-{outil.pk}" / "index.html").exists())

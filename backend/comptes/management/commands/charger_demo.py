@@ -29,6 +29,7 @@ class Command(BaseCommand):
         outils = self.creer_outillage(articles)
         produits, machines = self.creer_produits(articles, outils)
         self.creer_mouvements(articles, comptes)
+        self.creer_comptages(articles, comptes)
         commandes = self.creer_commandes(articles, comptes)
         self.stdout.write(self.style.SUCCESS(
             f"Démo chargée : {len(articles)} articles, {len(outils)} outils, {len(produits)} produits, "
@@ -75,6 +76,8 @@ class Command(BaseCommand):
             articles[reference] = Article.objects.create(
                 reference=reference, designation=designation, categorie=categorie,
                 type_inventaire=types_inventaire[type_inventaire], emplacement=emplacement, unite=unite,
+                origine=Article.DESIGN_INTERNE if reference in donnees.PLANS else Article.ACHAT,
+                numero_plan=donnees.PLANS.get(reference, ""),
                 stock=stock, stock_mini=stock_mini, mini_commande=mini_commande,
                 frequence_inventaire=frequence_jours,
                 dernier_inventaire=aujourdhui - timedelta(days=inventorie_il_y_a_jours),
@@ -148,6 +151,17 @@ class Command(BaseCommand):
             )
             Article.objects.filter(pk=article.pk).update(stock=stock_final)
             Mouvement.objects.filter(pk=mouvement.pk).update(stock_apres=stock_final)
+
+    @staticmethod
+    def creer_comptages(articles, comptes):
+        # Comptages passés, pour le rapport des écarts : ils ne touchent pas aux stocks de la démo.
+        maintenant = timezone.now()
+        for reference, stock_theorique, quantite_comptee, compte_il_y_a_jours in donnees.COMPTAGES:
+            Mouvement.objects.create(
+                article=articles[reference], type=Mouvement.INVENTAIRE, quantite=quantite_comptee,
+                stock_apres=quantite_comptee, ecart=quantite_comptee - stock_theorique,
+                date=maintenant - timedelta(days=compte_il_y_a_jours), utilisateur=comptes["intendante"],
+            )
 
     @staticmethod
     def creer_commandes(articles, comptes):

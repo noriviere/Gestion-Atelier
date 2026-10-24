@@ -1,6 +1,6 @@
-<div class="champ{% if champ.errors %} en-erreur{% endif %}">
-  <label for="{{ champ.id_for_label }}">{{ champ.label }}{% if champ.field.required %} *{% endif %}</label>
-  {{ champ }}
-  {% if champ.help_text %}<div class="discret">{{ champ.help_text }}</div>{% endif %}
-  {% for erreur in champ.errors %}<div class="erreur-champ">{{ erreur }}</div>{% endfor %}
+<div class="champ{% if champ.errors %} en-erreur{% endif %}{% if classe %} {{ classe }}{% endif %}">
+  {% if champ.field.widget.input_type == "radio" %}<span class="libelle-champ">{{ champ.label }}{% if champ.field.required %} *{% endif %}</span>{{ champ }}{% else %}<label for="{{ champ.id_for_label }}">{{ champ.label }}{% if champ.field.required %} *{% endif %}</label>
+  {{ champ }}{% endif %}
+  {% if champ.help_text %}<span class="aide">{{ champ.help_text }}</span>{% endif %}
+  {% for erreur in champ.errors %}<span class="erreur erreur-champ">{{ erreur }}</span>{% endfor %}
 </div>

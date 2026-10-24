@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titre %}{{ fournisseur.nom }} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<div class="fil"><a href="{% url 'fournisseurs' %}">Fournisseurs</a> › {{ fournisseur.nom }}</div>
+<h1>{{ fournisseur.nom }}</h1>
+<p class="sous-titre">{{ liens_articles|length }} article{{ liens_articles|pluralize }} fourni{{ liens_articles|pluralize }}</p>
+{% if peut_modifier %}<div class="actions"><a class="bouton secondaire" href="{% url 'fournisseur_modifier' fournisseur.pk %}">Modifier le fournisseur</a></div>{% endif %}
+<div class="deux-colonnes">
+  <div>
+    <h2>Articles</h2>
+    <div class="tableau"><table>
+      <tr><th>Article</th><th>Réf. fournisseur ou plan</th><th class="nombre">Prix</th><th class="nombre">Délai</th><th class="nombre">Stock</th></tr>
+      {% for lien in liens_articles %}
+      <tr><td><a href="{{ lien.article.get_absolute_url }}">{{ lien.article.reference }}</a> {{ lien.article.designation }} {% if lien.prefere %}<span class="etiquette prefere">préféré</span>{% endif %}</td>
+        <td>{{ lien.reference_a_commander }}</td>
+        <td class="nombre">{% if lien.prix %}{{ lien.prix }} €{% endif %}</td>
+        <td class="nombre">{% if lien.delai %}{{ lien.delai }} j{% endif %}</td>
+        <td class="nombre">{% if lien.article.a_commander %}<span class="etiquette alerte">{{ lien.article.stock|floatformat:"-2" }}</span>{% else %}{{ lien.article.stock|floatformat:"-2" }}{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="5">Aucun article chez ce fournisseur.</td></tr>{% endfor %}
+    </table></div>
+  </div>
+  <div>
+    <div class="carte">
+      <h2 class="titre-carte">Coordonnées</h2>
+      <dl class="infos">
+        <dt>Contact</dt><dd>{{ fournisseur.contact|default:"—" }}</dd>
+        <dt>Téléphone</dt><dd>{{ fournisseur.telephone|default:"—" }}</dd>
+        <dt>E-mail</dt><dd>{% if fournisseur.email %}<a href="mailto:{{ fournisseur.email }}">{{ fournisseur.email }}</a>{% else %}—{% endif %}</dd>
+      </dl>
+    </div>
+    <div class="carte">
+      <h2 class="titre-carte">Commandes en cours</h2>
+      {% for commande in commandes_en_cours %}<div><a href="{{ commande.get_absolute_url }}">{{ commande.numero }}</a> {% include "commandes/_etat.html" %}</div>
+      {% empty %}<span class="discret">Aucune commande en cours.</span>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

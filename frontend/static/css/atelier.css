@@ -94,9 +94,9 @@ h2 { font-size: 18px; margin: 28px 0 10px; }
 /* 3. En-tête et navigation ------------------------------------------------ */
 header.barre { background: var(--barre); color: #fff; display: flex; align-items: center; gap: 16px; padding: 0 24px; flex-wrap: wrap; position: sticky; top: 0; z-index: 10; }
 header.barre .logo { font-weight: 700; font-size: 17px; padding: 14px 0; color: #fff; }
-header.barre nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
-header.barre nav a { position: relative; color: var(--barre-texte); padding: 16px 9px; font-size: 14px; white-space: nowrap; transition: color var(--duree) ease; }
-header.barre nav a::after { content: ""; position: absolute; left: 9px; right: 9px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: #6ea1ff; transform: scaleX(0); transition: transform 250ms var(--courbe); }
+header.barre nav { display: flex; gap: 2px; flex: 1; flex-wrap: wrap; }
+header.barre nav a { position: relative; color: var(--barre-texte); padding: 16px 7px; font-size: 14px; white-space: nowrap; transition: color var(--duree) ease; }
+header.barre nav a::after { content: ""; position: absolute; left: 7px; right: 7px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: #6ea1ff; transform: scaleX(0); transition: transform 250ms var(--courbe); }
 header.barre nav a:hover, header.barre nav a.actif { color: #fff; text-decoration: none; }
 header.barre nav a:hover::after, header.barre nav a.actif::after { transform: scaleX(1); }
 header.barre .utilisateur { font-size: 13px; color: var(--barre-texte); display: flex; gap: 12px; align-items: center; }
@@ -184,7 +184,7 @@ html[data-theme="sombre"] .bouton:not(.secondaire) { color: #0b0e13; }
 .champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 18px; }
 .champ { margin: 0 0 10px; }
 .champ label { display: block; font-weight: 600; margin-bottom: 4px; }
-.champ input, .champ select, .champ textarea { width: 100%; }
+.champ input:not([type="checkbox"]):not([type="radio"]), .champ select, .champ textarea { width: 100%; }
 .champ-large { grid-column: 1 / -1; }
 .errorlist { list-style: none; margin: 4px 0 0; padding: 0; color: var(--alerte); font-size: 13px; }
 table.pieces-outil select { width: 100%; }
@@ -446,6 +446,19 @@ header.menu-ouvert .bouton-menu span:nth-child(3) { transform: translateY(-6px) 
 @media print {
   .commandes-mobile { display: none !important; }
 }
+
+/* 10. Formulaires de saisie (articles, fournisseurs) ------------------------ */
+.grille-champs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px 18px; }
+.champ { display: flex; flex-direction: column; gap: 4px; }
+.champ.large { grid-column: span 2; }
+.champ label, .champ .libelle-champ { font-weight: 600; font-size: 14px; }
+.champ div label { font-weight: normal; display: inline-flex; gap: 6px; align-items: center; margin-right: 14px; }
+.champ .aide { color: var(--discret); font-size: 12px; }
+.erreur { color: var(--alerte); font-size: 13px; display: block; }
+.champ.en-erreur input, .champ.en-erreur select { border-color: var(--alerte); }
+.formulaire td input:not([type="checkbox"]), .formulaire td select { width: 100%; min-width: 80px; box-sizing: border-box; }
+.champ-plan[hidden] { display: none; }
+@media (max-width: 760px) { .champ.large { grid-column: auto; } }
 
 /* Matrice et formulaires de fiche sur téléphone : la matrice reste un tableau qui défile. */
 @media (max-width: 760px) {

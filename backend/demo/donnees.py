@@ -20,7 +20,7 @@ COMPTES = [
     ("methode", "Noël", "Méthodes", "Méthode et management"),
     ("chef", "Chef", "d'équipe", "Méthode et management"),
     ("regleur", "Régleur", "Équipe A", "Régleur"),
-    ("intendante", "Intendante", "", "Opérateur"),
+    ("intendante", "Intendante", "", "Intendant"),
     ("operateur", "Opérateur", "(compte partagé)", "Opérateur"),
 ]
 
@@ -72,15 +72,22 @@ ARTICLES = [
     ("MEU-CBN", "Meule CBN de finition", "conso", "Abrasifs", "B2-03", "meule", 3, 2, 2, 60, 20),
 ]
 
+# Les pièces d'usure sont des designs internes, usinées par les fournisseurs sur plan :
+# elles n'ont pas de référence fournisseur. Huile, bandes et meules sont des articles achetés.
+PLANS = {
+    reference: f"PL-{numero:04d} ind. A"
+    for numero, (reference, *_reste) in enumerate((article for article in ARTICLES if article[2] == "usure"), start=1101)
+}
+
 PRIX = [
-    # référence article, fournisseur, référence fournisseur, prix (€), délai (jours), préféré
-    *[(f"PAT-{taille}", "Mécanique Précision Sud", f"MPS-PAT{taille}", 18.0, 10, True) for taille in "PMG"],
-    *[(f"PAT-{taille}", "Usinage Martin", f"UM-P{taille}", 21.0, 6, False) for taille in "PMG"],
-    *[(f"PL-{taille}", "Usinage Martin", f"UM-PL{taille}", 145.0, 15, True) for taille in "PM"],
-    *[(f"PL-{produit}", "Usinage Martin", f"UM-PL{produit}", 180.0, 20, True) for produit in ("N10", "N11", "N12")],
-    *[(f"TIG-{taille}", "Mécanique Précision Sud", f"MPS-TG{taille}", 9.5, 10, True) for taille in "PMG"],
-    *[(f"PEI-N{numero}", "Usinage Martin", f"UM-PE{numero}", 62.0, 15, True) for numero in range(2, 13)],
-    *[(f"PEI-N{numero}", "Mécanique Précision Sud", f"MPS-PE{numero}", 58.0, 25, False) for numero in range(2, 13)],
+    # référence article, fournisseur, référence fournisseur (vide pour un design interne), prix (€), délai (jours), préféré
+    *[(f"PAT-{taille}", "Mécanique Précision Sud", "", 18.0, 10, True) for taille in "PMG"],
+    *[(f"PAT-{taille}", "Usinage Martin", "", 21.0, 6, False) for taille in "PMG"],
+    *[(f"PL-{taille}", "Usinage Martin", "", 145.0, 15, True) for taille in "PM"],
+    *[(f"PL-{produit}", "Usinage Martin", "", 180.0, 20, True) for produit in ("N10", "N11", "N12")],
+    *[(f"TIG-{taille}", "Mécanique Précision Sud", "", 9.5, 10, True) for taille in "PMG"],
+    *[(f"PEI-N{numero}", "Usinage Martin", "", 62.0, 15, True) for numero in range(2, 13)],
+    *[(f"PEI-N{numero}", "Mécanique Précision Sud", "", 58.0, 25, False) for numero in range(2, 13)],
     ("HUI-01", "Lubrifiants de l'Ouest", "LO-HC20", 92.0, 4, True),
     *[(f"BAN-{grain}", "Abrasifs Industriels", f"AI-B{grain}", 6.8, 5, True) for grain in (40, 80, 120, 240)],
     *[(f"BAN-{grain}", "Meules et Bandes Diffusion", f"MBD-{grain}", 7.4, 3, False) for grain in (40, 80, 120, 240)],
@@ -207,6 +214,14 @@ MOUVEMENTS = [
     ("BAN-120", "entree", 50, "intendante", "Réception commande"),
     ("HUI-01", "sortie", 1, "operateur", "S2"),
     ("MEU-300", "sortie", 1, "regleur", "S7 changement de meule"),
+]
+
+COMPTAGES = [
+    # référence article, stock théorique, quantité comptée, compté il y a N jours (les mêmes que le dernier inventaire)
+    ("BAN-40", 37, 35, 10), ("BAN-80", 24, 24, 10), ("BAN-240", 25, 25, 10), ("TIG-M", 20, 18, 20),
+    ("TIG-G", 9, 9, 20), ("MEU-200", 6, 6, 20), ("MEU-CBN", 3, 3, 20), ("PAT-P", 13, 14, 30), ("PAT-G", 12, 12, 30),
+    ("HUI-01", 4, 3, 35), ("PEI-N2", 5, 5, 40), ("PEI-N3", 5, 4, 40), ("PEI-N5", 3, 3, 40), ("BAN-120", 45, 42, 40),
+    ("PL-P", 5, 5, 60), ("PL-N10", 3, 3, 60), ("MEU-300", 3, 3, 70),
 ]
 
 COMMANDES = [

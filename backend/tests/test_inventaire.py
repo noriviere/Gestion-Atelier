@@ -2,12 +2,14 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
-from inventaire.models import Mouvement
-from inventaire.views import articles_a_compter, lire_quantite, regrouper_par_fournisseur_prefere
+from inventaire.models import Article, Mouvement
+from inventaire.views import (articles_a_compter, formater_ecart, lire_quantite, regrouper_par_fournisseur_prefere,
+                              resumer_ecarts)
 
 from .fabriques import creer_article, creer_type_inventaire, creer_utilisateur, lier_fournisseur
 
@@ -91,6 +93,15 @@ class MouvementTests(TestCase):
         self.assertEqual(self.article.dernier_inventaire, timezone.localdate())
         self.assertFalse(self.article.inventaire_du)
 
+    def test_comptage_garde_l_ecart_avec_le_stock_theorique(self):
+        comptage = Mouvement.enregistrer(self.article, Mouvement.INVENTAIRE, Decimal("7"))
+        self.assertEqual(comptage.ecart, Decimal("-3"))
+        self.assertEqual(comptage.stock_theorique, Decimal("10"))
+
+    def test_sortie_n_a_pas_d_ecart(self):
+        sortie = Mouvement.enregistrer(self.article, Mouvement.SORTIE, Decimal("1"))
+        self.assertIsNone(sortie.ecart)
+
     def test_sortie_ne_change_pas_la_date_d_inventaire(self):
         date_avant = self.article.dernier_inventaire
         Mouvement.enregistrer(self.article, Mouvement.SORTIE, Decimal("1"))
@@ -135,6 +146,74 @@ class FournisseurTests(TestCase):
                          ["Abrasifs", "Usinage Martin", None])
         self.assertEqual(commandes[1][1], [(patin, lien_patin)])
         self.assertEqual(commandes[2][1], [(huile, None)])
+
+
+class OrigineTests(TestCase):
+    def test_design_interne_commande_sur_son_numero_de_plan(self):
+        porte_lame = creer_article("PL-1", origine=Article.DESIGN_INTERNE, numero_plan="PL-1101 ind. B")
+        lien = lier_fournisseur(porte_lame, "Usinage Martin", prefere=True)
+        lien.reference_fournisseur = "UM-PL1"
+        self.assertEqual(lien.reference_a_commander, "Plan PL-1101 ind. B")
+
+    def test_article_achete_commande_sur_la_reference_fournisseur(self):
+        bande = creer_article("BAN-1")
+        lien = lier_fournisseur(bande, "Abrasifs", prefere=True)
+        lien.reference_fournisseur = "AI-B40"
+        self.assertEqual(lien.reference_a_commander, "AI-B40")
+
+    def test_design_interne_sans_plan_refuse(self):
+        article = creer_article("PL-2", origine=Article.DESIGN_INTERNE)
+        with self.assertRaises(ValidationError) as erreur:
+            article.full_clean()
+        self.assertIn("numero_plan", erreur.exception.message_dict)
+
+    def test_article_achete_n_a_pas_de_plan(self):
+        article = creer_article("BAN-2", numero_plan="oubli")
+        article.full_clean()
+        self.assertEqual(article.numero_plan, "")
+
+
+class EcartsTests(TestCase):
+    def setUp(self):
+        self.article = creer_article("PATIN", stock=10)
+        lier_fournisseur(self.article, "Usinage Martin", prefere=True, prix=Decimal("18"))
+        lier_fournisseur(self.article, "Mécanique Sud", prix=Decimal("12"))
+
+    def test_ecart_chiffre_au_prix_du_fournisseur_prefere(self):
+        comptage = Mouvement.enregistrer(self.article, Mouvement.INVENTAIRE, Decimal("8"))
+        self.assertEqual(comptage.valeur_ecart, Decimal("-36"))
+
+    def test_sans_prix_prefere_le_prix_le_plus_bas(self):
+        tige = creer_article("TIGE")
+        lier_fournisseur(tige, "Usinage Martin", prefere=True)
+        lier_fournisseur(tige, "Mécanique Sud", prix=Decimal("9.5"))
+        lier_fournisseur(tige, "Abrasifs", prix=Decimal("11"))
+        self.assertEqual(tige.prix_de_reference, Decimal("9.5"))
+
+    def test_sans_prix_l_ecart_n_est_pas_chiffre(self):
+        huile = creer_article("HUILE", stock=4)
+        comptage = Mouvement.enregistrer(huile, Mouvement.INVENTAIRE, Decimal("3"))
+        self.assertIsNone(comptage.valeur_ecart)
+
+    def test_resume_des_ecarts(self):
+        manquant = Mouvement.enregistrer(self.article, Mouvement.INVENTAIRE, Decimal("8"))
+        juste = Mouvement.enregistrer(self.article, Mouvement.INVENTAIRE, Decimal("8"))
+        surplus = Mouvement.enregistrer(self.article, Mouvement.INVENTAIRE, Decimal("9"))
+        resume = resumer_ecarts([manquant, juste, surplus])
+        self.assertEqual(resume["nombre_comptages"], 3)
+        self.assertEqual(resume["nombre_ecarts"], 2)
+        self.assertEqual(resume["taux_exactitude"], 33)
+        self.assertEqual(resume["valeur_manquants"], Decimal("-36"))
+        self.assertEqual(resume["valeur_surplus"], Decimal("18"))
+        self.assertEqual(resume["valeur_nette"], Decimal("-18"))
+
+    def test_resume_sans_comptage(self):
+        self.assertIsNone(resumer_ecarts([])["taux_exactitude"])
+
+    def test_ecart_affiche_avec_son_signe(self):
+        self.assertEqual(formater_ecart(Decimal("2.00")), "+2")
+        self.assertEqual(formater_ecart(Decimal("-1.50")), "−1,5")
+        self.assertEqual(formater_ecart(Decimal("0")), "0")
 
 
 class LectureQuantiteTests(TestCase):

@@ -1,5 +1,5 @@
 """Remontées, étape 2 : consultation, statistiques, contrôle qualité, règles réglables et correction."""
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from io import BytesIO
 
@@ -64,16 +64,15 @@ class StatistiquesTests(DonneesMeulesMixin, TestCase):
         self.assertEqual(attendue["critere"], "meule + matière")
         self.assertTrue(attendue["fiable"])
 
-    def test_medianes_par_reference(self):
-        for faces, face in ((1000, "A"), (2000, "A"), (3000, "B")):
-            saisie = self.demonter(faces)
-            SaisieMeule.objects.filter(pk=saisie.pk).update(face=face)
-        [ligne] = statistiques.medianes_par_reference(self.toutes())
-        self.assertEqual((ligne["meule"], ligne["matiere"]), ("MEU-200", "Inox"))
-        self.assertEqual((ligne["face_a"], ligne["nombre_a"], ligne["face_b"], ligne["toutes"]), (1335, 2, 2670, 1780))
-
-    def test_derniers_mois(self):
-        self.assertEqual(statistiques.derniers_mois(3, date(2026, 2, 15)), [(2025, 12), (2026, 1), (2026, 2)])
+    def test_lignes_pour_les_statistiques(self):
+        self.demonter(1000)
+        self.demonter(0)
+        saisies = sorted(self.toutes(), key=lambda saisie: saisie.pk)
+        [ligne, sans_face] = statistiques.lignes_pour_les_statistiques(saisies, {self.meule.pk: "Tyrolit"})
+        self.assertEqual((ligne["format"], ligne["matiere"], ligne["machine"], ligne["article"], ligne["fournisseur"]),
+                         ("N2", "Inox", "S1", "MEU-200", "Tyrolit"))
+        self.assertEqual((ligne["faces_89"], ligne["faces_mm"], ligne["usure"], ligne["x"]), (890.0, 10.0, 100.0, False))
+        self.assertIsNone(sans_face["faces_89"])  # aucune face : erreur de saisie, pas une durée de vie
 
     def test_perte_par_machine(self):
         self.demonter(1000, hauteur_finale="25", commentaire="Changement de série")
@@ -273,3 +272,42 @@ class CorrectionTests(DonneesMeulesMixin, TestCase):
         saisie = self.monter()
         self.assertRedirects(self.client.post(f"/remontees/meules/{saisie.pk}/supprimer/"), "/remontees/meules/")
         self.assertFalse(SaisieMeule.objects.exists())
+
+
+class ControlesEnDirectTests(DonneesMeulesMixin, TestCase):
+    def test_montage(self):
+        for numero in range(MINIMUM_ZONE):
+            SaisieMeule.objects.filter(pk=self.monter().pk).update(vitesse_rotation=30 + numero % 5)
+        self.monter(compteur_fin=1000, hauteur_finale=Decimal("0"), demonte_le=timezone.now())
+        controles = regles.controles_en_direct(regles.DEFAUTS)
+        self.assertEqual(controles["limites"]["vitesse_rotation"], {"maximum": 50.0, "unite": "m/s"})
+        self.assertEqual(controles["matricules"], ["0534"])
+        zone = controles["zones"]["vitesse_rotation"]
+        self.assertLess(zone["bas"], 30)
+        self.assertGreater(zone["haut"], 34)
+        self.assertLess(zone["haut"], 40)
+        self.assertEqual(controles["durees"], [[self.meule.pk, self.s1.pk, "I", "A", 890.0]])
+
+    def test_regle_desactivee(self):
+        reglages = regles.Reglages({"hors_habitude": (False, {}), "rotation_max": (False, {})})
+        controles = regles.controles_en_direct(reglages)
+        self.assertEqual(controles["zones"], {})
+        self.assertNotIn("vitesse_rotation", controles["limites"])
+        self.assertFalse(controles["actives"]["hors_habitude"])
+
+    def test_demontage(self):
+        self.monter(compteur_fin=1000, hauteur_finale=Decimal("25"), demonte_le=timezone.now())
+        saisie = self.monter(compteur_debut=5)
+        controles = regles.controles_en_direct(regles.DEFAUTS, saisie)
+        self.assertEqual(controles["saisie"], {"compteur_debut": 5, "hauteur_initiale": 100.0, "meule": "MEU-200"})
+        self.assertEqual(controles["perte_annee"], 37.5)
+        self.assertIsNone(controles["zones"]["compteur_fin"])  # pas assez d'historique
+
+    def test_pages_de_saisie_portent_les_controles(self):
+        saisie = self.monter()
+        self.assertContains(self.client.get("/remontees/meules/montage/"), 'id="controles-meules"')
+        self.assertContains(self.client.get(f"/remontees/meules/{saisie.pk}/demontage/"), 'id="controles-meules"')
+        self.assertContains(self.client.get("/remontees/meules/statistiques/"), 'id="lignes-statistiques"')
+
+
+MINIMUM_ZONE = int(regles.DEFAUTS.valeur("hors_habitude", "minimum"))

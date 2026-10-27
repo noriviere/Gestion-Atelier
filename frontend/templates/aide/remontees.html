@@ -82,9 +82,20 @@
 <p>Une meule cassée ou fissurée et démontée avant usure totale est marquée <strong>Défaut</strong>. C'est l'équivalent de l'onglet « Data défaut » du classeur.</p>
 </section>
 
+<section class="point-aide" id="en-direct">
+<h2>Les messages sous les champs</h2>
+<p>Pendant la saisie, chaque champ est vérifié aussitôt, avant d'enregistrer, comme dans l'ancienne application :</p>
+<ul>
+  <li><strong>en rouge</strong>, une erreur qui empêchera l'enregistrement : vitesse ou hauteur au-dessus de la limite, compteur au démontage plus petit qu'au montage, hauteur finale plus grande que l'initiale, commentaire obligatoire manquant ;</li>
+  <li><strong>en orange</strong>, un avertissement : valeur inhabituelle (avec les valeurs habituelles), machine ou meule non prévue pour le format, matricule jamais utilisé, date dans le futur, aucune face, meule non finie avec les euros perdus et le cumul de l'année ;</li>
+  <li><strong>en vert</strong>, une confirmation : machine ou meule prévue, meule finie.</li>
+</ul>
+<p>Les listes de machines et de meules montrent d'abord celles prévues pour le format, puis les autres. Au montage, la médiane de faces de la meule choisie s'affiche pour la face A et la face B. Au démontage, une meule non finie demande une explication : la réponse « Oui, rien à signaler » n'est plus possible. Sous le formulaire, une ligne indique ce qu'il reste à renseigner.</p>
+</section>
+
 <section class="point-aide" id="avertissements">
 <h2>Les avertissements</h2>
-<p>Les erreurs bloquent l'enregistrement. Les avertissements, eux, s'affichent en haut du formulaire et le bouton devient <strong>Enregistrer quand même</strong> : corrigez si besoin, sinon confirmez. Avertissements possibles :</p>
+<p>À l'enregistrement, le serveur refait tous les contrôles. Les erreurs bloquent l'enregistrement. Les avertissements, eux, s'affichent en haut du formulaire et le bouton devient <strong>Enregistrer quand même</strong> : corrigez si besoin, sinon confirmez. Avertissements possibles :</p>
 <ul>
   <li>valeur inhabituelle par rapport aux saisies passées (pression, vitesses, hauteur initiale ; compteur au démontage comparé aux meules de même référence et matière). Une pression de 0 (manomètre hors service) n'est pas signalée ;</li>
   <li>machine ou meule différente de celles prévues pour le format ;</li>
@@ -112,31 +123,36 @@
 <h2>La liste des saisies</h2>
 {% droit_requis "remontees_consulter" %}
 <p>Le bouton <strong>Saisies meules</strong>, en haut des pages des remontées, liste toutes les meules, de la plus récente à la plus ancienne : celles encore montées et celles démontées, avec leur durée de vie et leurs marques (X, Défaut, problème signalé, corrigée).</p>
-<p>Filtrez par machine, meule, matière ou état, ou cherchez un lot fournisseur, un matricule, un format ou un mot du commentaire. Au-delà de 300 lignes, seules les plus récentes s'affichent : affinez les filtres. Une date ouvre le détail de la saisie.</p>
+<p>Filtrez par machine, meule, matière ou état, ou cherchez un lot fournisseur, un matricule, un format ou un mot du commentaire. Au-delà de 300 lignes, seules les plus récentes s'affichent : affinez les filtres. Un clic sur un titre de colonne trie le tableau ; une date ouvre le détail de la saisie.</p>
 </section>
 
 <section class="point-aide" id="statistiques">
 <h2>Les statistiques</h2>
 {% droit_requis "remontees_consulter" %}
-<p>Tout le monde peut les consulter. Elles portent sur les meules démontées :</p>
+<p>Tout le monde peut les consulter. Elles portent sur les meules démontées, comme la page Statistiques de l'ancienne application :</p>
 <ul>
-  <li>en haut, le nombre de meules démontées, la part de meules non finies (X), les défauts et les euros de meule pas utilisée cette année ;</li>
-  <li>la <a href="#mediane">durée de vie par meule</a>, face A, face B et les deux, avec la plus courte et la plus longue ;</li>
-  <li>l'<a href="#evolution">évolution sur 12 mois</a> ;</li>
+  <li><strong>les critères</strong> : format, matière, machine, n° article meule, face, fournisseur, année, mois. Seules les meules qui respectent tous les critères choisis sont prises en compte ;</li>
+  <li><strong>la grandeur étudiée</strong> : faces par meule de 89 mm (la durée de vie), hauteur usée par face, faces par mm, compteur fin ou hauteur usée totale ;</li>
+  <li>les cases pour <strong>inclure les meules non finies (X)</strong> et pour <strong>écarter les valeurs très éloignées</strong> (avec le coefficient du contrôle qualité) ;</li>
+  <li>en haut, le nombre de valeurs, la <a href="#mediane">médiane</a>, la moyenne, l'écart type, le minimum et le maximum, Q1 et Q3, et la fiabilité ;</li>
+  <li><strong>Détailler par</strong> : une ligne par format, meule, machine… Un clic sur une ligne filtre dessus ;</li>
+  <li>l'<a href="#evolution">évolution de la médiane</a> par mois, trimestre ou année ;</li>
   <li>la <a href="#perte">meule pas utilisée en euros</a>, cette année et l'an dernier.</li>
 </ul>
+<p><strong>Tout réinitialiser</strong> remet les critères à « Tous ».</p>
 </section>
 
 <section class="point-aide" id="mediane">
 <h2>La médiane</h2>
 <p>La durée de vie d'une meule est son nombre de faces ramené à une meule de 89 mm. La <strong>médiane</strong> est la valeur du milieu quand on range les meules de la plus courte à la plus longue : une meule sur deux a fait moins, une sur deux a fait plus. Contrairement à la moyenne, une saisie absurde ne la fausse pas.</p>
-<p>Le nombre de meules est donné entre parenthèses. Avec moins de 5 meules, la médiane est grisée : elle est peu fiable.</p>
-<p>Sur la page d'une saisie, la <strong>durée de vie habituelle</strong> est la médiane des autres meules identiques : même meule, même face, même machine et même matière. S'il y en a moins de 5, on élargit à la même meule et la même matière sur toutes les machines, puis à la meule seule ; le critère retenu est indiqué.</p>
+<p>La fiabilité dépend du nombre de valeurs : moins de 5, trop peu de données ; de 5 à 19, indicatif ; 20 et plus, fiable.</p>
+<p>Au montage et sur la page d'une saisie, la <strong>durée de vie habituelle</strong> est la médiane des autres meules identiques : même meule, même face, même machine et même matière. S'il y en a moins de 5, on élargit à la même meule et la même matière sur toutes les machines, puis à la meule seule ; le critère retenu est indiqué.</p>
 </section>
 
 <section class="point-aide" id="evolution">
-<h2>L'évolution par mois</h2>
-<p>La médiane de chaque meule et matière, mois par mois, selon le mois de montage. Une case vide veut dire qu'aucune meule de ce type n'a été montée ce mois-là. Utile pour voir l'effet d'un changement de fournisseur ou de réglage.</p>
+<h2>L'évolution de la médiane</h2>
+<p>La courbe donne la médiane de la grandeur étudiée par mois de montage (ou par trimestre, ou par année), pour les critères choisis. La bande bleue couvre la moitié des valeurs (de Q1 à Q3). Les barres grises donnent le nombre de meules de chaque période.</p>
+<p>Un point plein a au moins autant de valeurs que le <strong>seuil de fiabilité</strong> (5 par défaut) ; un point creux et une ligne pointillée signalent trop peu de valeurs pour conclure. Le survol d'un point affiche son détail. Utile pour voir l'effet d'un changement de fournisseur ou de réglage.</p>
 </section>
 
 <section class="point-aide" id="perte">
@@ -147,7 +163,7 @@
 <section class="point-aide" id="controle">
 <h2>Le contrôle qualité</h2>
 {% droit_requis "remontees_consulter" %}
-<p>Le contrôle qualité relit toutes les saisies démontées et liste celles qui semblent absurdes ou incomplètes. Il ne modifie rien et n'envoie rien : c'est une liste à aller voir. Trois gravités :</p>
+<p>Le contrôle qualité relit toutes les saisies démontées et liste celles qui semblent absurdes ou incomplètes. Il ne modifie rien et n'envoie rien : c'est une liste à aller voir. Filtrez par gravité, cherchez un champ ou un motif, triez par colonne. Trois gravités :</p>
 <dl class="champs-aide">
   <dt>Probable erreur</dt><dd>Valeur au-dessus d'une limite, compteur au démontage plus petit qu'au montage, hauteur finale plus grande que l'initiale, date dans le futur.</dd>
   <dt>À vérifier</dt><dd>Aucune face, date très ancienne, machine ou meule non prévue pour le format, durée de vie très éloignée des meules identiques (au moins 8), doublon possible.</dd>

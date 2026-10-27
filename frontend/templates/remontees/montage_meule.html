@@ -6,8 +6,9 @@
 {% url 'remontees' as adresse_remontees %}
 <nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{{ adresse_remontees }}">Remontées</a></li>{% if machine %}<li><a href="{{ adresse_remontees }}?machine={{ machine.code }}">{{ machine.code }}</a></li>{% endif %}<li aria-current="page">Montage d'une meule</li></ol></nav>
 <h1>Montage d'une meule{% if machine %} sur {{ machine.code }}{% endif %}</h1>
-<p class="sous-titre">Fiche du monteur. Le démontage se saisira plus tard, depuis l'écran des remontées. {% info "remontees" "montage" "Le montage d'une meule" %}</p>
+<p class="sous-titre">Fiche du monteur. Le démontage se saisira plus tard, depuis l'écran des remontées. {% info "remontees" "montage" "Le montage d'une meule" %} {% info "remontees" "en-direct" "Les messages sous les champs" %}</p>
 {{ table_formats|json_script:"table-formats" }}
+{{ controles|json_script:"controles-meules" }}
 <form method="post" class="formulaire formulaire-meule" data-demo="saisie-meule" data-demo-texte="Montage vérifié : sur la version installée, il est enregistré et la meule apparaît dans les meules montées de la machine.">{% csrf_token %}
   {% include "remontees/_avertissements.html" %}
   <div class="carte">
@@ -28,6 +29,10 @@
       {% include "_champ.html" with champ=form.ma5 classe="champ-ma5" aide_sujet="remontees" aide_ancre="format" %}
       {% include "_champ.html" with champ=form.meule %}
       {% include "_champ.html" with champ=form.lot_fournisseur aide_sujet="remontees" aide_ancre="lot-fournisseur" %}
+    </div>
+    <div class="mediane-attendue" data-mediane-attendue hidden>
+      <p class="libelle-avec-aide"><strong>Médiane de faces par meule de 89 mm (à titre indicatif)</strong>{% info "remontees" "mediane" "La médiane" %}</p>
+      <div class="grille grille-compacte" data-faces></div>
     </div>
   </div>
   <div class="carte">

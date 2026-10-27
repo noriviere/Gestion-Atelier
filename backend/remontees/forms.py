@@ -224,8 +224,8 @@ class CorrectionForm(forms.ModelForm):
             self.add_error("hauteur_finale", f"Supérieure à la hauteur initiale ({initiale:g} mm).")
         if "probleme" in donnees and not donnees["probleme"]:
             donnees["themes"] = []
-        elif donnees.get("probleme") and not donnees.get("themes"):
-            self.add_error("themes", "Choisissez au moins un thème pour le problème signalé.")
+        elif donnees.get("probleme") and not donnees.get("themes") and not donnees.get("commentaire", "").strip():
+            self.add_error("themes", "Choisissez un thème ou décrivez le problème dans le commentaire.")
         return donnees
 
 

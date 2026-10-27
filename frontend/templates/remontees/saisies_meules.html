@@ -4,7 +4,7 @@
 {% block contenu %}
 <h1>Saisies meules{% info "remontees" "saisies" "La liste des saisies" %}</h1>
 {% include "remontees/_navigation.html" with page="saisies" %}
-<p class="sous-titre">Toutes les meules montées et démontées, de la plus récente à la plus ancienne. Cliquez sur une date pour voir le détail{% if droits.remontees_corriger %} ou corriger la saisie{% endif %}.</p>
+<p class="sous-titre">Toutes les meules montées et démontées, de la plus récente à la plus ancienne. Cliquez sur un titre de colonne pour trier, sur une date pour voir le détail{% if droits.remontees_corriger %} ou corriger la saisie{% endif %}.</p>
 
 <form class="filtres" method="get" data-filtrer-au-chargement>
   <input type="search" name="q" value="{{ filtres.q }}" placeholder="Lot, matricule, format, commentaire" aria-label="Rechercher une saisie">
@@ -23,14 +23,14 @@
   <button class="bouton" type="submit">Filtrer</button>
 </form>
 {% if tronquee %}<p class="carte">{{ nombre }} saisies correspondent : seules les {{ saisies|length }} plus récentes sont affichées. Affinez les filtres pour voir les autres.</p>{% endif %}
-<div class="tableau"><table>
+<div class="tableau"><table data-triable>
   <tr><th>Montée le</th><th>Machine</th><th>Meule</th><th>Format</th><th>Face</th><th>Monteur</th><th>Démontée le</th><th class="nombre">Faces</th><th class="nombre">Faces / meule de 89 mm{% info "remontees" "calculs" "Les valeurs calculées" %}</th><th>Remarque</th></tr>
   {% for saisie in saisies %}
   <tr data-machine="{{ saisie.machine.code }}" data-meule="{{ saisie.meule_id }}" data-matiere="{{ saisie.format_matiere.matiere }}" data-etat="{{ saisie.etats }}">
-    <td><a href="{{ saisie.get_absolute_url }}">{{ saisie.date_montage|date:"d/m/Y" }}</a></td>
+    <td data-tri="{{ saisie.date_montage|date:'Y-m-d' }}"><a href="{{ saisie.get_absolute_url }}">{{ saisie.date_montage|date:"d/m/Y" }}</a></td>
     <td>{{ saisie.machine.code }}</td><td>{{ saisie.meule.reference }}</td><td>{{ saisie.format_matiere }}</td><td>{{ saisie.face }}</td>
     <td>{{ saisie.matricule_monteur.numero }}</td>
-    <td>{% if saisie.est_demontee %}{{ saisie.demonte_le|date:"d/m/Y" }}{% else %}<span class="etiquette ok">montée</span>{% endif %}</td>
+    <td data-tri="{{ saisie.demonte_le|date:'Y-m-d' }}">{% if saisie.est_demontee %}{{ saisie.demonte_le|date:"d/m/Y" }}{% else %}<span class="etiquette ok">montée</span>{% endif %}</td>
     <td class="nombre">{{ saisie.nombre_faces_brut|default_if_none:"" }}</td>
     <td class="nombre">{{ saisie.faces_par_meule_reference|floatformat:0 }}</td>
     <td>{% include "remontees/_etat_saisie.html" %}{% if saisie.corrige_le %}<span class="etiquette" title="Corrigée par Méthode et management">corrigée</span>{% endif %}</td>

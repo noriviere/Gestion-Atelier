@@ -6,7 +6,7 @@
 {% url 'remontees' as adresse_remontees %}
 <nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{{ adresse_remontees }}">Remontées</a></li><li><a href="{{ adresse_remontees }}?machine={{ saisie.machine.code }}">{{ saisie.machine.code }}</a></li><li aria-current="page">Démontage</li></ol></nav>
 <h1>Démontage de la meule {{ saisie.meule.reference }}</h1>
-<p class="sous-titre">À renseigner par le démonteur. {% info "remontees" "demontage" "Le démontage d'une meule" %}</p>
+<p class="sous-titre">À renseigner par le démonteur. {% info "remontees" "demontage" "Le démontage d'une meule" %} {% info "remontees" "en-direct" "Les messages sous les champs" %}</p>
 <div class="carte rappel-montage">
   <h2 class="titre-carte">Rappel du montage</h2>
   <dl class="infos">
@@ -19,6 +19,7 @@
     <dt>Compteur au montage</dt><dd data-compteur-debut="{{ saisie.compteur_debut }}">{{ saisie.compteur_debut }}</dd>
   </dl>
 </div>
+{{ controles|json_script:"controles-meules" }}
 <form method="post" class="formulaire formulaire-meule" data-demo="saisie-meule" data-seuil-non-finie="{{ seuil_non_finie|stringformat:'s' }}" data-demo-texte="Démontage vérifié : sur la version installée, il est enregistré avec le nombre de faces et la durée de vie de la meule.">{% csrf_token %}
   {% include "remontees/_avertissements.html" %}
   <div class="carte">
@@ -28,14 +29,15 @@
       {% include "_champ.html" with champ=form.compteur_fin %}
       {% include "_champ.html" with champ=form.hauteur_finale aide_sujet="remontees" aide_ancre="non-finie" %}
     </div>
-    <p class="discret alerte-non-finie" data-alerte-non-finie hidden>La meule n'est pas finie : expliquez pourquoi dans le commentaire.</p>
   </div>
   <div class="carte">
     <h2 class="titre-carte">Retour{% info "remontees" "retour" "Signaler un problème" %}</h2>
+    <p class="question-contexte" data-alerte-non-finie hidden></p>
     {% include "_champ.html" with champ=form.probleme %}
     <div data-themes>{% include "_champ.html" with champ=form.themes %}</div>
     <div class="aide-commentaire" role="group" aria-label="Aide à la rédaction">{% for question, amorce in aide_commentaire %}<button type="button" class="bouton secondaire" data-amorce="{{ amorce }}">{{ question }}</button> {% endfor %}</div>
     {% include "_champ.html" with champ=form.commentaire %}
+    <p class="note-defaut" data-note-defaut hidden>Cette meule sera aussi marquée <strong>Défaut</strong> (meule défectueuse).</p>
   </div>
   {% with retour=adresse_remontees|add:"?machine="|add:saisie.machine.code %}{% include "remontees/_bouton_enregistrer.html" with libelle="Enregistrer le démontage" %}{% endwith %}
 </form>

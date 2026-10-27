@@ -15,7 +15,7 @@ from openpyxl.styles import Font
 
 from comptes import roles
 from inventaire.excel import TYPE_XLSX
-from inventaire.models import Article, Mouvement
+from inventaire.models import Article, ArticleFournisseur, Mouvement
 from produits.matrice import cle_naturelle
 from produits.models import Machine
 
@@ -26,7 +26,6 @@ from .models import FormatMatiere, HistoriqueRegle, Matricule, RegleMeule, Saisi
 NOMBRE_DERNIERES_SAISIES = 10
 # Au-delà, la liste des saisies demande d'affiner les filtres (l'historique Excel compte des milliers de lignes).
 NOMBRE_MAXIMUM_SAISIES = 300
-NOMBRE_MOIS_EVOLUTION = 12
 NOMBRE_LIGNES_HISTORIQUE = 30
 
 
@@ -55,13 +54,14 @@ def contexte_formulaire(formulaire):
 
 
 def table_formats():
-    """Pour remontees.js : code lame, MA5 et meules prévues de chaque format et matière."""
+    """Pour remontees.js : code lame, MA5, meules et machines prévues de chaque format et matière."""
     table = {}
-    for ligne in FormatMatiere.objects.prefetch_related("meules"):
+    for ligne in FormatMatiere.objects.prefetch_related("meules", "machines"):
         table.setdefault(str(ligne.produit_id), {})[ligne.matiere] = {
             "code_lame": ligne.code_lame,
             "ma5": ligne.ma5,
             "meules": [str(meule.pk) for meule in ligne.meules.all()],
+            "machines": [str(machine.pk) for machine in ligne.machines.all()],
         }
     return table
 
@@ -86,7 +86,8 @@ def montage_meule(request):
             messages.success(request, message)
             return redirect(f"{reverse('remontees')}?machine={saisie.machine.code}")
     contexte = contexte_formulaire(formulaire)
-    contexte.update({"machine": machine, "table_formats": table_formats()})
+    contexte.update({"machine": machine, "table_formats": table_formats(),
+                     "controles": regles.controles_en_direct(regles.lire_reglages())})
     return render(request, "remontees/montage_meule.html", contexte)
 
 
@@ -131,7 +132,8 @@ def demontage_meule(request, pk):
             return redirect(saisie)
     contexte = contexte_formulaire(formulaire)
     contexte.update({"saisie": saisie, "aide_commentaire": regles.AIDE_COMMENTAIRE,
-                     "seuil_non_finie": formulaire.reglages.seuil_non_finie})
+                     "seuil_non_finie": formulaire.reglages.seuil_non_finie,
+                     "controles": regles.controles_en_direct(formulaire.reglages, saisie)})
     return render(request, "remontees/demontage_meule.html", contexte)
 
 
@@ -233,21 +235,23 @@ def saisies_demontees():
                 .prefetch_related("format_matiere__machines", "format_matiere__meules"))
 
 
+def fournisseurs_preferes(articles):
+    """{article_id: nom du fournisseur préféré} pour les meules des saisies."""
+    return dict(ArticleFournisseur.objects.filter(article__in=articles, prefere=True)
+                .values_list("article_id", "fournisseur__nom"))
+
+
 def statistiques_meules(request):
     saisies = saisies_demontees()
     reglages = regles.lire_reglages()
     prix = reglages.valeur("prix_meule")
     annee = timezone.localdate().year
-    mois = statistiques.derniers_mois(NOMBRE_MOIS_EVOLUTION)
-    non_finies = sum(1 for saisie in saisies if saisie.non_finie)
+    fournisseurs = fournisseurs_preferes({saisie.meule_id for saisie in saisies})
     return render(request, "remontees/statistiques_meules.html", {
-        "nombre": len(saisies), "non_finies": non_finies,
-        "part_non_finies": round(100 * non_finies / len(saisies)) if saisies else 0,
-        "defauts": sum(1 for saisie in saisies if saisie.defaut),
-        "medianes": statistiques.medianes_par_reference(saisies),
-        "mois": mois, "evolution": statistiques.evolution_par_mois(saisies, mois),
+        "lignes": statistiques.lignes_pour_les_statistiques(saisies, fournisseurs),
         "pertes": [statistiques.perte(saisies, annee, prix), statistiques.perte(saisies, annee - 1, prix)],
-        "hauteur_reference": regles.HAUTEUR_REFERENCE_MM, "minimum_fiable": statistiques.MINIMUM_FIABLE,
+        "coefficient_eloigne": float(reglages.valeur("duree_eloignee", "coefficient")),
+        "hauteur_reference": regles.HAUTEUR_REFERENCE_MM,
     })
 
 
@@ -256,12 +260,18 @@ def controle_meules(request):
     gravite = request.GET.get("gravite", "")
     nombres = {gravite_possible: sum(1 for anomalie in anomalies if anomalie["gravite"] == gravite_possible)
                for gravite_possible in statistiques.GRAVITES}
-    if gravite and not settings.DEMO_STATIQUE:
-        anomalies = [anomalie for anomalie in anomalies if slugify(anomalie["gravite"]) == gravite]
+    recherche = request.GET.get("q", "").strip()
+    if not settings.DEMO_STATIQUE:
+        # Démo statique : toutes les lignes sont dans la page, demo.js masque celles hors filtre.
+        if gravite:
+            anomalies = [anomalie for anomalie in anomalies if slugify(anomalie["gravite"]) == gravite]
+        if recherche:
+            anomalies = [anomalie for anomalie in anomalies if recherche.lower() in
+                         f"{anomalie['champ']} {anomalie['motif']} {anomalie['valeur']}".lower()]
     return render(request, "remontees/controle_meules.html", {
         "anomalies": anomalies, "gravites": [(gravite_possible, nombres[gravite_possible])
                                              for gravite_possible in statistiques.GRAVITES],
-        "gravite_choisie": gravite, "grave": statistiques.GRAVE, "verif": statistiques.VERIF,
+        "gravite_choisie": gravite, "recherche": recherche, "grave": statistiques.GRAVE, "verif": statistiques.VERIF,
     })
 
 

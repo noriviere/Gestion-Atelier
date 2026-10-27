@@ -296,3 +296,44 @@
     lienAide.appendChild(mention);
   });
 })();
+
+// Tableaux triables (data-triable) : un clic sur un titre de colonne trie, un deuxième inverse l'ordre.
+// Une cellule peut donner sa valeur de tri dans data-tri (une date AAAA-MM-JJ, par exemple).
+(function () {
+  var lireNombre = window.Atelier.lireNombre;
+  function valeurDeTri(ligne, colonne) {
+    var cellule = ligne.cells[colonne];
+    if (!cellule) return "";
+    var texte = cellule.dataset.tri !== undefined ? cellule.dataset.tri : cellule.textContent.trim();
+    var nombre = lireNombre(texte.replace(/\s/g, ""));
+    return /^-?[\d\s]+([.,]\d+)?$/.test(texte) && !isNaN(nombre) ? nombre : texte.toLowerCase();
+  }
+  document.querySelectorAll("table[data-triable]").forEach(function (tableau) {
+    var entete = tableau.rows[0];
+    if (!entete) return;
+    Array.prototype.forEach.call(entete.cells, function (titre, colonne) {
+      var bouton = document.createElement("button");
+      bouton.type = "button";
+      bouton.className = "titre-triable";
+      while (titre.firstChild && titre.firstChild.nodeType === Node.TEXT_NODE) bouton.append(titre.firstChild);
+      if (!bouton.textContent.trim()) return;
+      titre.prepend(bouton);
+      bouton.addEventListener("click", function () {
+        var sens = titre.getAttribute("aria-sort") === "ascending" ? -1 : 1;
+        Array.prototype.forEach.call(entete.cells, function (autre) { autre.removeAttribute("aria-sort"); });
+        titre.setAttribute("aria-sort", sens === 1 ? "ascending" : "descending");
+        var lignes = Array.prototype.slice.call(tableau.rows, 1).filter(function (ligne) {
+          return !(ligne.cells.length === 1 && ligne.cells[0].colSpan > 1);   // ligne « Aucun… »
+        });
+        lignes.sort(function (premiere, seconde) {
+          var a = valeurDeTri(premiere, colonne), b = valeurDeTri(seconde, colonne);
+          if (a === "" || b === "") return a === "" ? 1 : -1;   // cases vides en dernier
+          return (typeof a === "number" && typeof b === "number" ? a - b
+                  : String(a).localeCompare(String(b), "fr", { numeric: true })) * sens;
+        });
+        var parent = lignes.length ? lignes[0].parentNode : null;
+        lignes.forEach(function (ligne) { parent.appendChild(ligne); });
+      });
+    });
+  });
+})();

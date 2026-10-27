@@ -2,7 +2,7 @@
 {% load aide static %}
 {% block texte %}
 <h1>Remontées terrain</h1>
-<p class="sous-titre">Les remontées gardent ce qui se passe sur les machines. Pour l'instant : le montage et le démontage de chaque meule, qui remplacent l'application de suivi d'usure des meules et son classeur Excel. Les porte-lames et les autres pièces suivront.</p>
+<p class="sous-titre">Les remontées gardent ce qui se passe sur les machines. Pour l'instant : le montage et le démontage de chaque meule, leur consultation, leurs statistiques et leur contrôle qualité, qui remplacent l'application de suivi d'usure des meules et son classeur Excel. Les porte-lames et les autres pièces suivront.</p>
 
 <section class="point-aide" id="ecran">
 <h2>L'écran des remontées</h2>
@@ -69,6 +69,7 @@
 <section class="point-aide" id="non-finie">
 <h2>Meule non finie</h2>
 <p>Il faut aller jusqu'à 0 mm. Au-delà de 2 mm restants, la meule est <strong>démontée avant usure totale</strong> : elle est marquée « X » et le commentaire devient obligatoire pour expliquer pourquoi.</p>
+<p>Le seuil de 2 mm se règle dans les <a href="#regles">règles</a>. La marque est posée au démontage : changer le seuil ne remarque pas les meules déjà démontées, sauf si leur saisie est corrigée.</p>
 </section>
 
 <section class="point-aide" id="retour">
@@ -91,7 +92,7 @@
   <li>nouveau matricule ;</li>
   <li>saisie identique à une saisie existante (même meule, machine, face, date de montage et compteur au démontage).</li>
 </ul>
-<p>Les avertissements confirmés restent visibles sur la page de la saisie.</p>
+<p>Les avertissements confirmés restent visibles sur la page de la saisie. Chacun peut être désactivé dans les <a href="#regles">règles</a>.</p>
 </section>
 
 <section class="point-aide" id="calculs">
@@ -105,5 +106,77 @@
   <dt>Faces pour une meule de 89 mm</dt><dd>Faces par mm × 89 : la durée de vie ramenée à une meule de hauteur de référence, pour comparer les meules entre elles.</dd>
   <dt>Hauteur usée par face</dt><dd>Hauteur usée divisée par le nombre de faces.</dd>
 </dl>
+</section>
+
+<section class="point-aide" id="saisies">
+<h2>La liste des saisies</h2>
+{% droit_requis "remontees_consulter" %}
+<p>Le bouton <strong>Saisies meules</strong>, en haut des pages des remontées, liste toutes les meules, de la plus récente à la plus ancienne : celles encore montées et celles démontées, avec leur durée de vie et leurs marques (X, Défaut, problème signalé, corrigée).</p>
+<p>Filtrez par machine, meule, matière ou état, ou cherchez un lot fournisseur, un matricule, un format ou un mot du commentaire. Au-delà de 300 lignes, seules les plus récentes s'affichent : affinez les filtres. Une date ouvre le détail de la saisie.</p>
+</section>
+
+<section class="point-aide" id="statistiques">
+<h2>Les statistiques</h2>
+{% droit_requis "remontees_consulter" %}
+<p>Tout le monde peut les consulter. Elles portent sur les meules démontées :</p>
+<ul>
+  <li>en haut, le nombre de meules démontées, la part de meules non finies (X), les défauts et les euros de meule pas utilisée cette année ;</li>
+  <li>la <a href="#mediane">durée de vie par meule</a>, face A, face B et les deux, avec la plus courte et la plus longue ;</li>
+  <li>l'<a href="#evolution">évolution sur 12 mois</a> ;</li>
+  <li>la <a href="#perte">meule pas utilisée en euros</a>, cette année et l'an dernier.</li>
+</ul>
+</section>
+
+<section class="point-aide" id="mediane">
+<h2>La médiane</h2>
+<p>La durée de vie d'une meule est son nombre de faces ramené à une meule de 89 mm. La <strong>médiane</strong> est la valeur du milieu quand on range les meules de la plus courte à la plus longue : une meule sur deux a fait moins, une sur deux a fait plus. Contrairement à la moyenne, une saisie absurde ne la fausse pas.</p>
+<p>Le nombre de meules est donné entre parenthèses. Avec moins de 5 meules, la médiane est grisée : elle est peu fiable.</p>
+<p>Sur la page d'une saisie, la <strong>durée de vie habituelle</strong> est la médiane des autres meules identiques : même meule, même face, même machine et même matière. S'il y en a moins de 5, on élargit à la même meule et la même matière sur toutes les machines, puis à la meule seule ; le critère retenu est indiqué.</p>
+</section>
+
+<section class="point-aide" id="evolution">
+<h2>L'évolution par mois</h2>
+<p>La médiane de chaque meule et matière, mois par mois, selon le mois de montage. Une case vide veut dire qu'aucune meule de ce type n'a été montée ce mois-là. Utile pour voir l'effet d'un changement de fournisseur ou de réglage.</p>
+</section>
+
+<section class="point-aide" id="perte">
+<h2>La meule pas utilisée, en euros</h2>
+<p>Pour chaque meule démontée avec de la hauteur restante : hauteur restante ÷ hauteur initiale × prix d'une meule moyenne. Le prix (150 € à l'origine) se règle dans les <a href="#regles">règles</a>. Le total est donné par année de montage, avec le détail par machine.</p>
+</section>
+
+<section class="point-aide" id="controle">
+<h2>Le contrôle qualité</h2>
+{% droit_requis "remontees_consulter" %}
+<p>Le contrôle qualité relit toutes les saisies démontées et liste celles qui semblent absurdes ou incomplètes. Il ne modifie rien et n'envoie rien : c'est une liste à aller voir. Trois gravités :</p>
+<dl class="champs-aide">
+  <dt>Probable erreur</dt><dd>Valeur au-dessus d'une limite, compteur au démontage plus petit qu'au montage, hauteur finale plus grande que l'initiale, date dans le futur.</dd>
+  <dt>À vérifier</dt><dd>Aucune face, date très ancienne, machine ou meule non prévue pour le format, durée de vie très éloignée des meules identiques (au moins 8), doublon possible.</dd>
+  <dt>Mineur</dt><dd>Meule non finie sans explication dans le commentaire.</dd>
+</dl>
+<p>Le bouton <strong>Exporter en Excel</strong> télécharge la liste complète, pour la traiter hors de l'application. Une saisie à corriger se corrige depuis sa page.</p>
+</section>
+
+<section class="point-aide" id="correction">
+<h2>Corriger ou supprimer une saisie</h2>
+{% droit_requis "remontees_corriger" %}
+<p>Sur la page d'une saisie, le bouton <strong>Corriger ou supprimer</strong> ouvre tous les champs du montage et du démontage. Les avertissements ne sont pas redemandés ; seules les incohérences restent bloquantes (compteur ou hauteur à l'envers). Les valeurs calculées et les marques X et Défaut sont recalculées avec les règles du moment. La saisie garde qui l'a corrigée et quand.</p>
+<p><strong>Supprimer la saisie</strong> la retire de la liste et des statistiques, après confirmation. Si une sortie de stock avait été faite au montage, elle n'est pas annulée : faites une entrée de stock si la meule n'a pas servi.</p>
+</section>
+
+<section class="point-aide" id="regles">
+<h2>Le réglage des règles</h2>
+{% droit_requis "remontees_parametrer" %}
+<p>La page <strong>Règles</strong> réunit les contrôles des meules, par groupe : démontage, limites bloquantes, avertissements, contrôle qualité et calculs. Pour chaque règle :</p>
+<ul>
+  <li>la case <strong>Active</strong> l'allume ou l'éteint (certaines règles sont toujours actives) ;</li>
+  <li>ses valeurs se modifient entre un minimum et un maximum ; la valeur d'origine est rappelée sous chaque champ.</li>
+</ul>
+<p><strong>Revenir aux valeurs d'origine</strong> remet toutes les règles comme au départ, sans toucher aux thèmes. Chaque changement est noté dans l'historique, avec la personne et l'heure. Une règle changée s'applique aux saisies suivantes.</p>
+</section>
+
+<section class="point-aide" id="themes">
+<h2>Les thèmes du problème</h2>
+{% droit_requis "remontees_parametrer" %}
+<p>Les thèmes proposés au démontage, à la question « Qu'est-ce qui a posé problème ? », se renomment, se retirent (décocher « Proposé ») ou s'ajoutent en bas de la page Règles. Un thème retiré ou renommé reste tel quel sur les anciennes saisies. « Meule cassée ou fissurée » ne se modifie pas : c'est lui qui marque une meule en <a href="#defaut">défaut</a>.</p>
 </section>
 {% endblock %}

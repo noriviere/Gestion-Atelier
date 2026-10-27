@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load aide %}
+{% block titre %}Contrôle qualité meules – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Contrôle qualité des saisies</h1>
+{% include "remontees/_navigation.html" with page="controle" %}
+<p class="sous-titre">Les saisies démontées qui semblent absurdes ou incomplètes. Rien n'est modifié ni envoyé : c'est une liste à vérifier. {% info "remontees" "controle" "Le contrôle qualité" %}</p>
+<div class="grille grille-compacte">
+  {% for gravite, nombre in gravites %}<div class="tuile{% if nombre and gravite == grave %} alerte{% elif nombre and gravite == verif %} attention{% endif %}"><div class="valeur">{{ nombre }}</div><div class="libelle">{{ gravite }}</div></div>{% endfor %}
+</div>
+<form class="filtres" method="get" data-filtrer-au-chargement>
+  <select name="gravite" aria-label="Gravité"><option value="">Toutes les gravités</option>
+    {% for gravite, nombre in gravites %}<option value="{{ gravite|slugify }}" {% if gravite_choisie|slugify == gravite|slugify %}selected{% endif %}>{{ gravite }}</option>{% endfor %}
+  </select>
+  <button class="bouton" type="submit">Filtrer</button>
+  <a class="bouton secondaire" href="{% url 'export_controle_meules' %}">Exporter en Excel</a>
+</form>
+<div class="tableau"><table>
+  <tr><th>Gravité</th><th>Saisie</th><th>Machine</th><th>Meule</th><th>Champ</th><th>Valeur</th><th>Motif</th></tr>
+  {% for anomalie in anomalies %}{% with saisie=anomalie.saisie %}
+  <tr data-gravite="{{ anomalie.gravite|slugify }}">
+    <td><span class="etiquette{% if anomalie.gravite == grave %} alerte{% elif anomalie.gravite == verif %} attention{% endif %}">{{ anomalie.gravite }}</span></td>
+    <td><a href="{{ saisie.get_absolute_url }}">n° {{ saisie.pk }} du {{ saisie.date_montage|date:"d/m/Y" }}</a></td>
+    <td>{{ saisie.machine.code }}</td><td>{{ saisie.meule.reference }}</td><td>{{ anomalie.champ }}</td><td>{{ anomalie.valeur }}</td><td>{{ anomalie.motif }}</td>
+  </tr>
+  {% endwith %}{% empty %}<tr><td colspan="7">Aucune anomalie : toutes les saisies semblent cohérentes.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

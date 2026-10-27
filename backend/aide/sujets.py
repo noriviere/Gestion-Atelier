@@ -72,6 +72,11 @@ SUJET_DE_LA_PAGE = {
     "montage_meule": "remontees",
     "demontage_meule": "remontees",
     "saisie_meule": "remontees",
+    "saisies_meules": "remontees",
+    "statistiques_meules": "remontees",
+    "controle_meules": "remontees",
+    "modifier_saisie_meule": "remontees",
+    "regles_meules": "remontees",
 }
 
 

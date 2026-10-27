@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load aide %}
+{% block titre %}Statistiques meules – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Statistiques meules</h1>
+{% include "remontees/_navigation.html" with page="statistiques" %}
+<p class="sous-titre">Calculées sur les meules démontées. La durée de vie est le nombre de faces ramené à une meule de {{ hauteur_reference }} mm. {% info "remontees" "statistiques" "Les statistiques" %}</p>
+<div class="grille grille-compacte">
+  <div class="tuile"><div class="valeur">{{ nombre }}</div><div class="libelle">meules démontées</div></div>
+  <div class="tuile{% if part_non_finies %} attention{% endif %}"><div class="valeur">{{ part_non_finies }} %</div><div class="libelle">non finies (X) : {{ non_finies }}</div></div>
+  <div class="tuile{% if defauts %} alerte{% endif %}"><div class="valeur">{{ defauts }}</div><div class="libelle">défauts (cassées ou fissurées)</div></div>
+  {% with perte=pertes.0 %}<div class="tuile"><div class="valeur">{{ perte.total|floatformat:"0g" }} €</div><div class="libelle">de meule pas utilisée en {{ perte.annee }}</div></div>{% endwith %}
+</div>
+
+<h2>Durée de vie par meule{% info "remontees" "mediane" "La médiane" %}</h2>
+<p class="discret">Médiane des faces pour une meule de {{ hauteur_reference }} mm, avec le nombre de meules entre parenthèses. Moins de {{ minimum_fiable }} meules : la médiane est en gris, peu fiable.</p>
+<div class="tableau"><table>
+  <tr><th>Meule</th><th>Matière</th><th class="nombre">Face A</th><th class="nombre">Face B</th><th class="nombre">Les deux</th><th class="nombre">Plus courte</th><th class="nombre">Plus longue</th></tr>
+  {% for ligne in medianes %}
+  <tr><td>{{ ligne.meule }}</td><td>{{ ligne.matiere }}</td>
+    <td class="nombre{% if ligne.nombre_a < minimum_fiable %} discret{% endif %}">{% if ligne.nombre_a %}{{ ligne.face_a }} <span class="discret">({{ ligne.nombre_a }})</span>{% else %}—{% endif %}</td>
+    <td class="nombre{% if ligne.nombre_b < minimum_fiable %} discret{% endif %}">{% if ligne.nombre_b %}{{ ligne.face_b }} <span class="discret">({{ ligne.nombre_b }})</span>{% else %}—{% endif %}</td>
+    <td class="nombre{% if ligne.nombre < minimum_fiable %} discret{% endif %}"><strong>{{ ligne.toutes }}</strong> <span class="discret">({{ ligne.nombre }})</span></td>
+    <td class="nombre">{{ ligne.mini }}</td><td class="nombre">{{ ligne.maxi }}</td></tr>
+  {% empty %}<tr><td colspan="7">Aucune meule démontée.</td></tr>{% endfor %}
+</table></div>
+
+<h2>Évolution sur {{ mois|length }} mois{% info "remontees" "evolution" "L'évolution par mois" %}</h2>
+<p class="discret">Médiane par mois de montage. Une case vide : aucune meule de ce type montée ce mois-là.</p>
+<div class="tableau"><table>
+  <tr><th>Meule</th><th>Matière</th>{% for annee, numero in mois %}<th class="nombre">{{ numero|stringformat:"02d" }}/{{ annee|stringformat:"s"|slice:"2:" }}</th>{% endfor %}</tr>
+  {% for ligne in evolution %}
+  <tr><td>{{ ligne.meule }}</td><td>{{ ligne.matiere }}</td>{% for mediane in ligne.medianes %}<td class="nombre">{{ mediane|default_if_none:"" }}</td>{% endfor %}</tr>
+  {% empty %}<tr><td colspan="{{ mois|length|add:2 }}">Aucune meule démontée.</td></tr>{% endfor %}
+</table></div>
+
+<h2>Meule pas utilisée, en euros{% info "remontees" "perte" "Le calcul de la perte" %}</h2>
+<p class="discret">Pour chaque meule démontée avec de la hauteur restante : hauteur restante ÷ hauteur initiale × {{ pertes.0.prix|floatformat:"0g" }} € (prix d'une meule moyenne, réglable dans les règles).</p>
+<div class="deux-colonnes">
+  {% for perte in pertes %}
+  <div class="carte">
+    <h3 class="titre-carte">{{ perte.annee }} : {{ perte.total|floatformat:"0g" }} € sur {{ perte.nombre }} meule{{ perte.nombre|pluralize }}</h3>
+    {% if perte.par_machine %}<dl class="infos">{% for machine, valeur in perte.par_machine %}<dt>{{ machine }}</dt><dd>{{ valeur|floatformat:"0g" }} €</dd>{% endfor %}</dl>
+    {% else %}<p class="discret">Aucune meule non finie montée en {{ perte.annee }}.</p>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

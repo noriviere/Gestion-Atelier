@@ -1,0 +1,10 @@
+{% comment %}Navigation entre les pages des remontées. `page` : le nom de la page en cours.{% endcomment %}
+<nav class="actions sous-navigation no-print" aria-label="Pages des remontées">
+  {% if droits.remontees_saisir %}<a class="bouton{% if page != 'remontees' %} secondaire{% endif %}" href="{% url 'remontees' %}"{% if page == 'remontees' %} aria-current="page"{% endif %}>Saisir</a>{% endif %}
+  {% if droits.remontees_consulter %}
+  <a class="bouton{% if page != 'saisies' %} secondaire{% endif %}" href="{% url 'saisies_meules' %}"{% if page == 'saisies' %} aria-current="page"{% endif %}>Saisies meules</a>
+  <a class="bouton{% if page != 'statistiques' %} secondaire{% endif %}" href="{% url 'statistiques_meules' %}"{% if page == 'statistiques' %} aria-current="page"{% endif %}>Statistiques</a>
+  <a class="bouton{% if page != 'controle' %} secondaire{% endif %}" href="{% url 'controle_meules' %}"{% if page == 'controle' %} aria-current="page"{% endif %}>Contrôle qualité</a>
+  {% endif %}
+  {% if droits.remontees_parametrer %}<a class="bouton{% if page != 'regles' %} secondaire{% endif %}" href="{% url 'regles_meules' %}"{% if page == 'regles' %} aria-current="page"{% endif %}>Règles</a>{% endif %}
+</nav>

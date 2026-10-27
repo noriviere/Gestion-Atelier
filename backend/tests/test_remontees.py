@@ -13,6 +13,8 @@ from remontees.models import FormatMatiere, Matricule, SaisieMeule
 
 from .fabriques import creer_article, creer_utilisateur
 
+MINIMUM_HISTORIQUE = int(regles.DEFAUTS.valeur("hors_habitude", "minimum"))
+
 
 class CalculsTests(SimpleTestCase):
     """Les colonnes que le classeur calculait par formules."""
@@ -25,7 +27,7 @@ class CalculsTests(SimpleTestCase):
         self.assertEqual(saisie.faces_par_mm, Decimal("90"))
         self.assertEqual(saisie.faces_par_meule_reference, Decimal("8010"))
         self.assertEqual(saisie.hauteur_usee_par_face, Decimal("100") / 9000)
-        self.assertFalse(saisie.demontee_avant_usure)
+        self.assertFalse(regles.demontee_avant_usure(saisie.hauteur_finale))
 
     def test_compteur_qui_ne_part_pas_de_zero(self):
         saisie = SaisieMeule(compteur_debut=150, compteur_fin=1150, hauteur_initiale=Decimal("100"),
@@ -44,7 +46,7 @@ class CalculsTests(SimpleTestCase):
         saisie = SaisieMeule(compteur_debut=0, hauteur_initiale=Decimal("100"))
         self.assertIsNone(saisie.nombre_faces_brut)
         self.assertIsNone(saisie.hauteur_usee)
-        self.assertFalse(saisie.demontee_avant_usure)
+        self.assertFalse(regles.demontee_avant_usure(saisie.hauteur_finale))
 
     def test_marque_x_au_dela_du_seuil(self):
         self.assertFalse(regles.demontee_avant_usure(Decimal("2")))
@@ -61,19 +63,19 @@ class ValeurInhabituelleTests(SimpleTestCase):
     HISTORIQUE = [10, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 15, 16, 16, 17, 17, 18, 18, 19, 20]
 
     def test_zone_habituelle_regle_de_tukey(self):
-        q1, q3, bas, haut = regles.zone_habituelle(self.HISTORIQUE)
+        q1, q3, bas, haut = regles.zone_habituelle(self.HISTORIQUE, 1.5)
         self.assertEqual((q1, q3), (13.0, 17.0))
         self.assertAlmostEqual(bas, 13 - 1.5 * 4)
         self.assertAlmostEqual(haut, 17 + 1.5 * 4)
 
     def test_valeur_hors_zone_signalee(self):
-        texte = regles.avertissement_inhabituel("Vitesse", 40, self.HISTORIQUE, "toutes les saisies", 20)
+        texte = regles.avertissement_inhabituel("Vitesse", 40, self.HISTORIQUE, "toutes les saisies", 20, 1.5)
         self.assertIn("40 est inhabituel", texte)
         self.assertIn("entre 13 et 17", texte)
-        self.assertEqual(regles.avertissement_inhabituel("Vitesse", 16, self.HISTORIQUE, "toutes les saisies", 20), "")
+        self.assertEqual(regles.avertissement_inhabituel("Vitesse", 16, self.HISTORIQUE, "toutes les saisies", 20, 1.5), "")
 
     def test_pas_assez_d_historique_pour_juger(self):
-        self.assertEqual(regles.avertissement_inhabituel("Vitesse", 400, self.HISTORIQUE[:19], "toutes", 20), "")
+        self.assertEqual(regles.avertissement_inhabituel("Vitesse", 400, self.HISTORIQUE[:19], "toutes", 20, 1.5), "")
 
 
 class DonneesMeulesMixin:
@@ -201,14 +203,14 @@ class MontageTests(DonneesMeulesMixin, TestCase):
         self.assertContains(reponse, "Un matricule a 4 chiffres")
 
     def test_valeur_inhabituelle_par_rapport_a_l_historique(self):
-        for _ in range(regles.REGLAGES["habitude_minimum"]):
+        for _ in range(MINIMUM_HISTORIQUE):
             self.monter()
         reponse = self.client.post("/remontees/meules/montage/", self.donnees_montage(vitesse_avance=400))
         self.assertContains(reponse, "Vitesse d&#x27;avance : 400 est inhabituel")
-        self.assertEqual(SaisieMeule.objects.count(), regles.REGLAGES["habitude_minimum"])
+        self.assertEqual(SaisieMeule.objects.count(), MINIMUM_HISTORIQUE)
 
     def test_pression_zero_jamais_signalee(self):
-        for _ in range(regles.REGLAGES["habitude_minimum"]):
+        for _ in range(MINIMUM_HISTORIQUE):
             self.monter(pression_arrosage=6)
         # Les autres valeurs sont celles de l'historique : seule la pression pourrait être signalée.
         self.client.post("/remontees/meules/montage/", self.donnees_montage(pression_arrosage=0, hauteur_initiale="100"))
@@ -248,7 +250,7 @@ class DemontageTests(DonneesMeulesMixin, TestCase):
         self.client.post(f"/remontees/meules/{saisie.pk}/demontage/",
                          self.donnees_demontage(hauteur_finale="12", commentaire="Changement de série"))
         saisie.refresh_from_db()
-        self.assertTrue(saisie.demontee_avant_usure)
+        self.assertTrue(saisie.non_finie)
 
     def test_meule_cassee_marquee_defaut(self):
         saisie = self.monter()

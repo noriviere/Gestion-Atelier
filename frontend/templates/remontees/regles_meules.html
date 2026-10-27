@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load aide %}
+{% block titre %}Règles des meules – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Règles des meules</h1>
+{% include "remontees/_navigation.html" with page="regles" %}
+<p class="sous-titre">Les contrôles faits à la saisie et à la consultation. Chaque changement est gardé dans l'historique en bas de page. {% info "remontees" "regles" "Le réglage des règles" %}</p>
+
+<form method="post" class="formulaire" data-demo-message="Règles enregistrées.">{% csrf_token %}
+  <input type="hidden" name="formulaire" value="regles">
+  {% for erreur in form_regles.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+  {% for groupe, regle, interrupteur, parametres in form_regles.lignes %}
+  {% ifchanged groupe %}{% if not forloop.first %}</div>{% endif %}<h2>{{ groupe }}</h2><div class="liste-regles">{% endifchanged %}
+  <div class="carte regle">
+    <div class="entete-regle">
+      <h3 class="titre-carte">{{ regle.titre }}</h3>
+      {% if interrupteur %}<label class="interrupteur">{{ interrupteur }} Active</label>{% else %}<span class="etiquette">toujours active</span>{% endif %}
+    </div>
+    {% if regle.aide %}<p class="discret">{{ regle.aide }}</p>{% endif %}
+    {% if parametres %}<div class="grille-champs">{% for champ, parametre in parametres %}
+      <div class="champ{% if champ.errors %} en-erreur{% endif %}"><label for="{{ champ.id_for_label }}">{{ champ.label }}{% if parametre.unite %} ({{ parametre.unite }}){% endif %}</label>{{ champ }}<span class="aide">{{ champ.help_text }}</span>{% for erreur in champ.errors %}<span class="erreur">{{ erreur }}</span>{% endfor %}</div>
+    {% endfor %}</div>{% endif %}
+  </div>
+  {% if forloop.last %}</div>{% endif %}
+  {% endfor %}
+  <div class="actions"><button class="bouton" type="submit">Enregistrer les règles</button></div>
+</form>
+<form method="post" data-demo-message="Règles remises aux valeurs d'origine." data-confirmation="Remettre toutes les règles aux valeurs d'origine ? Les thèmes ne changent pas.">{% csrf_token %}
+  <input type="hidden" name="formulaire" value="origine">
+  <button class="bouton secondaire" type="submit">Revenir aux valeurs d'origine</button>
+</form>
+
+<h2>Thèmes proposés au démontage{% info "remontees" "themes" "Les thèmes du problème" %}</h2>
+<p class="discret">Les thèmes de la question « Qu'est-ce qui a posé problème ? ». « {{ theme_defaut }} » reste fixe : c'est lui qui marque une meule en défaut.</p>
+<form method="post" class="formulaire" data-demo-message="Thèmes enregistrés.">{% csrf_token %}
+  <input type="hidden" name="formulaire" value="themes">
+  {% for erreur in form_themes.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+  <div class="tableau"><table>
+    <tr><th>Libellé</th><th>Proposé</th></tr>
+    {% for theme, libelle, actif in form_themes.lignes %}
+    <tr><td>{{ libelle }}{% for erreur in libelle.errors %}<span class="erreur">{{ erreur }}</span>{% endfor %}</td><td><label>{{ actif }} oui</label></td></tr>
+    {% endfor %}
+  </table></div>
+  <div class="grille-champs">{% include "_champ.html" with champ=form_themes.nouveau %}</div>
+  <div class="actions"><button class="bouton" type="submit">Enregistrer les thèmes</button></div>
+</form>
+
+<h2>Historique des changements</h2>
+{% if historique %}
+<div class="tableau"><table>
+  <tr><th>Date</th><th>Par</th><th>Changement</th></tr>
+  {% for ligne in historique %}<tr><td>{{ ligne.date|date:"d/m/Y H:i" }}</td><td>{{ ligne.utilisateur|default:"—" }}</td><td>{{ ligne.texte }}</td></tr>{% endfor %}
+</table></div>
+{% else %}<p class="carte">Aucun changement : les règles ont leurs valeurs d'origine.</p>{% endif %}
+{% endblock %}

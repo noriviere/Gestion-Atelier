@@ -1,0 +1,1 @@
+{% if saisie.defaut %}<span class="etiquette alerte">Défaut</span> {% endif %}{% if saisie.demontee_avant_usure %}<span class="etiquette attention" title="Démontée avant usure totale">X : il restait {{ saisie.hauteur_finale|floatformat:"-1" }} mm</span> {% endif %}{% if saisie.probleme %}<span class="etiquette">{{ saisie.themes|join:", " }}</span>{% endif %}

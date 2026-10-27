@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load aide static %}
+{% block titre %}Montage d'une meule – Gestion Atelier{% endblock %}
+{% block scripts %}<script src="{% static 'js/remontees.js' %}" defer></script>{% endblock %}
+{% block contenu %}
+{% url 'remontees' as adresse_remontees %}
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{{ adresse_remontees }}">Remontées</a></li>{% if machine %}<li><a href="{{ adresse_remontees }}?machine={{ machine.code }}">{{ machine.code }}</a></li>{% endif %}<li aria-current="page">Montage d'une meule</li></ol></nav>
+<h1>Montage d'une meule{% if machine %} sur {{ machine.code }}{% endif %}</h1>
+<p class="sous-titre">Fiche du monteur. Le démontage se saisira plus tard, depuis l'écran des remontées. {% info "remontees" "montage" "Le montage d'une meule" %}</p>
+{{ table_formats|json_script:"table-formats" }}
+<form method="post" class="formulaire formulaire-meule" data-demo="saisie-meule" data-demo-texte="Montage vérifié : sur la version installée, il est enregistré et la meule apparaît dans les meules montées de la machine.">{% csrf_token %}
+  {% include "remontees/_avertissements.html" %}
+  <div class="carte">
+    <h2 class="titre-carte">Qui et où</h2>
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form.matricule_monteur aide_sujet="remontees" aide_ancre="matricule" %}
+      {% include "_champ.html" with champ=form.machine %}
+      {% include "_champ.html" with champ=form.date_montage %}
+    </div>
+  </div>
+  <div class="carte">
+    <h2 class="titre-carte">Format et meule</h2>
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form.produit aide_sujet="remontees" aide_ancre="format" %}
+      {% include "_champ.html" with champ=form.matiere %}
+      {% include "_champ.html" with champ=form.face %}
+      <div class="champ"><span class="libelle-avec-aide"><span class="libelle-champ">Code lame</span>{% info "remontees" "format" "Code lame et MA5" %}</span><output class="valeur-deduite" data-code-lame>—</output><span class="aide">Déduit du format et de la matière (non modifiable).</span><span class="aide" data-ma5-auto></span></div>
+      {% include "_champ.html" with champ=form.ma5 classe="champ-ma5" aide_sujet="remontees" aide_ancre="format" %}
+      {% include "_champ.html" with champ=form.meule %}
+      {% include "_champ.html" with champ=form.lot_fournisseur aide_sujet="remontees" aide_ancre="lot-fournisseur" %}
+    </div>
+  </div>
+  <div class="carte">
+    <h2 class="titre-carte">Réglages au montage</h2>
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form.pression_arrosage %}
+      {% include "_champ.html" with champ=form.vitesse_rotation %}
+      {% include "_champ.html" with champ=form.vitesse_avance %}
+      {% include "_champ.html" with champ=form.hauteur_initiale %}
+      {% include "_champ.html" with champ=form.compteur_debut %}
+      {% include "_champ.html" with champ=form.commentaire_montage classe="champ-large" %}
+      {% if form.sortir_du_stock %}{% include "_champ.html" with champ=form.sortir_du_stock aide_sujet="remontees" aide_ancre="sortie-stock" %}{% endif %}
+    </div>
+  </div>
+  {% if machine %}{% url 'remontees' as base_retour %}{% with retour=base_retour|add:"?machine="|add:machine.code %}{% include "remontees/_bouton_enregistrer.html" with libelle="Enregistrer le montage" %}{% endwith %}{% else %}{% include "remontees/_bouton_enregistrer.html" with libelle="Enregistrer le montage" retour=adresse_remontees %}{% endif %}
+</form>
+{% endblock %}

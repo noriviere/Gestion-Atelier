@@ -1,4 +1,5 @@
-from datetime import timedelta
+import random
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -14,6 +15,8 @@ from demo import donnees, fichiers
 from inventaire.models import Article, ArticleFournisseur, Fournisseur, Mouvement, TypeInventaire
 from outillage.models import Outil, PieceOutil
 from produits.models import Consommation, Document, Machine, Parametre, Produit, ProduitMachine
+from remontees import regles
+from remontees.models import FormatMatiere, Matricule, SaisieMeule
 
 MOT_DE_PASSE_DEMO = "demo"
 
@@ -41,16 +44,18 @@ class Command(BaseCommand):
         self.creer_mouvements(articles, comptes)
         self.creer_comptages(articles, comptes)
         commandes = self.creer_commandes(articles, comptes)
+        saisies_meules = self.creer_remontees(articles, produits, machines, comptes)
         self.stdout.write(self.style.SUCCESS(
             f"Démo chargée : {len(articles)} articles, {len(outils)} outils, {len(produits)} produits, "
-            f"{len(machines)} machines, {len(commandes)} commandes, {len(comptes)} comptes (mot de passe : {MOT_DE_PASSE_DEMO})."
+            f"{len(machines)} machines, {len(commandes)} commandes, {len(saisies_meules)} saisies meules, "
+            f"{len(comptes)} comptes (mot de passe : {MOT_DE_PASSE_DEMO})."
         ))
 
     @staticmethod
     def effacer_donnees_metier():
         for document in Document.objects.all():
             document.fichier.delete(save=False)
-        for modele in (LigneCommande, Commande, Mouvement, Document, Parametre, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
+        for modele in (SaisieMeule, FormatMatiere, Matricule, LigneCommande, Commande, Mouvement, Document, Parametre, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
                        ArticleFournisseur, Article, TypeInventaire, Fournisseur):
             modele.objects.all().delete()
 
@@ -199,3 +204,49 @@ class Command(BaseCommand):
                 )
             commandes.append(commande)
         return commandes
+
+    @staticmethod
+    def creer_remontees(articles, produits, machines, comptes):
+        # Les saisies passées ne font pas de sortie de stock : les stocks de la démo restent ceux de donnees.py.
+        matricules = [Matricule.objects.create(numero=numero, nom=nom) for numero, nom in donnees.MATRICULES]
+        formats = {}
+        for reference, matiere, code_lame, ma5, meules, codes_machines in donnees.FORMATS_MEULE:
+            ligne = FormatMatiere.objects.create(produit=produits[reference], matiere=matiere, code_lame=code_lame, ma5=ma5)
+            ligne.meules.set([articles[meule] for meule in meules])
+            ligne.machines.set([machines[code] for code in codes_machines])
+            formats[(reference, matiere)] = ligne
+        alea = random.Random(2026)
+        aujourdhui = timezone.localdate()
+
+        def a_heure(jour, heure):
+            return timezone.make_aware(datetime.combine(jour, time(heure)))
+
+        saisies = []
+        for valeurs in donnees.saisies_meules_historique(alea):
+            date_montage = aujourdhui - timedelta(days=valeurs["monte_il_y_a"])
+            hauteur_finale = Decimal(str(valeurs["hauteur_finale"]))
+            saisies.append(SaisieMeule(
+                machine=machines[valeurs["machine"]], format_matiere=formats[(valeurs["produit"], valeurs["matiere"])],
+                face=valeurs["face"], meule=articles[valeurs["meule"]], lot_fournisseur=f"FA{alea.randint(100000, 999999)}",
+                date_montage=date_montage, ma5=formats[(valeurs["produit"], valeurs["matiere"])].ma5 == FormatMatiere.MA5_OUI,
+                pression_arrosage=valeurs["pression"], vitesse_rotation=valeurs["vitesse_rotation"],
+                vitesse_avance=valeurs["vitesse_avance"], hauteur_initiale=Decimal(str(valeurs["hauteur_initiale"])),
+                compteur_debut=0, matricule_monteur=alea.choice(matricules), monte_par=comptes["regleur"],
+                monte_le=a_heure(date_montage, 6), matricule_demonteur=alea.choice(matricules),
+                compteur_fin=valeurs["compteur_fin"], hauteur_finale=hauteur_finale, probleme=valeurs["probleme"],
+                themes=valeurs["themes"], commentaire=valeurs["commentaire"], demonte_par=comptes["operateur"],
+                demonte_le=a_heure(date_montage + timedelta(days=valeurs["duree_jours"]), 14),
+                defaut=regles.est_un_defaut(valeurs["probleme"], valeurs["themes"], hauteur_finale),
+            ))
+        for code_machine, reference, matiere, face, il_y_a in donnees.MEULES_MONTEES:
+            format_matiere = formats[(reference, matiere)]
+            date_montage = aujourdhui - timedelta(days=il_y_a)
+            vitesse_meule, avance = (int(valeur) for valeur in donnees._PARAMETRES_PAR_TAILLE[donnees.TAILLES[reference]][:2])
+            saisies.append(SaisieMeule(
+                machine=machines[code_machine], format_matiere=format_matiere, face=face,
+                meule=format_matiere.meules.first(), lot_fournisseur=f"FA{alea.randint(100000, 999999)}",
+                date_montage=date_montage, ma5=format_matiere.ma5 == FormatMatiere.MA5_OUI, pression_arrosage=6,
+                vitesse_rotation=vitesse_meule, vitesse_avance=avance, hauteur_initiale=Decimal("104"), compteur_debut=0,
+                matricule_monteur=alea.choice(matricules), monte_par=comptes["regleur"], monte_le=a_heure(date_montage, 6),
+            ))
+        return SaisieMeule.objects.bulk_create(saisies)

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load aide %}
+{% block titre %}Meule {{ saisie.meule.reference }} sur {{ saisie.machine.code }} – Gestion Atelier{% endblock %}
+{% block contenu %}
+{% url 'remontees' as adresse_remontees %}
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{{ adresse_remontees }}">Remontées</a></li><li><a href="{{ adresse_remontees }}?machine={{ saisie.machine.code }}">{{ saisie.machine.code }}</a></li><li aria-current="page">Meule n° {{ saisie.pk }}</li></ol></nav>
+<h1>Meule {{ saisie.meule.reference }}, face {{ saisie.face }}, sur {{ saisie.machine.code }}</h1>
+<p class="sous-titre">{{ saisie.format_matiere }} · {% if saisie.est_demontee %}démontée{% else %}montée, pas encore démontée{% endif %} {% include "remontees/_etat_saisie.html" %}</p>
+{% if not saisie.est_demontee and droits.remontees_saisir %}<div class="actions"><a class="bouton" href="{% url 'demontage_meule' saisie.pk %}">Démonter</a></div>{% endif %}
+{% if saisie.est_demontee %}
+<h2>Résultat{% info "remontees" "calculs" "Les valeurs calculées" %}</h2>
+<div class="grille grille-compacte">
+  <div class="tuile"><div class="valeur">{{ saisie.nombre_faces_brut }}</div><div class="libelle">faces (compteur fin − début)</div></div>
+  <div class="tuile"><div class="valeur">{{ saisie.hauteur_usee|floatformat:"-2" }} mm</div><div class="libelle">hauteur usée</div></div>
+  <div class="tuile"><div class="valeur">{{ saisie.faces_par_mm|floatformat:1|default:"—" }}</div><div class="libelle">faces par mm</div></div>
+  <div class="tuile"><div class="valeur">{{ saisie.faces_par_meule_reference|floatformat:0|default:"—" }}</div><div class="libelle">faces pour une meule de {{ hauteur_reference }} mm</div></div>
+  <div class="tuile"><div class="valeur">{{ saisie.hauteur_usee_par_face|floatformat:4|default:"—" }} mm</div><div class="libelle">hauteur usée par face</div></div>
+</div>
+{% endif %}
+<div class="deux-colonnes">
+  <div class="carte">
+    <h2 class="titre-carte">Montage</h2>
+    <dl class="infos">
+      <dt>Monteur</dt><dd>{{ saisie.matricule_monteur }}</dd>
+      <dt>Date</dt><dd>{{ saisie.date_montage|date:"d/m/Y" }}</dd>
+      <dt>Code lame</dt><dd>{{ saisie.code_lame|default:"—" }}</dd>
+      <dt>MA5</dt><dd>{{ saisie.ma5|yesno:"Oui,Non" }}</dd>
+      <dt>Lot FA / Beleg</dt><dd>{{ saisie.lot_fournisseur }}</dd>
+      <dt>Pression d'arrosage</dt><dd>{{ saisie.pression_arrosage }}</dd>
+      <dt>Vitesse de rotation</dt><dd>{{ saisie.vitesse_rotation }} m/s</dd>
+      <dt>Vitesse d'avance</dt><dd>{{ saisie.vitesse_avance }} mm/min</dd>
+      <dt>Hauteur initiale</dt><dd>{{ saisie.hauteur_initiale|floatformat:"-2" }} mm</dd>
+      <dt>Compteur au montage</dt><dd>{{ saisie.compteur_debut }}</dd>
+    </dl>
+    {% if saisie.commentaire_montage %}<div class="notes">{{ saisie.commentaire_montage }}</div>{% endif %}
+    <p class="discret">Saisi par {{ saisie.monte_par|default:"—" }} le {{ saisie.monte_le|date:"d/m/Y H:i" }}{% if saisie.sortie_stock %} · sortie de stock faite{% endif %}</p>
+  </div>
+  {% if saisie.est_demontee %}
+  <div class="carte">
+    <h2 class="titre-carte">Démontage</h2>
+    <dl class="infos">
+      <dt>Démonteur</dt><dd>{{ saisie.matricule_demonteur }}</dd>
+      <dt>Compteur au démontage</dt><dd>{{ saisie.compteur_fin }}</dd>
+      <dt>Hauteur finale</dt><dd>{{ saisie.hauteur_finale|floatformat:"-2" }} mm</dd>
+      <dt>Problème</dt><dd>{% if saisie.probleme %}{{ saisie.themes|join:", " }}{% else %}Rien à signaler{% endif %}</dd>
+    </dl>
+    {% if saisie.commentaire %}<div class="notes">{{ saisie.commentaire }}</div>{% endif %}
+    <p class="discret">Saisi par {{ saisie.demonte_par|default:"—" }} le {{ saisie.demonte_le|date:"d/m/Y H:i" }}</p>
+  </div>
+  {% endif %}
+</div>
+{% if saisie.avertissements %}<h2>Avertissements confirmés à la saisie</h2><div class="carte"><ul>{% for ligne in saisie.avertissements.splitlines %}<li>{{ ligne }}</li>{% endfor %}</ul></div>{% endif %}
+{% endblock %}

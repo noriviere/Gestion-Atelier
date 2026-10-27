@@ -23,6 +23,8 @@ SUJETS = [
           "La matrice produits × machines, ses états, et les pages produit et machine."),
     Sujet("fiches", "Fiches de production",
           "Cadence, paramètres de réglage, outillages, consommables, notes, photos et documents."),
+    Sujet("remontees", "Remontées terrain",
+          "Écran des remontées, montage et démontage d'une meule, contrôles, avertissements et valeurs calculées."),
     Sujet("demo", "La démo en ligne",
           "Choisir un profil, ce qui est simulé, et comment remettre la démo à zéro."),
 ]
@@ -61,6 +63,10 @@ SUJET_DE_LA_PAGE = {
     "fiche": "fiches",
     "nouvelle_fiche": "fiches",
     "modifier_fiche": "fiches",
+    "remontees": "remontees",
+    "montage_meule": "remontees",
+    "demontage_meule": "remontees",
+    "saisie_meule": "remontees",
 }
 
 

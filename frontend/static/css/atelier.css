@@ -567,3 +567,15 @@ ul.legende-aide .pastille { margin-right: 6px; }
   .galerie { grid-template-columns: repeat(3, 1fr); }
   .galerie figure, tr { break-inside: avoid; }
 }
+
+/* Remontées terrain */
+.grille-machines .tuile.choisie { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-doux); }
+.tuile.a-venir { opacity: .55; }
+.valeur-deduite { min-height: 38px; padding: 7px 0; font-weight: 600; }
+.champ-ma5[hidden] { display: none; }
+.avertissements { border-left: 4px solid var(--attention); }
+.avertissements ul { margin: 0 0 8px; padding-left: 20px; }
+.aide-commentaire { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.aide-commentaire .bouton { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+.alerte-non-finie { color: var(--attention); font-weight: 600; }
+.champ input[type="checkbox"] { align-self: flex-start; width: 18px; height: 18px; }

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "outillage",
     "produits",
     "commandes",
+    "remontees",
     "aide",
 ]
 

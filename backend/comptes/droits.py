@@ -56,6 +56,13 @@ BLOCS = [
                  _edition("produits.produit", "produits.machine", "produits.produitmachine", "produits.consommation",
                           "produits.parametre", "produits.document")),
     ]),
+    Bloc("remontees", "Remontées terrain", [
+        Fonction("remontees_saisir", "Saisir le montage et le démontage des meules, ajouter un matricule", []),
+        Fonction("remontees_consulter", "Consulter les remontées",
+                 _vues("remontees.saisiemeule", "remontees.matricule", "remontees.formatmatiere")),
+        Fonction("remontees_parametrer", "Régler la table « Formats et matière » et la liste des matricules",
+                 _edition("remontees.formatmatiere", "remontees.matricule")),
+    ]),
     Bloc("administration", "Administration", [
         Fonction("admin_droits", "Gérer les droits des profils et le profil des comptes", []),
     ]),
@@ -107,6 +114,10 @@ PAGES = {
     "document": "produits_documents_voir",
     "ajouter_document": "produits_documents_gerer",
     "supprimer_document": "produits_documents_gerer",
+    "remontees": "remontees_saisir",
+    "montage_meule": "remontees_saisir",
+    "demontage_meule": "remontees_saisir",
+    "saisie_meule": "remontees_consulter",
     "droits": "admin_droits",
 }
 
@@ -114,8 +125,10 @@ PAGES = {
 # vérifie elle-même les droits. Un test oblige chaque nouvelle page à figurer dans l'une des deux listes.
 PAGES_SANS_DROIT_UNIQUE = {"connexion", "deconnexion", "accueil", "recherche", "aide", "aide_sujet", "modifier_fiche"}
 
+# Tout le monde saisit les remontées et les consulte ; leur paramétrage reste à Méthode et management.
+REMONTEES = ["remontees_saisir", "remontees_consulter"]
 _ATELIER = ["stock_consulter", "stock_mouvements", "commandes_consulter", "commandes_receptionner",
-            "outillage_consulter", "produits_consulter"]
+            "outillage_consulter", "produits_consulter"] + REMONTEES
 
 # Droits de départ de chaque profil, avant toute modification sur la page « Droits ».
 # Le profil Admin a toujours tout et n'apparaît pas ici.
@@ -123,7 +136,7 @@ DEFAUTS = {
     "Méthode et management": [code for code in TOUS_LES_CODES if code != "admin_droits"],
     "Intendant": ["stock_consulter", "stock_mouvements", "stock_comptages", "stock_articles", "stock_fournisseurs",
                   "commandes_consulter", "commandes_preparer", "commandes_receptionner",
-                  "outillage_consulter", "produits_consulter"],
+                  "outillage_consulter", "produits_consulter"] + REMONTEES,
     "Régleur": _ATELIER + ["produits_documents_voir", "produits_documents_gerer", "produits_reglages"],
     "Opérateur": _ATELIER,
 }

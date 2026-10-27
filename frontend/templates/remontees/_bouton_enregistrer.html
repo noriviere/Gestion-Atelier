@@ -1,0 +1,4 @@
+<div class="actions barre-enregistrer">
+  <button class="bouton" type="submit">{% if form.avertissements_a_confirmer %}Enregistrer quand même{% else %}{{ libelle }}{% endif %}</button>
+  <a class="bouton secondaire" href="{{ retour }}" data-lien-retour>Annuler</a>
+</div>

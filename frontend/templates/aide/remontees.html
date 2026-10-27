@@ -1,0 +1,109 @@
+{% extends "aide/_page.html" %}
+{% load aide static %}
+{% block texte %}
+<h1>Remontées terrain</h1>
+<p class="sous-titre">Les remontées gardent ce qui se passe sur les machines. Pour l'instant : le montage et le démontage de chaque meule, qui remplacent l'application de suivi d'usure des meules et son classeur Excel. Les porte-lames et les autres pièces suivront.</p>
+
+<section class="point-aide" id="ecran">
+<h2>L'écran des remontées</h2>
+{% droit_requis "remontees_saisir" %}
+<p>Le menu <strong>Remontées</strong> ouvre un écran en deux temps :</p>
+<ol class="etapes-aide">
+  <li>choisissez la <strong>machine</strong> ; une étiquette verte indique le nombre de meules montées et pas encore démontées ;</li>
+  <li>choisissez le <strong>sujet</strong> : <strong>Meule</strong> ouvre la fiche du monteur. <strong>Porte-lame</strong> et <strong>Autre</strong> arrivent dans une prochaine version.</li>
+</ol>
+<p>En dessous s'affichent les meules montées sur cette machine et ses derniers démontages.</p>
+</section>
+
+<section class="point-aide" id="en-attente">
+<h2>Les meules montées</h2>
+<p>Une meule montée attend son démontage. Le bouton <strong>Démonter</strong> ouvre la deuxième partie de la saisie, avec le rappel du montage. Le montage et le démontage peuvent être saisis par deux personnes différentes, à des jours différents.</p>
+</section>
+
+<section class="point-aide" id="montage">
+<h2>Le montage d'une meule</h2>
+{% droit_requis "remontees_saisir" %}
+<p>C'est la fiche du monteur de l'ancienne application, avec les mêmes champs : matricule, machine, date (aujourd'hui par défaut), format, matière, face, code lame, MA5, n° article meule, lot fournisseur, pression d'arrosage (6 par défaut), vitesse de rotation, vitesse d'avance, hauteur initiale et compteur au montage (0 par défaut).</p>
+<p>Les champs marqués d'une étoile sont obligatoires. Un commentaire n'est demandé que si la machine n'est pas prévue pour ce format.</p>
+</section>
+
+<section class="point-aide" id="matricule">
+<h2>Le matricule</h2>
+<p>Choisissez votre matricule dans la liste qui s'ouvre en tapant, ou saisissez ses 4 chiffres. « 534 » devient « 0534 ». Un matricule jamais vu est ajouté à la liste au moment d'enregistrer, après un avertissement pour éviter les fautes de frappe. Le compte connecté est aussi noté, avec l'heure.</p>
+</section>
+
+<section class="point-aide" id="format">
+<h2>Format, matière, code lame et MA5</h2>
+<p>Le <strong>format</strong> est le produit (N2, N3…). Le couple format et matière doit exister dans la table <strong>Formats et matière</strong>, qui donne :</p>
+<ul>
+  <li>le <strong>code lame</strong>, affiché automatiquement ;</li>
+  <li>le <strong>MA5</strong> (une nuance d'inox) : choisi automatiquement, sauf quand la table indique « peut-être ». Il faut alors choisir Oui ou Non ; en cas de doute, voyez la fiche posée sur les palettes en production ;</li>
+  <li>les <strong>meules prévues</strong> : la première est proposée quand vous choisissez le format ;</li>
+  <li>les <strong>machines prévues</strong>.</li>
+</ul>
+<p>La table se règle dans <strong>Paramétrage</strong>.</p>
+{% droit_requis "remontees_parametrer" %}
+</section>
+
+<section class="point-aide" id="lot-fournisseur">
+<h2>Le lot fournisseur (n° FA ou Beleg)</h2>
+<p>Recopiez le numéro FA ou Beleg inscrit sur l'étiquette de la meule.</p>
+<div class="grille">
+  <figure><img src="{% static 'img/etiquette_FA.svg' %}" alt="Étiquette de meule : repère du numéro FA"><figcaption>Repère du numéro FA</figcaption></figure>
+  <figure><img src="{% static 'img/etiquette_Beleg.svg' %}" alt="Étiquette de meule : repère du numéro Beleg"><figcaption>Repère du numéro Beleg</figcaption></figure>
+</div>
+</section>
+
+<section class="point-aide" id="sortie-stock">
+<h2>La sortie de stock au montage</h2>
+{% droit_requis "stock_mouvements" %}
+<p>La case <strong>Sortir la meule du stock</strong> est cochée par défaut : à l'enregistrement, une sortie d'une meule est faite sur l'article, comme une sortie ordinaire. Décochez-la si la meule a déjà été sortie du magasin. La case n'apparaît pas si votre profil ne fait pas de sorties de stock.</p>
+</section>
+
+<section class="point-aide" id="demontage">
+<h2>Le démontage</h2>
+{% droit_requis "remontees_saisir" %}
+<p>À renseigner par le démonteur : son matricule, le compteur de la machine au démontage et la hauteur finale de la meule. Le compteur au démontage ne peut pas être plus petit que celui du montage, ni la hauteur finale plus grande que la hauteur initiale.</p>
+</section>
+
+<section class="point-aide" id="non-finie">
+<h2>Meule non finie</h2>
+<p>Il faut aller jusqu'à 0 mm. Au-delà de 2 mm restants, la meule est <strong>démontée avant usure totale</strong> : elle est marquée « X » et le commentaire devient obligatoire pour expliquer pourquoi.</p>
+</section>
+
+<section class="point-aide" id="retour">
+<h2>Signaler un problème</h2>
+<p>À la question <strong>Tout s'est-il bien passé ?</strong>, répondez « Non, j'ai une remarque » pour choisir un ou plusieurs thèmes (bruit, meule cassée, usure irrégulière…). Les boutons d'aide à la rédaction ajoutent au commentaire les amorces Constat, Moment, Action et Récurrence.</p>
+</section>
+
+<section class="point-aide" id="defaut">
+<h2>Meule défectueuse</h2>
+<p>Une meule cassée ou fissurée et démontée avant usure totale est marquée <strong>Défaut</strong>. C'est l'équivalent de l'onglet « Data défaut » du classeur.</p>
+</section>
+
+<section class="point-aide" id="avertissements">
+<h2>Les avertissements</h2>
+<p>Les erreurs bloquent l'enregistrement. Les avertissements, eux, s'affichent en haut du formulaire et le bouton devient <strong>Enregistrer quand même</strong> : corrigez si besoin, sinon confirmez. Avertissements possibles :</p>
+<ul>
+  <li>valeur inhabituelle par rapport aux saisies passées (pression, vitesses, hauteur initiale ; compteur au démontage comparé aux meules de même référence et matière). Une pression de 0 (manomètre hors service) n'est pas signalée ;</li>
+  <li>machine ou meule différente de celles prévues pour le format ;</li>
+  <li>date de montage dans le futur ;</li>
+  <li>nouveau matricule ;</li>
+  <li>saisie identique à une saisie existante (même meule, machine, face, date de montage et compteur au démontage).</li>
+</ul>
+<p>Les avertissements confirmés restent visibles sur la page de la saisie.</p>
+</section>
+
+<section class="point-aide" id="calculs">
+<h2>Les valeurs calculées</h2>
+{% droit_requis "remontees_consulter" %}
+<p>Au démontage, l'application calcule ce que faisaient les formules du classeur :</p>
+<dl class="champs-aide">
+  <dt>Faces</dt><dd>Compteur au démontage moins compteur au montage.</dd>
+  <dt>Hauteur usée</dt><dd>Hauteur initiale moins hauteur finale.</dd>
+  <dt>Faces par mm</dt><dd>Faces divisées par la hauteur usée.</dd>
+  <dt>Faces pour une meule de 89 mm</dt><dd>Faces par mm × 89 : la durée de vie ramenée à une meule de hauteur de référence, pour comparer les meules entre elles.</dd>
+  <dt>Hauteur usée par face</dt><dd>Hauteur usée divisée par le nombre de faces.</dd>
+</dl>
+</section>
+{% endblock %}

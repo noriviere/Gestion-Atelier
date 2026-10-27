@@ -324,8 +324,16 @@
       adresseDeRetour(formulaire));
   }
 
+  // Montage et démontage d'une meule : les champs obligatoires sont vérifiés par le navigateur ;
+  // les contrôles et calculs du serveur ne tournent que sur la version installée.
+  function simulerSaisieMeule(formulaire) {
+    if (!formulaire.reportValidity()) return;
+    messageApresRedirection(formulaire.dataset.demoTexte + " (Démo : rien n'est enregistré.)", adresseDeRetour(formulaire));
+  }
+
   var simulations = {
     "mouvement": simulerMouvementDeStock,
+    "saisie-meule": simulerSaisieMeule,
     "sortie-piece": simulerSortieDePiece,
     "comptage": simulerComptage,
     "outil": simulerEnregistrementOutil,

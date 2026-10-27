@@ -169,7 +169,8 @@ class MenuTests(TestCase):
         operateur = creer_utilisateur("operateur", roles.ATELIER)
         self.assertEqual(
             self.libelles(entrees_menu(operateur, "accueil")),
-            ["Accueil", "Remontées", "Produits et machines", "Outillage", "Stock", "Inventaires", "Commandes"],
+            ["Accueil", "Production", "Remontées", "Produits et machines", "Outillage", "Stock", "Inventaires",
+             "Commandes"],
         )
 
     def test_bureau_voit_toutes_les_entrees(self):

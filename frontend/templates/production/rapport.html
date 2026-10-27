@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load aide production %}
+{% block titre %}Rapport de production – Gestion Atelier{% endblock %}
+{% block contenu %}
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{% url 'production' %}">Production</a></li><li aria-current="page">Rapport</li></ol></nav>
+<h1>Rapport de production{% info "production" "rapport" "Le rapport de production" %}</h1>
+<p class="sous-titre">{% if du == au %}Le {{ du|date:"l d/m/Y" }}{% else %}Du {{ du|date:"d/m/Y" }} au {{ au|date:"d/m/Y" }}{% endif %} · {{ shifts|length }} shift{{ shifts|length|pluralize }}{% if filtres_actifs %}, filtrés{% endif %}.
+  {% if restreint %}Votre profil voit le rapport de la veille.{% endif %}</p>
+
+{% if periodes %}<p class="actions no-print">{% for libelle, debut, fin in periodes %}<a class="bouton secondaire" href="{% url 'rapport_production' %}?du={{ debut|date:'Y-m-d' }}&au={{ fin|date:'Y-m-d' }}">{{ libelle }}</a>{% endfor %}</p>{% endif %}
+
+<form class="filtres no-print" method="get" data-tableau="#tableau-shifts">
+  {% if not restreint %}<label>Du {{ form.du }}</label><label>Au {{ form.au }}</label>{% endif %}
+  <select name="machine" aria-label="Machine"><option value="">Toutes les machines</option>{% for machine in form.fields.machine.queryset %}<option value="{{ machine.pk }}"{% if form.machine.value|stringformat:"s" == machine.pk|stringformat:"s" %} selected{% endif %}>{{ machine.code }}</option>{% endfor %}</select>
+  <select name="equipe" aria-label="Équipe"><option value="">Toutes les équipes</option>{% for equipe in form.fields.equipe.queryset %}<option value="{{ equipe.pk }}"{% if form.equipe.value|stringformat:"s" == equipe.pk|stringformat:"s" %} selected{% endif %}>{{ equipe.code }}</option>{% endfor %}</select>
+  <select name="creneau" aria-label="Créneau"><option value="">Tous les créneaux</option>{% for creneau in form.fields.creneau.queryset %}<option value="{{ creneau.pk }}"{% if form.creneau.value|stringformat:"s" == creneau.pk|stringformat:"s" %} selected{% endif %}>{{ creneau.nom }}</option>{% endfor %}</select>
+  <select name="produit" aria-label="Produit"><option value="">Tous les produits</option>{% for produit in form.fields.produit.queryset %}<option value="{{ produit.pk }}"{% if form.produit.value|stringformat:"s" == produit.pk|stringformat:"s" %} selected{% endif %}>{{ produit.reference }}</option>{% endfor %}</select>
+  <select name="cause" aria-label="Cause d'arrêt"><option value="">Toutes les causes</option>{% for cause in form.fields.cause.queryset %}<option value="{{ cause.pk }}"{% if form.cause.value|stringformat:"s" == cause.pk|stringformat:"s" %} selected{% endif %}>{{ cause.libelle }}</option>{% endfor %}</select>
+  <button class="bouton" type="submit">Filtrer</button>{% info "production" "filtres" "Les filtres" %}
+  <a class="bouton secondaire" href="{{ adresse_export }}">Exporter vers Excel</a>
+  <button class="bouton secondaire" type="button" data-action="imprimer">Imprimer</button>
+</form>
+
+<div class="grille grille-compacte">
+  <div class="tuile"><div class="valeur">{{ total.quantite|floatformat:"0g" }}</div><div class="libelle">pièces produites</div></div>
+  <div class="tuile"><div class="valeur">{{ total.marche|minutes }}</div><div class="libelle">de marche sur {{ total.theorique|minutes }}</div></div>
+  <div class="tuile{% if total.arrets %} attention{% endif %}"><div class="valeur">{{ total.arrets|minutes }}</div><div class="libelle">d'arrêts</div></div>
+  <div class="tuile{% if total.rendement is not None and total.rendement < 0.85 %} alerte{% endif %}"><div class="valeur">{{ total.rendement|pourcent }}</div><div class="libelle">rendement {% info "production" "calculs" "Temps de marche et rendement" %}</div></div>
+</div>
+
+<div class="colonnes-egales">
+<section>
+<h2>Causes d'arrêt{% info "production" "pareto" "Le Pareto des causes" %}</h2>
+{% if pareto %}
+<div class="tableau"><table class="graphique-barres">
+  <tr><th>Cause</th><th class="nombre">Durée</th><th class="nombre">Part</th><th class="nombre">Cumul</th><th class="colonne-barre"><span class="visuellement-cache">Barre</span></th></tr>
+  {% for ligne in pareto %}
+  <tr><td>{{ ligne.cause }}</td><td class="nombre">{{ ligne.minutes|minutes }}</td><td class="nombre">{{ ligne.part|floatformat:0 }} %</td><td class="nombre">{{ ligne.cumul|floatformat:0 }} %</td>
+    <td class="colonne-barre"><svg class="barre" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect width="{{ ligne.largeur|stringformat:'.1f' }}" height="10"/></svg></td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="carte">Aucun arrêt sur la période.</p>{% endif %}
+</section>
+<section>
+<h2>Évolution {% if evolution_par_semaine %}par semaine{% else %}par jour{% endif %}</h2>
+{% if evolution %}
+<div class="tableau"><table class="graphique-barres">
+  <tr><th>{% if evolution_par_semaine %}Semaine{% else %}Jour{% endif %}</th><th class="nombre">Quantité</th><th class="nombre">Arrêts</th><th class="nombre">Rendement</th><th class="colonne-barre"><span class="visuellement-cache">Quantité comparée</span></th></tr>
+  {% for point in evolution %}
+  <tr><td>{{ point.libelle }}</td><td class="nombre">{{ point.quantite|floatformat:"0g" }}</td><td class="nombre">{{ point.arrets|minutes }}</td><td class="nombre">{% include "production/_rendement.html" with rendement=point.rendement %}</td>
+    <td class="colonne-barre"><svg class="barre" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true"><rect width="{{ point.largeur|stringformat:'.1f' }}" height="10"/></svg></td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="carte">Aucun shift sur la période.</p>{% endif %}
+</section>
+</div>
+
+<h2>Shifts</h2>
+<div class="tableau"><table id="tableau-shifts">
+  <tr><th>Date</th><th>Créneau</th><th>Équipe</th><th>Machine</th><th>Produits</th><th class="nombre">Quantité</th><th class="nombre">Arrêts</th><th class="nombre">Marche</th><th class="nombre">Rendement</th><th>Commentaires</th></tr>
+  {% for shift in shifts %}{% with bilan=shift.bilan %}
+  <tr data-machine="{{ shift.machine_id }}" data-equipe="{{ shift.equipe_id }}" data-creneau="{{ shift.creneau_id }}" data-produit="{% for element in bilan.troncons %}{{ element.troncon.produit_id }} {% endfor %}" data-cause="{% for arret in shift.arrets.all %}{{ arret.cause_id }} {% endfor %}">
+    <td><a href="{{ shift.get_absolute_url }}">{{ shift.jour|date:"d/m/Y" }}</a></td><td>{{ shift.creneau.nom }}</td><td>{{ shift.equipe }}</td><td>{{ shift.machine.code }}</td>
+    <td>{% for element in bilan.troncons %}{{ element.troncon.produit.reference }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="discret">—</span>{% endfor %}</td>
+    <td class="nombre">{{ bilan.quantite|floatformat:"0g" }}</td><td class="nombre">{{ bilan.arrets }} min</td><td class="nombre">{{ bilan.marche|minutes }}</td>
+    <td class="nombre">{% include "production/_rendement.html" with rendement=bilan.rendement %}</td>
+    <td>{% for arret in shift.arrets.all %}{% if arret.commentaire %}<span class="discret">{{ arret.cause }} :</span> {{ arret.commentaire }}<br>{% endif %}{% endfor %}</td></tr>
+  {% endwith %}{% empty %}<tr><td colspan="10">Aucun shift ne correspond à la période et aux filtres.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

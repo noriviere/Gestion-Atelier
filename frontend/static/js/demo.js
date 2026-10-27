@@ -324,6 +324,12 @@
       adresseDeRetour(formulaire));
   }
 
+  // Rapport de production : les saisies du shift sont vérifiées par le navigateur, sans être enregistrées.
+  function simulerSaisieProduction(formulaire) {
+    if (!formulaire.reportValidity()) return;
+    afficherMessage(formulaire.dataset.demoTexte + " (Démo : rien n'est enregistré.)");
+  }
+
   // Montage et démontage d'une meule : les champs obligatoires sont vérifiés par le navigateur ;
   // les contrôles et calculs du serveur ne tournent que sur la version installée.
   function simulerSaisieMeule(formulaire) {
@@ -334,6 +340,7 @@
   var simulations = {
     "mouvement": simulerMouvementDeStock,
     "saisie-meule": simulerSaisieMeule,
+    "production": simulerSaisieProduction,
     "sortie-piece": simulerSortieDePiece,
     "comptage": simulerComptage,
     "outil": simulerEnregistrementOutil,
@@ -365,7 +372,8 @@
 
   // Filtres et recherches : appliqués directement sur les lignes du tableau.
   document.querySelectorAll("form.filtres:not([method=post])").forEach(function (formulaire) {
-    var tableau = document.querySelector("main table");
+    // data-tableau : quand la page a plusieurs tableaux, celui que les filtres concernent.
+    var tableau = document.querySelector(formulaire.dataset.tableau || "main table");
     if (!tableau) return;
     var champRecherche = formulaire.querySelector("[type=search]");
     var listesDeroulantes = formulaire.querySelectorAll("select");

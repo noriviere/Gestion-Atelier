@@ -260,10 +260,13 @@ class DemontageTests(DonneesMeulesMixin, TestCase):
         self.assertTrue(saisie.defaut)
         self.assertEqual(saisie.themes, [regles.THEME_DEFAUT])
 
-    def test_probleme_sans_theme_refuse(self):
+    def test_probleme_sans_theme_ni_commentaire_refuse(self):
         saisie = self.monter()
         reponse = self.client.post(f"/remontees/meules/{saisie.pk}/demontage/", self.donnees_demontage(probleme="oui"))
-        self.assertContains(reponse, "Choisissez au moins un thème")
+        self.assertContains(reponse, "Choisissez un thème ou décrivez le problème")
+        reponse = self.client.post(f"/remontees/meules/{saisie.pk}/demontage/",
+                                   self.donnees_demontage(probleme="oui", commentaire="Constat : bruit au démarrage"))
+        self.assertRedirects(reponse, saisie.get_absolute_url())
 
     def test_rien_a_signaler_efface_les_themes(self):
         saisie = self.monter()

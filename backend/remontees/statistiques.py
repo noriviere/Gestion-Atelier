@@ -56,47 +56,28 @@ def mediane_attendue(saisies, meule, machine, matiere, face):
     return repli
 
 
-def medianes_par_reference(saisies):
-    """Une ligne par meule et matière : médiane et nombre de cas pour la face A, la face B et les deux."""
-    groupes = defaultdict(lambda: {"A": [], "B": []})
-    for saisie in saisies:
-        valeur = duree_de_vie(saisie)
-        if valeur is not None:
-            groupes[(saisie.meule.reference, saisie.format_matiere.get_matiere_display())][saisie.face].append(valeur)
-    lignes = []
-    for (reference, matiere), par_face in sorted(groupes.items()):
-        toutes = par_face["A"] + par_face["B"]
-        lignes.append({
-            "meule": reference, "matiere": matiere,
-            "face_a": _mediane(par_face["A"]), "nombre_a": len(par_face["A"]),
-            "face_b": _mediane(par_face["B"]), "nombre_b": len(par_face["B"]),
-            "toutes": _mediane(toutes), "nombre": len(toutes), "mini": round(min(toutes)), "maxi": round(max(toutes)),
-        })
-    return lignes
+def _arrondi(valeur, decimales=4):
+    return None if valeur is None else round(float(valeur), decimales)
 
 
-def derniers_mois(nombre, aujourdhui=None):
-    """Les `nombre` derniers mois (année, mois), du plus ancien au mois en cours."""
-    aujourdhui = aujourdhui or timezone.localdate()
-    annee, mois = aujourdhui.year, aujourdhui.month
-    resultat = []
-    for _ in range(nombre):
-        resultat.append((annee, mois))
-        annee, mois = (annee, mois - 1) if mois > 1 else (annee - 1, 12)
-    return list(reversed(resultat))
-
-
-def evolution_par_mois(saisies, mois):
-    """Médiane par meule et matière, mois par mois (mois de montage). Une case vide quand aucune meule n'a été montée."""
-    groupes = defaultdict(lambda: defaultdict(list))
-    for saisie in saisies:
-        valeur = duree_de_vie(saisie)
-        if valeur is not None:
-            cle = (saisie.meule.reference, saisie.format_matiere.get_matiere_display())
-            groupes[cle][(saisie.date_montage.year, saisie.date_montage.month)].append(valeur)
-    return [{"meule": reference, "matiere": matiere,
-             "medianes": [_mediane(par_mois.get(un_mois, [])) for un_mois in mois]}
-            for (reference, matiere), par_mois in sorted(groupes.items())]
+def lignes_pour_les_statistiques(saisies, fournisseurs):
+    """Une ligne par meule démontée, pour la page Statistiques (calculée dans le navigateur, comme dans l'ancienne
+    application). `fournisseurs` : {article_id: nom du fournisseur préféré}."""
+    return [{
+        "format": saisie.format_matiere.produit.reference,
+        "matiere": saisie.format_matiere.get_matiere_display(),
+        "machine": saisie.machine.code,
+        "article": saisie.meule.reference,
+        "face": saisie.face,
+        "fournisseur": fournisseurs.get(saisie.meule_id, ""),
+        "date": saisie.date_montage.isoformat(),
+        "x": saisie.non_finie,
+        "faces_89": _arrondi(duree_de_vie(saisie), 2),
+        "usure_par_face": _arrondi(saisie.hauteur_usee_par_face, 6) if saisie.nombre_faces_brut else None,
+        "faces_mm": _arrondi(saisie.faces_par_mm, 4) if saisie.nombre_faces_brut else None,
+        "compteur_fin": saisie.compteur_fin,
+        "usure": _arrondi(saisie.hauteur_usee, 2),
+    } for saisie in saisies]
 
 
 def perte(saisies, annee, prix):

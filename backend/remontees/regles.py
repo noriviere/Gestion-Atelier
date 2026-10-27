@@ -195,6 +195,64 @@ LIMITES = [
 ]
 
 
+# --- Contrôles en direct (dans le navigateur, avant l'enregistrement) --------------------------------
+def _zone(valeurs, minimum, coefficient):
+    """Zone habituelle à envoyer au navigateur ; None s'il n'y a pas assez d'historique pour juger."""
+    valeurs = [valeur for valeur in valeurs if valeur is not None]
+    if len(valeurs) < minimum:
+        return None
+    q1, q3, bas, haut = zone_habituelle(valeurs, coefficient)
+    return {"q1": q1, "q3": q3, "bas": bas, "haut": haut}
+
+
+def controles_en_direct(reglages, saisie=None):
+    """Ce que remontees.js doit savoir pour afficher les erreurs et avertissements sous les champs, pendant la saisie.
+
+    Les mêmes règles sont refaites par le serveur à l'enregistrement : le navigateur ne fait que prévenir plus tôt."""
+    from .models import Matricule, SaisieMeule
+
+    donnees = {
+        "actives": {regle.code: reglages.actif(regle.code) for regle in CATALOGUE},
+        "limites": {champ: {"maximum": float(reglages.valeur(code)), "unite": unite}
+                    for code, champ, _, unite in LIMITES if reglages.actif(code)},
+        "seuil_non_finie": float(reglages.seuil_non_finie),
+        "prix_meule": float(reglages.valeur("prix_meule")),
+        "matricules": list(Matricule.objects.values_list("numero", flat=True)),
+        "theme_defaut": THEME_DEFAUT,
+        "zones": {},
+    }
+    minimum = int(reglages.valeur("hors_habitude", "minimum"))
+    coefficient = reglages.valeur("hors_habitude", "coefficient")
+    if saisie is None:
+        if reglages.actif("hors_habitude"):
+            historique = list(SaisieMeule.objects.values(*[champ for champ, _ in CHAMPS_HABITUELS_MONTAGE]))
+            for champ, _ in CHAMPS_HABITUELS_MONTAGE:
+                valeurs = [ligne[champ] for ligne in historique]
+                if champ == "pression_arrosage":
+                    valeurs = [valeur for valeur in valeurs if valeur != 0]  # 0 = manomètre hors service
+                donnees["zones"][champ] = _zone(valeurs, minimum, coefficient)
+        # Médianes attendues : une ligne par meule démontée (meule, machine, matière, face, faces pour 89 mm).
+        donnees["durees"] = [
+            [ligne.meule_id, ligne.machine_id, ligne.format_matiere.matiere, ligne.face, round(float(duree), 1)]
+            for ligne in SaisieMeule.objects.demontees().select_related("format_matiere")
+            for duree in [ligne.faces_par_meule_reference] if duree is not None and ligne.nombre_faces_brut
+        ]
+    else:
+        if reglages.actif("hors_habitude"):
+            meme_reference = (SaisieMeule.objects.demontees().exclude(pk=saisie.pk)
+                              .filter(meule=saisie.meule, format_matiere__matiere=saisie.format_matiere.matiere))
+            donnees["zones"]["compteur_fin"] = _zone(list(meme_reference.values_list("compteur_fin", flat=True)),
+                                                     min(minimum, MINIMUM_HISTORIQUE_COMPTEUR), coefficient)
+        donnees["saisie"] = {"compteur_debut": saisie.compteur_debut, "hauteur_initiale": float(saisie.hauteur_initiale),
+                             "meule": saisie.meule.reference}
+        donnees["perte_annee"] = float(sum(
+            (perte_estimee(hi, hf, reglages.valeur("prix_meule")) for hi, hf in SaisieMeule.objects.demontees()
+             .filter(date_montage__year=timezone.localdate().year).values_list("hauteur_initiale", "hauteur_finale")),
+            Decimal(0)))
+        donnees["annee"] = timezone.localdate().year
+    return donnees
+
+
 # --- Contrôles -----------------------------------------------------------------------------------
 def controler_montage(machine, format_matiere, meule, date_montage, valeurs, commentaire, nouveaux_matricules=(),
                       reglages=None):
@@ -258,8 +316,8 @@ def controler_demontage(saisie, compteur_fin, hauteur_finale, probleme, themes, 
     if reglages.actif("non_finie") and demontee_avant_usure(hauteur_finale, reglages) and not commentaire.strip():
         erreurs.append(f"Commentaire obligatoire : la meule est démontée avant usure totale "
                        f"(il reste {hauteur_finale:g} mm). Pourquoi ?")
-    if probleme and not themes:
-        erreurs.append("Choisissez au moins un thème pour le problème signalé.")
+    if probleme and not themes and not commentaire.strip():
+        erreurs.append("Choisissez un thème ou décrivez le problème dans le commentaire.")
 
     if reglages.actif("nouveau_matricule"):
         avertissements += [avertissement_nouveau_matricule(numero) for numero in nouveaux_matricules]

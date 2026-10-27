@@ -601,3 +601,46 @@ svg.barre rect { fill: var(--accent); }
 .champs-compteurs label { display: flex; align-items: center; gap: 4px; font-size: 13px; }
 .champs-compteurs input { width: 90px; }
 .champs-compteurs .bouton { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+
+/* Remontées : statistiques des meules (comme l'ancienne application) */
+.barre-statistiques { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; margin: 10px 0; }
+.barre-statistiques label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--discret); }
+.barre-statistiques label.case { flex-direction: row; align-items: center; gap: 8px; max-width: 300px; color: var(--texte); }
+.barre-statistiques label.case input { flex: none; width: 18px; height: 18px; margin: 0; }
+.barre-statistiques select { min-width: 110px; }
+.champ-court { width: 80px; }
+.grille-statistiques { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.grille-statistiques .valeur { font-size: 18px; }
+.statistiques-meules .vide { padding: 24px; text-align: center; color: var(--discret); }
+tr.cliquable { cursor: pointer; }
+tr.cliquable:hover, tr.cliquable:focus { background: var(--carte-survol); outline: none; }
+.graphique-defilant { overflow-x: auto; }
+svg.graphique-mediane { display: block; width: 100%; min-width: 640px; height: auto; font-size: 13px; }
+svg.graphique-mediane text { fill: var(--discret); }
+svg.graphique-mediane .grille-axe { stroke: var(--bord); stroke-width: 1; }
+svg.graphique-mediane .bande { fill: var(--accent); fill-opacity: .16; }
+svg.graphique-mediane .ligne { stroke: var(--accent); stroke-width: 2.5; }
+svg.graphique-mediane .ligne.pointillee { stroke-dasharray: 6 5; stroke-opacity: .7; }
+svg.graphique-mediane .point { fill: var(--accent); stroke: var(--carte); stroke-width: 2; }
+svg.graphique-mediane .point.faible { fill: var(--carte); stroke: var(--accent); }
+svg.graphique-mediane .barre-effectif { fill: var(--discret); fill-opacity: .45; }
+.legende-graphique { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--discret); }
+
+/* Remontées : messages en direct sous les champs (comme l'ancienne application) */
+.message-champ { font-size: 13px; color: var(--discret); }
+.message-champ.erreur { color: var(--alerte); font-weight: 600; }
+.message-champ.alerte { color: var(--attention); font-weight: 600; }
+.message-champ.ok { color: var(--ok); }
+.champ.signal-erreur input, .champ.signal-erreur select, .champ.signal-erreur textarea { border-color: var(--alerte); }
+.champ.signal-alerte input, .champ.signal-alerte select, .champ.signal-alerte textarea { border-color: var(--attention); box-shadow: 0 0 0 1px var(--attention); }
+.question-contexte { margin: 0 0 10px; padding: 8px 12px; border-left: 4px solid var(--attention); background: var(--attention-fond); font-weight: 600; }
+.note-defaut { margin: 0 0 10px; padding: 8px 12px; border-left: 4px solid var(--alerte); background: var(--alerte-fond); }
+.manque { margin: 12px 0 0; font-weight: 600; color: var(--attention); }
+.manque.pret { color: var(--ok); }
+.mediane-attendue { margin-top: 6px; }
+.mediane-attendue .tuile.choisie { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-doux); }
+.titre-triable { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: inherit; cursor: pointer; text-align: inherit; }
+.titre-triable::after { content: " ↕"; color: var(--discret); font-size: 11px; }
+th[aria-sort="ascending"] .titre-triable::after { content: " ↑"; color: var(--accent); }
+th[aria-sort="descending"] .titre-triable::after { content: " ↓"; color: var(--accent); }
+@media (max-width: 640px) { td .etiquette { white-space: normal; } }

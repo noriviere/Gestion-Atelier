@@ -1,0 +1,125 @@
+{% extends "aide/_page.html" %}
+{% load aide %}
+{% block texte %}
+<h1>Rapport de production</h1>
+<p class="sous-titre">Le rapport de production remplace le classeur Excel « Rapport de production ». Les opérateurs et régleurs le remplissent au fil de chaque shift, machine par machine. Les managers y lisent ce qui s'est passé : combien de pièces, combien de temps perdu, et pourquoi.</p>
+
+<section class="point-aide" id="ecran">
+<h2>La saisie du shift</h2>
+{% droit_requis "production_saisir" %}
+<p>Le menu <strong>Production</strong> ouvre l'écran de saisie :</p>
+<ol class="etapes-aide">
+  <li>choisissez la <strong>machine</strong> ; une étiquette verte indique qu'un shift est déjà ouvert sur le créneau en cours ;</li>
+  <li><strong>ouvrez le shift</strong> (matricule, équipe), ou continuez celui qui est ouvert ;</li>
+  <li>au fil du shift, indiquez le <strong>produit</strong>, ajoutez les <strong>arrêts</strong>, puis saisissez la <strong>quantité</strong> lue sur la machine.</li>
+</ol>
+<p>Un shift, c'est une machine, une équipe et un créneau d'une date. Les chiffres du haut de la page se recalculent à chaque saisie.</p>
+</section>
+
+<section class="point-aide" id="ouverture">
+<h2>L'ouverture du shift</h2>
+<p>La date et le créneau sont proposés selon l'heure : à 2 h du matin, c'est la nuit qui a commencé la veille. Vous pouvez les changer, par exemple pour saisir un shift oublié. Il ne peut y avoir qu'un shift par machine, date et créneau.</p>
+</section>
+
+<section class="point-aide" id="matricule">
+<h2>Le matricule</h2>
+<p>Choisissez votre matricule dans la liste qui s'ouvre en tapant, ou saisissez ses 4 chiffres. Un matricule jamais vu est ajouté à la liste. C'est la même liste que pour les remontées terrain.</p>
+</section>
+
+<section class="point-aide" id="equipe">
+<h2>L'équipe</h2>
+<p>E1 et E2 alternent chaque semaine entre le matin et l'après-midi : l'application ne peut pas deviner laquelle travaille. Choisissez la vôtre à chaque ouverture de shift. E3 fait la nuit, E4 le weekend.</p>
+</section>
+
+<section class="point-aide" id="creneaux">
+<h2>Les créneaux horaires</h2>
+<p>Chaque créneau donne le <strong>temps théorique</strong> du shift :</p>
+<dl class="champs-aide">
+  <dt>Matin</dt><dd>5 h – 13 h, du lundi au vendredi (480 min).</dd>
+  <dt>Après-midi</dt><dd>13 h – 21 h, du lundi au vendredi (480 min).</dd>
+  <dt>Nuit</dt><dd>21 h – 5 h, en commençant du lundi au vendredi (480 min).</dd>
+  <dt>Weekend</dt><dd>6 h – 18 h, le samedi et le dimanche (720 min).</dd>
+</dl>
+<p>Les horaires se règlent dans <strong>Paramétrage</strong>. Un shift garde les horaires du jour où il a été ouvert.</p>
+{% droit_requis "production_parametrer" %}
+</section>
+
+<section class="point-aide" id="produits">
+<h2>Produits et quantités</h2>
+<p>Le shift est découpé en <strong>tronçons</strong>, un par produit. Chaque ligne du tableau donne l'heure de début et de fin du produit, ses arrêts, son temps de marche, la cadence de sa fiche, la quantité attendue, la quantité produite et le rendement.</p>
+<p>La liste propose les produits programmés sur la machine dans la matrice. La cadence est reprise de la fiche au démarrage du produit. Saisissez la quantité dans la colonne <strong>Compteurs</strong>, puis <strong>Enregistrer</strong>. Une étiquette « à saisir » signale une quantité manquante.</p>
+</section>
+
+<section class="point-aide" id="changement">
+<h2>Changer de produit</h2>
+<p>Au premier produit, l'heure proposée est le début du shift. Pour changer de produit, indiquez l'heure du changement, le compteur à la fin du produit précédent, puis le nouveau produit. Les changements peuvent être aussi nombreux que nécessaire.</p>
+</section>
+
+<section class="point-aide" id="compteur">
+<h2>Le compteur de la machine</h2>
+<p>Normalement, le compteur est remis à zéro : laissez le compteur au début vide (0), et la quantité est la valeur de fin. Sinon, saisissez la valeur de début et celle de fin : l'application fait la soustraction.</p>
+</section>
+
+<section class="point-aide" id="arrets">
+<h2>Les arrêts</h2>
+<p>Ajoutez chaque arrêt au moment où il se produit, avec sa cause, sa durée en minutes et, si besoin, un commentaire. L'arrêt est rattaché au produit en cours, modifiable dans la liste. Le total des arrêts ne peut pas dépasser le temps théorique du shift.</p>
+</section>
+
+<section class="point-aide" id="causes">
+<h2>La liste des causes</h2>
+<p>La liste reprend les causes de l'ancien classeur (pause, réunion, nettoyage, organisation, outillages) et des causes classiques d'atelier (panne, changement de série, attente matière…). La cause <strong>Autre</strong> demande un commentaire.</p>
+<p>La liste s'enrichit dans <strong>Paramétrage</strong>. Une cause qui ne sert plus est archivée (case « actif » décochée), jamais supprimée, pour garder l'historique.</p>
+{% droit_requis "production_parametrer" %}
+</section>
+
+<section class="point-aide" id="raccourcis">
+<h2>Les raccourcis</h2>
+<p>Depuis le shift, <strong>Sortir une pièce du stock</strong> ouvre la liste du stock, et <strong>Suivi des meules et porte-lames</strong> ouvre les remontées de la machine. Rien n'est repris de ces pages dans le rapport.</p>
+</section>
+
+<section class="point-aide" id="corrections">
+<h2>Corriger un shift terminé</h2>
+{% droit_requis "production_corriger" %}
+<p>Le shift se complète jusqu'à sa fin. Ensuite, seuls les profils qui ont le droit de corriger peuvent le modifier. Chaque correction est notée dans l'<strong>historique des corrections</strong> en bas du shift, avec la date et le compte.</p>
+</section>
+
+<section class="point-aide" id="calculs">
+<h2>Temps de marche et rendement</h2>
+<p>Il n'y a pas de TRS. Les calculs sont :</p>
+<dl class="champs-aide">
+  <dt>Temps de marche</dt><dd>Temps théorique du créneau moins la somme des arrêts.</dd>
+  <dt>Temps de marche d'un produit</dt><dd>Durée du tronçon moins ses arrêts.</dd>
+  <dt>Quantité attendue</dt><dd>Cadence de la fiche (pièces/heure) × temps de marche.</dd>
+  <dt>Rendement</dt><dd>Quantité produite divisée par la quantité attendue. Pour le shift ou une période, c'est la somme des quantités divisée par la somme des quantités attendues.</dd>
+</dl>
+<p>Exemple : 480 min avec 20 min de pause et 60 min de panne donnent 400 min de marche. À 200 pièces/h pendant 240 min, 720 pièces font 90 %. Un rendement sous 85 % ressort en rouge.</p>
+</section>
+
+<section class="point-aide" id="rapport">
+<h2>Le rapport de production</h2>
+<p>Un seul écran, <strong>Consulter le rapport</strong>, remplace les onglets d'analyse de l'Excel. Il s'ouvre sur la veille et montre :</p>
+<ul>
+  <li>les chiffres clés : pièces produites, temps de marche, temps d'arrêt et rendement ;</li>
+  <li>le Pareto des causes d'arrêt et l'évolution par jour (par semaine au-delà d'un mois), dont la barre compare les quantités produites ;</li>
+  <li>la liste des shifts : un clic sur la date ouvre le détail du shift.</li>
+</ul>
+<p>Le bouton <strong>Exporter vers Excel</strong> donne un classeur avec une feuille des shifts et une feuille des arrêts.</p>
+{% droit_requis "production_consulter" %}
+<p>Sans ce droit, le rapport montre seulement la veille.</p>
+</section>
+
+<section class="point-aide" id="filtres">
+<h2>Les filtres</h2>
+<p>Les raccourcis <strong>Veille</strong>, <strong>7 derniers jours</strong> et <strong>30 derniers jours</strong> changent la période. Les filtres la restreignent à une machine, une équipe, un créneau, un produit, ou aux shifts qui ont eu une cause d'arrêt donnée.</p>
+</section>
+
+<section class="point-aide" id="pareto">
+<h2>Le Pareto des causes</h2>
+<p>Les causes sont classées de la plus longue à la plus courte. La part est le pourcentage du temps d'arrêt total, le cumul additionne les parts : les premières lignes montrent où se perd le plus de temps.</p>
+</section>
+
+<section class="point-aide" id="historique">
+<h2>L'historique de l'Excel</h2>
+<p>Les arrêts de l'onglet « Datas » de l'ancien classeur sont repris une fois, à l'installation. Chaque arrêt rejoint le shift de sa machine, de son équipe et du créneau de son heure de saisie. Ces shifts n'ont pas de quantité : leur rendement s'affiche « — ».</p>
+</section>
+{% endblock %}

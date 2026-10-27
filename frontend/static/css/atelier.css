@@ -588,3 +588,16 @@ ul.legende-aide .pastille { margin-right: 6px; }
 .entete-regle { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .interrupteur { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-weight: 600; }
 @media (max-width: 480px) { .liste-regles { grid-template-columns: 1fr; } }
+
+/* Rapport de production */
+.colonnes-egales { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.colonnes-egales > section { min-width: 0; }
+@media (max-width: 900px) { .colonnes-egales { grid-template-columns: 1fr; gap: 0; } }
+.graphique-barres .colonne-barre { width: 25%; min-width: 70px; }
+.graphique-barres .nombre { white-space: nowrap; }
+svg.barre { display: block; width: 100%; height: 12px; }
+svg.barre rect { fill: var(--accent); }
+.champs-compteurs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.champs-compteurs label { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+.champs-compteurs input { width: 90px; }
+.champs-compteurs .bouton { min-height: 32px; padding: 4px 10px; font-size: 13px; }

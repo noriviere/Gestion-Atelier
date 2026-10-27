@@ -26,6 +26,10 @@ Cette version est une **démo** avec des données fictives, destinée à présen
 - **Outillage** : arborescence outil, sous-ensembles et pièces d'usure, avec leur stock.
   Le profil Méthode crée et modifie les outils et leurs pièces directement dans l'application ;
   depuis la fiche d'un outil, tous les profils sortent du stock une pièce remplacée.
+- **Rapport de production** : saisie de chaque shift par machine (équipe choisie à la main, produits et
+  changements de produit, quantité lue sur la machine, arrêts avec une liste de causes réglable), temps de
+  marche et rendement par rapport à la cadence de la fiche (pas de TRS). Un seul écran de rapport filtrable
+  (période, machine, équipe, créneau, produit, cause), avec Pareto des causes, évolution et export Excel.
 - **Produits et machines** : une matrice avec une ligne par produit et une colonne par machine.
   Chaque case a un état : programmé, à faire (affiché « à sécuriser » quand le produit tourne déjà
   sur une autre machine), non faisable, ou vide (rien de prévu mais possible). Un clic sur une case
@@ -97,6 +101,11 @@ l'application refuse de démarrer sans clé secrète ni adresses autorisées, et
 `--effacer-tout` pour ne pas effacer des données réelles par erreur. Derrière HTTPS, ajouter `DJANGO_HTTPS=1`
 (le port 8000 ne doit alors être joignable que par le proxy HTTPS).
 
+Reprise de l'historique de l'ancien classeur « Rapport de production » (onglet Datas), une seule fois :
+`docker compose cp rapport.xlsx web:/tmp/rapport.xlsx` puis
+`docker compose exec web python manage.py importer_historique_production /tmp/rapport.xlsx`.
+Relancer la commande sur le même fichier ne crée pas de doublons.
+
 Mise à jour d'une VM déjà installée : PostgreSQL garde le mot de passe choisi à la création de sa base.
 Mettre dans `.env` l'ancien mot de passe (`atelier-a-changer`), ou le changer d'abord dans la base
 (`docker compose exec db psql -U atelier -c "ALTER USER atelier PASSWORD '…'"`). Les photos et documents des fiches
@@ -139,6 +148,8 @@ backend/                 Code Python (Django)
   inventaire/            Fournisseurs, articles, mouvements, inventaires
   outillage/             Outils, sous-ensembles et pièces montées
   produits/              Machines, produits, fiches produit sur machine
+  remontees/             Remontées terrain : suivi d'usure des meules
+  production/            Rapport de production : shifts, arrêts, rendement, reprise de l'Excel
   demo/                  Données fictives de la démo
   tests/                 Tests unitaires
 frontend/                Interface

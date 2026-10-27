@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load aide production %}
+{% block titre %}Production{% if machine_choisie %} {{ machine_choisie.code }}{% endif %} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Rapport de production</h1>
+<p class="sous-titre">{% if creneau %}Créneau en cours : <strong>{{ creneau.nom|lower }}</strong> du {{ jour|date:"d/m/Y" }}.{% else %}Aucun créneau en cours à cette heure.{% endif %} Choisissez la machine pour ouvrir ou compléter son shift. {% info "production" "ecran" "La saisie du shift" %}</p>
+<p><a class="bouton secondaire" href="{% url 'rapport_production' %}">Consulter le rapport</a>{% info "production" "rapport" "Le rapport de production" %}</p>
+
+<h2>Machine</h2>
+<div class="grille grille-compacte grille-machines">
+  {% for machine in machines %}<a class="tuile{% if machine == machine_choisie %} choisie{% endif %}" href="{% url 'production' %}?machine={{ machine.code }}"{% if machine == machine_choisie %} aria-current="true"{% endif %}><div class="valeur">{{ machine.code }}</div><div class="libelle">{% if machine.shift_en_cours %}<span class="etiquette ok">Shift ouvert · {{ machine.shift_en_cours.equipe }}</span>{% else %}{{ machine.nom }}{% endif %}</div></a>
+  {% empty %}<p class="carte">Aucune machine : elles se créent dans « Produits et machines ».</p>{% endfor %}
+</div>
+
+{% if machine_choisie %}
+{% if machine_choisie.shift_en_cours %}
+<h2>Shift en cours sur {{ machine_choisie.code }}</h2>
+<p class="carte">Le shift {{ creneau.nom|lower }} est ouvert par l'équipe {{ machine_choisie.shift_en_cours.equipe }}. <a class="bouton" href="{{ machine_choisie.shift_en_cours.get_absolute_url }}">Continuer la saisie</a></p>
+{% else %}
+<h2>Ouvrir un shift sur {{ machine_choisie.code }}{% info "production" "ouverture" "L'ouverture du shift" %}</h2>
+<datalist id="matricules">{% for matricule in matricules %}<option value="{{ matricule.numero }}">{{ matricule }}</option>{% endfor %}</datalist>
+<form method="post" class="formulaire" data-demo="production" data-demo-texte="Shift vérifié : sur la version installée, il est ouvert et la page de saisie s'affiche.">{% csrf_token %}
+  {% for erreur in form.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+  <div class="carte">
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form.matricule aide_sujet="production" aide_ancre="matricule" %}
+      {% include "_champ.html" with champ=form.equipe aide_sujet="production" aide_ancre="equipe" %}
+      {% include "_champ.html" with champ=form.machine %}
+      {% include "_champ.html" with champ=form.jour %}
+      {% include "_champ.html" with champ=form.creneau aide_sujet="production" aide_ancre="creneaux" %}
+    </div>
+  </div>
+  <div class="actions barre-enregistrer"><button class="bouton" type="submit">Ouvrir le shift</button></div>
+</form>
+{% endif %}
+
+<h2>Derniers shifts sur {{ machine_choisie.code }}</h2>
+{% if derniers_shifts %}
+<div class="tableau"><table>
+  <tr><th>Date</th><th>Créneau</th><th>Équipe</th><th class="nombre">Quantité</th><th class="nombre">Arrêts (min)</th><th class="nombre">Rendement</th></tr>
+  {% for shift in derniers_shifts %}{% with bilan=shift.bilan %}
+  <tr><td><a href="{{ shift.get_absolute_url }}">{{ shift.jour|date:"d/m/Y" }}</a></td><td>{{ shift.creneau.nom }}</td><td>{{ shift.equipe }}</td>
+    <td class="nombre">{{ bilan.quantite|floatformat:"0g" }}</td><td class="nombre">{{ bilan.arrets }}</td><td class="nombre">{% include "production/_rendement.html" with rendement=bilan.rendement %}</td></tr>
+  {% endwith %}{% endfor %}
+</table></div>
+{% else %}<p class="carte">Aucun shift saisi sur {{ machine_choisie.code }}.</p>{% endif %}
+{% endif %}
+{% endblock %}

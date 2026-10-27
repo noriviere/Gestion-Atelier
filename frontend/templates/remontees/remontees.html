@@ -3,6 +3,7 @@
 {% block titre %}Remontées{% if machine_choisie %} {{ machine_choisie.code }}{% endif %} – Gestion Atelier{% endblock %}
 {% block contenu %}
 <h1>Remontées terrain</h1>
+{% include "remontees/_navigation.html" with page="remontees" %}
 <p class="sous-titre">Choisissez la machine, puis ce que vous voulez signaler. {% info "remontees" "ecran" "L'écran des remontées" %}</p>
 
 <h2>Machine</h2>

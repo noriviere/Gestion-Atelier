@@ -5,7 +5,7 @@ from inventaire.models import Article
 from produits.models import Machine, Produit
 
 from . import regles
-from .models import LONGUEUR_MATRICULE, FormatMatiere, Matricule
+from .models import LONGUEUR_MATRICULE, FormatMatiere, Matricule, SaisieMeule, ThemeProbleme
 
 SEPARATEUR_AVERTISSEMENTS = "\n"
 
@@ -139,7 +139,7 @@ class DemontageForm(SaisieAvecAvertissementsForm):
     probleme = forms.ChoiceField(label="Tout s'est-il bien passé ?", widget=forms.RadioSelect,
                                  choices=[(PROBLEME_NON, "Oui, rien à signaler"), (PROBLEME_OUI, "Non, j'ai une remarque")])
     themes = forms.MultipleChoiceField(label="Qu'est-ce qui a posé problème ? (plusieurs choix possibles)",
-                                       choices=[(theme, theme) for theme in regles.THEMES], required=False,
+                                       required=False,
                                        widget=forms.CheckboxSelectMultiple)
     commentaire = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 4}),
                                   help_text="Obligatoire si la meule est démontée avant usure totale.")
@@ -147,6 +147,10 @@ class DemontageForm(SaisieAvecAvertissementsForm):
     def __init__(self, *args, saisie, **kwargs):
         super().__init__(*args, **kwargs)
         self.saisie = saisie
+        self.reglages = regles.lire_reglages()
+        # Thèmes réglés dans le back-office ; un thème retiré depuis reste lisible sur les anciennes saisies.
+        self.fields["themes"].choices = [(theme, theme) for theme in ThemeProbleme.objects.filter(actif=True)
+                                         .values_list("libelle", flat=True)]
         for nom in ("compteur_fin", "hauteur_finale"):
             self.fields[nom].widget.attrs["inputmode"] = "decimal" if nom == "hauteur_finale" else "numeric"
 
@@ -159,7 +163,7 @@ class DemontageForm(SaisieAvecAvertissementsForm):
             donnees["themes"] = []
         erreurs, self.avertissements = regles.controler_demontage(
             self.saisie, donnees["compteur_fin"], donnees["hauteur_finale"], donnees["probleme"], donnees["themes"],
-            donnees.get("commentaire", ""), self.nouveaux_matricules("matricule_demonteur"),
+            donnees.get("commentaire", ""), self.nouveaux_matricules("matricule_demonteur"), self.reglages,
         )
         self.ajouter_erreurs(erreurs)
         return donnees
@@ -168,3 +172,156 @@ class DemontageForm(SaisieAvecAvertissementsForm):
 def valeurs_initiales_montage(machine=None):
     return {"machine": machine, "date_montage": timezone.localdate(), "pression_arrosage": 6, "compteur_debut": 0,
             "sortir_du_stock": True}
+
+
+class CorrectionForm(forms.ModelForm):
+    """Correction d'une saisie par Méthode et management : tous les champs, sans les avertissements.
+
+    Seules les incohérences restent bloquantes (compteur ou hauteur à l'envers)."""
+
+    matricule_monteur = ChampMatricule(label="Matricule monteur")
+    matricule_demonteur = ChampMatricule(label="Matricule démonteur")
+    themes = forms.MultipleChoiceField(label="Thèmes du problème", required=False, widget=forms.CheckboxSelectMultiple)
+    CHAMPS_DEMONTAGE = ["matricule_demonteur", "compteur_fin", "hauteur_finale", "probleme", "themes", "commentaire"]
+
+    class Meta:
+        model = SaisieMeule
+        fields = ["machine", "format_matiere", "face", "meule", "lot_fournisseur", "date_montage", "ma5",
+                  "pression_arrosage", "vitesse_rotation", "vitesse_avance", "hauteur_initiale", "compteur_debut",
+                  "commentaire_montage", "compteur_fin", "hauteur_finale", "probleme", "themes", "commentaire"]
+        widgets = {
+            "date_montage": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "face": forms.RadioSelect,
+            "commentaire_montage": forms.Textarea(attrs={"rows": 2}),
+            "commentaire": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        saisie = self.instance
+        self.fields["format_matiere"].queryset = FormatMatiere.objects.select_related("produit")
+        self.fields["meule"].queryset = Article.objects.filter(formats_meule__isnull=False).distinct()
+        self.fields["matricule_monteur"].initial = saisie.matricule_monteur.numero
+        if saisie.est_demontee:
+            self.fields["matricule_demonteur"].initial = saisie.matricule_demonteur.numero
+            for nom in ("compteur_fin", "hauteur_finale"):
+                self.fields[nom].required = True
+            # Thèmes actifs, plus ceux de la saisie (un thème retiré ou renommé depuis reste coché).
+            themes = list(ThemeProbleme.objects.filter(actif=True).values_list("libelle", flat=True))
+            themes += [theme for theme in saisie.themes if theme not in themes]
+            self.fields["themes"].choices = [(theme, theme) for theme in themes]
+        else:
+            for nom in self.CHAMPS_DEMONTAGE:
+                del self.fields[nom]
+
+    def clean(self):
+        donnees = super().clean()
+        debut, fin = donnees.get("compteur_debut"), donnees.get("compteur_fin")
+        if debut is not None and fin is not None and fin < debut:
+            self.add_error("compteur_fin", f"Inférieur au compteur au montage ({debut}).")
+        initiale, finale = donnees.get("hauteur_initiale"), donnees.get("hauteur_finale")
+        if initiale is not None and finale is not None and finale > initiale:
+            self.add_error("hauteur_finale", f"Supérieure à la hauteur initiale ({initiale:g} mm).")
+        if "probleme" in donnees and not donnees["probleme"]:
+            donnees["themes"] = []
+        elif donnees.get("probleme") and not donnees.get("themes"):
+            self.add_error("themes", "Choisissez au moins un thème pour le problème signalé.")
+        return donnees
+
+
+def _nom_parametre(regle, parametre):
+    return f"{regle.code}__{parametre.cle}"
+
+
+class ReglesForm(forms.Form):
+    """Le back-office des règles : un interrupteur et des valeurs par règle du catalogue."""
+
+    def __init__(self, *args, reglages, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.reglages = reglages
+        for regle in regles.CATALOGUE:
+            if regle.interrupteur:
+                self.fields[f"actif_{regle.code}"] = forms.BooleanField(
+                    label="Active", required=False, initial=reglages.actif(regle.code))
+            for parametre in regle.parametres:
+                self.fields[_nom_parametre(regle, parametre)] = forms.DecimalField(
+                    label=parametre.libelle, min_value=parametre.mini, max_value=parametre.maxi,
+                    initial=reglages.valeur(regle.code, parametre.cle),
+                    widget=forms.NumberInput(attrs={"step": parametre.pas, "inputmode": "decimal"}),
+                    help_text=f"Valeur d'origine : {parametre.defaut:g} {parametre.unite}".rstrip(),
+                )
+
+    def lignes(self):
+        """Pour le gabarit : (groupe, règle, champ interrupteur ou None, champs des valeurs)."""
+        return [(regle.groupe, regle, self[f"actif_{regle.code}"] if regle.interrupteur else None,
+                 [(self[_nom_parametre(regle, parametre)], parametre) for parametre in regle.parametres])
+                for regle in regles.CATALOGUE]
+
+    def changements(self):
+        """{code: (actif, {cle: texte})} à enregistrer, et les phrases de l'historique."""
+        reglages, phrases = {}, []
+        for regle in regles.CATALOGUE:
+            actif = self.cleaned_data[f"actif_{regle.code}"] if regle.interrupteur else True
+            if actif != self.reglages.actif(regle.code):
+                phrases.append(f"{regle.titre} : {'activée' if actif else 'désactivée'}")
+            valeurs = {}
+            for parametre in regle.parametres:
+                nouvelle = self.cleaned_data[_nom_parametre(regle, parametre)]
+                ancienne = self.reglages.valeur(regle.code, parametre.cle)
+                # « 150 » et non « 1.5E+2 » : normalize() seul passerait en notation scientifique.
+                valeurs[parametre.cle] = texte = format(nouvelle.normalize(), "f")
+                if nouvelle != ancienne:
+                    phrases.append(f"{regle.titre}, {parametre.libelle.lower()} : {ancienne:g} → {texte} "
+                                   f"{parametre.unite}".rstrip())
+            reglages[regle.code] = (actif, valeurs)
+        return reglages, phrases
+
+
+class ThemesForm(forms.Form):
+    """Les thèmes proposés au démontage : renommer, retirer, remettre, ajouter. Le thème du défaut reste fixe."""
+
+    nouveau = forms.CharField(label="Ajouter un thème", max_length=80, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.themes = list(ThemeProbleme.objects.all())
+        for theme in self.themes:
+            fixe = theme.libelle == regles.THEME_DEFAUT
+            self.fields[f"libelle_{theme.pk}"] = forms.CharField(
+                label="Libellé", max_length=80, initial=theme.libelle, disabled=fixe)
+            self.fields[f"actif_{theme.pk}"] = forms.BooleanField(
+                label="Proposé", required=False, initial=theme.actif, disabled=fixe)
+
+    def lignes(self):
+        return [(theme, self[f"libelle_{theme.pk}"], self[f"actif_{theme.pk}"]) for theme in self.themes]
+
+    def clean(self):
+        donnees = super().clean()
+        libelles = [donnees.get(f"libelle_{theme.pk}", "").strip() for theme in self.themes]
+        nouveau = donnees.get("nouveau", "").strip()
+        if nouveau:
+            libelles.append(nouveau)
+        doublons = {libelle for libelle in libelles if libelle and libelles.count(libelle) > 1}
+        if doublons:
+            raise forms.ValidationError(f"Deux thèmes ont le même libellé : {', '.join(sorted(doublons))}.")
+        return donnees
+
+    def enregistrer(self):
+        """Enregistre et renvoie les phrases de l'historique."""
+        phrases = []
+        for theme in self.themes:
+            libelle = self.cleaned_data[f"libelle_{theme.pk}"].strip()
+            actif = self.cleaned_data[f"actif_{theme.pk}"]
+            if libelle != theme.libelle:
+                phrases.append(f"Thème renommé : {theme.libelle} → {libelle}")
+            if actif != theme.actif:
+                phrases.append(f"Thème {'remis' if actif else 'retiré'} : {libelle}")
+            if libelle != theme.libelle or actif != theme.actif:
+                theme.libelle, theme.actif = libelle, actif
+                theme.save()
+        nouveau = self.cleaned_data["nouveau"].strip()
+        if nouveau:
+            ordre = max((theme.ordre for theme in self.themes), default=0) + 1
+            ThemeProbleme.objects.create(libelle=nouveau, ordre=ordre)
+            phrases.append(f"Thème ajouté : {nouveau}")
+        return phrases

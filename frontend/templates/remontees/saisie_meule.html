@@ -6,7 +6,10 @@
 <nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{{ adresse_remontees }}">Remontées</a></li><li><a href="{{ adresse_remontees }}?machine={{ saisie.machine.code }}">{{ saisie.machine.code }}</a></li><li aria-current="page">Meule n° {{ saisie.pk }}</li></ol></nav>
 <h1>Meule {{ saisie.meule.reference }}, face {{ saisie.face }}, sur {{ saisie.machine.code }}</h1>
 <p class="sous-titre">{{ saisie.format_matiere }} · {% if saisie.est_demontee %}démontée{% else %}montée, pas encore démontée{% endif %} {% include "remontees/_etat_saisie.html" %}</p>
-{% if not saisie.est_demontee and droits.remontees_saisir %}<div class="actions"><a class="bouton" href="{% url 'demontage_meule' saisie.pk %}">Démonter</a></div>{% endif %}
+{% if not saisie.est_demontee and droits.remontees_saisir or droits.remontees_corriger %}<div class="actions">
+  {% if not saisie.est_demontee and droits.remontees_saisir %}<a class="bouton" href="{% url 'demontage_meule' saisie.pk %}">Démonter</a>{% endif %}
+  {% if droits.remontees_corriger %}<a class="bouton secondaire" href="{% url 'modifier_saisie_meule' saisie.pk %}">Corriger ou supprimer</a>{% info "remontees" "correction" "Corriger une saisie" %}{% endif %}
+</div>{% endif %}
 {% if saisie.est_demontee %}
 <h2>Résultat{% info "remontees" "calculs" "Les valeurs calculées" %}</h2>
 <div class="grille grille-compacte">
@@ -16,6 +19,9 @@
   <div class="tuile"><div class="valeur">{{ saisie.faces_par_meule_reference|floatformat:0|default:"—" }}</div><div class="libelle">faces pour une meule de {{ hauteur_reference }} mm</div></div>
   <div class="tuile"><div class="valeur">{{ saisie.hauteur_usee_par_face|floatformat:4|default:"—" }} mm</div><div class="libelle">hauteur usée par face</div></div>
 </div>
+{% endif %}
+{% if attendue %}
+<p class="carte">Durée de vie habituelle de cette meule{% info "remontees" "mediane" "La médiane" %} : <strong>{{ attendue.mediane }} faces</strong> pour une meule de {{ hauteur_reference }} mm (médiane de {{ attendue.nombre }} meule{{ attendue.nombre|pluralize }}, critère {{ attendue.critere }}){% if not attendue.fiable %}, <span class="etiquette attention">peu fiable : moins de {{ minimum_fiable }} meules</span>{% endif %}.</p>
 {% endif %}
 <div class="deux-colonnes">
   <div class="carte">
@@ -49,5 +55,6 @@
   </div>
   {% endif %}
 </div>
+{% if saisie.corrige_le %}<p class="discret">Corrigée par {{ saisie.corrige_par|default:"—" }} le {{ saisie.corrige_le|date:"d/m/Y H:i" }}.</p>{% endif %}
 {% if saisie.avertissements %}<h2>Avertissements confirmés à la saisie</h2><div class="carte"><ul>{% for ligne in saisie.avertissements.splitlines %}<li>{{ ligne }}</li>{% endfor %}</ul></div>{% endif %}
 {% endblock %}

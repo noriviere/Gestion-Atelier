@@ -1,20 +1,33 @@
+from io import BytesIO
+
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
 
 from comptes import roles
-from inventaire.models import Mouvement
+from inventaire.excel import TYPE_XLSX
+from inventaire.models import Article, Mouvement
 from produits.matrice import cle_naturelle
 from produits.models import Machine
 
-from . import regles
-from .forms import DemontageForm, MontageForm, valeurs_initiales_montage
-from .models import FormatMatiere, Matricule, SaisieMeule
+from . import regles, statistiques
+from .forms import CorrectionForm, DemontageForm, MontageForm, ReglesForm, ThemesForm, valeurs_initiales_montage
+from .models import FormatMatiere, HistoriqueRegle, Matricule, RegleMeule, SaisieMeule
 
 NOMBRE_DERNIERES_SAISIES = 10
+# Au-delà, la liste des saisies demande d'affiner les filtres (l'historique Excel compte des milliers de lignes).
+NOMBRE_MAXIMUM_SAISIES = 300
+NOMBRE_MOIS_EVOLUTION = 12
+NOMBRE_LIGNES_HISTORIQUE = 30
 
 
 def machines_avec_meules_montees():
@@ -113,12 +126,12 @@ def demontage_meule(request, pk):
             message = f"Démontage enregistré : {saisie.nombre_faces_brut} faces"
             if saisie.faces_par_meule_reference is not None:
                 message += (f", soit {saisie.faces_par_meule_reference:.0f} faces pour une meule de "
-                            f"{regles.REGLAGES['hauteur_reference_mm']} mm")
+                            f"{regles.HAUTEUR_REFERENCE_MM} mm")
             messages.success(request, message + ".")
             return redirect(saisie)
     contexte = contexte_formulaire(formulaire)
     contexte.update({"saisie": saisie, "aide_commentaire": regles.AIDE_COMMENTAIRE,
-                     "seuil_non_finie": regles.REGLAGES["seuil_non_finie_mm"]})
+                     "seuil_non_finie": formulaire.reglages.seuil_non_finie})
     return render(request, "remontees/demontage_meule.html", contexte)
 
 
@@ -133,7 +146,7 @@ def enregistrer_demontage(saisie, formulaire, utilisateur):
     saisie.commentaire = donnees["commentaire"]
     saisie.demonte_par = utilisateur
     saisie.demonte_le = timezone.now()
-    saisie.defaut = regles.est_un_defaut(saisie.probleme, saisie.themes, saisie.hauteur_finale)
+    saisie.marquer(formulaire.reglages)
     saisie.avertissements = "\n".join(filter(None, [saisie.avertissements, *formulaire.avertissements]))
     saisie.save()
 
@@ -141,7 +154,215 @@ def enregistrer_demontage(saisie, formulaire, utilisateur):
 def saisie_meule(request, pk):
     saisie = get_object_or_404(
         SaisieMeule.objects.select_related("machine", "meule", "format_matiere__produit", "matricule_monteur",
-                                           "matricule_demonteur", "monte_par", "demonte_par"), pk=pk)
+                                           "matricule_demonteur", "monte_par", "demonte_par", "corrige_par"), pk=pk)
+    autres = list(SaisieMeule.objects.demontees().filter(meule=saisie.meule).exclude(pk=saisie.pk)
+                  .select_related("format_matiere"))
+    attendue = statistiques.mediane_attendue(autres, saisie.meule, saisie.machine, saisie.format_matiere.matiere,
+                                             saisie.face)
     return render(request, "remontees/saisie_meule.html", {
-        "saisie": saisie, "hauteur_reference": regles.REGLAGES["hauteur_reference_mm"],
+        "saisie": saisie, "hauteur_reference": regles.HAUTEUR_REFERENCE_MM, "attendue": attendue,
+        "minimum_fiable": statistiques.MINIMUM_FIABLE,
+    })
+
+
+# --- Consultation ----------------------------------------------------------------------------------
+ETATS = [
+    ("montee", "Montées, pas encore démontées"),
+    ("demontee", "Démontées"),
+    ("non_finie", "Non finies (X)"),
+    ("defaut", "Défauts"),
+    ("probleme", "Avec un problème signalé"),
+    ("corrigee", "Corrigées"),
+]
+
+
+def etats_de_la_saisie(saisie):
+    """Les états de la liste ETATS qui s'appliquent : sert au filtre de la démo statique (data-etat)."""
+    etats = ["demontee" if saisie.est_demontee else "montee"]
+    etats += [etat for etat, vrai in [("non_finie", saisie.non_finie), ("defaut", saisie.defaut),
+                                      ("probleme", saisie.probleme), ("corrigee", saisie.corrige_le)] if vrai]
+    return " ".join(etats)
+
+
+def filtrer_saisies(saisies, filtres):
+    if filtres["machine"]:
+        saisies = saisies.filter(machine__code=filtres["machine"])
+    if filtres["meule"].isdigit():
+        saisies = saisies.filter(meule_id=filtres["meule"])
+    if filtres["matiere"]:
+        saisies = saisies.filter(format_matiere__matiere=filtres["matiere"])
+    etat = filtres["etat"]
+    if etat in ("montee", "demontee"):
+        saisies = saisies.montees() if etat == "montee" else saisies.demontees()
+    elif etat == "corrigee":
+        saisies = saisies.filter(corrige_le__isnull=False)
+    elif etat in ("non_finie", "defaut", "probleme"):
+        saisies = saisies.filter(**{etat: True})
+    if filtres["q"]:
+        q = filtres["q"]
+        saisies = saisies.filter(Q(lot_fournisseur__icontains=q) | Q(matricule_monteur__numero=q)
+                                 | Q(matricule_demonteur__numero=q) | Q(commentaire__icontains=q)
+                                 | Q(commentaire_montage__icontains=q) | Q(format_matiere__produit__reference__iexact=q))
+    return saisies
+
+
+def saisies_meules(request):
+    """Toutes les saisies, filtrées : la page « Consultation » de l'ancienne application."""
+    filtres = {cle: request.GET.get(cle, "").strip() for cle in ("q", "machine", "meule", "matiere", "etat")}
+    saisies = SaisieMeule.objects.select_related("machine", "meule", "format_matiere__produit", "matricule_monteur",
+                                                 "matricule_demonteur")
+    if not settings.DEMO_STATIQUE:
+        # Démo statique : toutes les lignes sont dans la page, demo.js masque celles hors filtre.
+        saisies = filtrer_saisies(saisies, filtres)
+    nombre = saisies.count()
+    saisies = list(saisies[:NOMBRE_MAXIMUM_SAISIES] if not settings.DEMO_STATIQUE else saisies)
+    for saisie in saisies:
+        saisie.etats = etats_de_la_saisie(saisie)
+    return render(request, "remontees/saisies_meules.html", {
+        "saisies": saisies, "nombre": nombre, "tronquee": nombre > len(saisies), "filtres": filtres,
+        "machines": sorted(Machine.objects.filter(saisies_meules__isnull=False).distinct(),
+                           key=lambda machine: cle_naturelle(machine.code)),
+        "meules": Article.objects.filter(saisies_meules__isnull=False).distinct().order_by("reference"),
+        "matieres": FormatMatiere.MATIERES, "etats": ETATS,
+    })
+
+
+def saisies_demontees():
+    """Les saisies démontées avec tout ce que les statistiques lisent, en une requête (plus les prévisions)."""
+    return list(SaisieMeule.objects.demontees().select_related("machine", "meule", "format_matiere__produit")
+                .prefetch_related("format_matiere__machines", "format_matiere__meules"))
+
+
+def statistiques_meules(request):
+    saisies = saisies_demontees()
+    reglages = regles.lire_reglages()
+    prix = reglages.valeur("prix_meule")
+    annee = timezone.localdate().year
+    mois = statistiques.derniers_mois(NOMBRE_MOIS_EVOLUTION)
+    non_finies = sum(1 for saisie in saisies if saisie.non_finie)
+    return render(request, "remontees/statistiques_meules.html", {
+        "nombre": len(saisies), "non_finies": non_finies,
+        "part_non_finies": round(100 * non_finies / len(saisies)) if saisies else 0,
+        "defauts": sum(1 for saisie in saisies if saisie.defaut),
+        "medianes": statistiques.medianes_par_reference(saisies),
+        "mois": mois, "evolution": statistiques.evolution_par_mois(saisies, mois),
+        "pertes": [statistiques.perte(saisies, annee, prix), statistiques.perte(saisies, annee - 1, prix)],
+        "hauteur_reference": regles.HAUTEUR_REFERENCE_MM, "minimum_fiable": statistiques.MINIMUM_FIABLE,
+    })
+
+
+def controle_meules(request):
+    anomalies = statistiques.anomalies(saisies_demontees(), regles.lire_reglages())
+    gravite = request.GET.get("gravite", "")
+    nombres = {gravite_possible: sum(1 for anomalie in anomalies if anomalie["gravite"] == gravite_possible)
+               for gravite_possible in statistiques.GRAVITES}
+    if gravite and not settings.DEMO_STATIQUE:
+        anomalies = [anomalie for anomalie in anomalies if slugify(anomalie["gravite"]) == gravite]
+    return render(request, "remontees/controle_meules.html", {
+        "anomalies": anomalies, "gravites": [(gravite_possible, nombres[gravite_possible])
+                                             for gravite_possible in statistiques.GRAVITES],
+        "gravite_choisie": gravite, "grave": statistiques.GRAVE, "verif": statistiques.VERIF,
+    })
+
+
+COLONNES_CONTROLE = ["Gravité", "Saisie n°", "Date de montage", "Machine", "Meule", "Format", "Face", "Champ", "Valeur",
+                     "Motif"]
+
+
+def export_controle_meules(request):
+    """Le contrôle qualité en Excel : une ligne par anomalie, pour corriger ou expliquer hors de l'application."""
+    classeur = Workbook()
+    feuille = classeur.active
+    feuille.title = "Contrôle qualité"
+    feuille.append(COLONNES_CONTROLE)
+    for cellule in feuille[1]:
+        cellule.font = Font(bold=True)
+    for anomalie in statistiques.anomalies(saisies_demontees(), regles.lire_reglages()):
+        saisie = anomalie["saisie"]
+        feuille.append([anomalie["gravite"], saisie.pk, saisie.date_montage, saisie.machine.code,
+                        saisie.meule.reference, str(saisie.format_matiere), saisie.face, anomalie["champ"],
+                        anomalie["valeur"], anomalie["motif"]])
+        feuille.cell(feuille.max_row, 3).number_format = "DD/MM/YYYY"
+    for colonne, largeur in zip("ABCDEFGHIJ", [16, 10, 14, 10, 14, 14, 6, 28, 14, 60]):
+        feuille.column_dimensions[colonne].width = largeur
+    feuille.freeze_panes = "A2"
+    contenu = BytesIO()
+    classeur.save(contenu)
+    reponse = HttpResponse(contenu.getvalue(), content_type=TYPE_XLSX)
+    reponse["Content-Disposition"] = f'attachment; filename="controle-meules-{timezone.localdate():%Y-%m-%d}.xlsx"'
+    return reponse
+
+
+# --- Correction (Méthode et management) ------------------------------------------------------------
+def modifier_saisie_meule(request, pk):
+    saisie = get_object_or_404(SaisieMeule.objects.select_related("machine", "meule", "format_matiere__produit",
+                                                                  "matricule_monteur", "matricule_demonteur"), pk=pk)
+    formulaire = CorrectionForm(request.POST or None, instance=saisie)
+    if request.method == "POST" and formulaire.is_valid():
+        enregistrer_correction(formulaire, request.user)
+        messages.success(request, "Saisie corrigée. Les valeurs calculées et les marques X et Défaut sont recalculées.")
+        return redirect(saisie)
+    return render(request, "remontees/modifier_saisie_meule.html", {"form": formulaire, "saisie": saisie,
+                                                                     "matricules": Matricule.objects.filter(actif=True)})
+
+
+@transaction.atomic
+def enregistrer_correction(formulaire, utilisateur):
+    saisie = formulaire.save(commit=False)
+    donnees = formulaire.cleaned_data
+    saisie.matricule_monteur = matricule(donnees["matricule_monteur"])
+    if saisie.est_demontee:
+        saisie.matricule_demonteur = matricule(donnees["matricule_demonteur"])
+        saisie.marquer(regles.lire_reglages())
+    saisie.corrige_par = utilisateur
+    saisie.corrige_le = timezone.now()
+    saisie.save()
+
+
+def supprimer_saisie_meule(request, pk):
+    saisie = get_object_or_404(SaisieMeule.objects.select_related("meule", "machine"), pk=pk)
+    if request.method != "POST":
+        return redirect(saisie)
+    texte = f"Saisie n° {saisie.pk} supprimée (meule {saisie.meule.reference} sur {saisie.machine.code})."
+    if saisie.sortie_stock_id:
+        texte += " La sortie de stock du montage reste : si la meule n'a pas servi, faites une entrée de stock."
+    saisie.delete()
+    messages.success(request, texte)
+    return redirect("saisies_meules")
+
+
+# --- Back-office des règles ------------------------------------------------------------------------
+def historiser(phrases, utilisateur):
+    HistoriqueRegle.objects.bulk_create([HistoriqueRegle(utilisateur=utilisateur, texte=phrase[:300])
+                                         for phrase in phrases])
+
+
+def regles_meules(request):
+    reglages = regles.lire_reglages()
+    formulaire_envoye = request.POST.get("formulaire") if request.method == "POST" else None
+    form_regles = ReglesForm(request.POST if formulaire_envoye == "regles" else None, reglages=reglages)
+    form_themes = ThemesForm(request.POST if formulaire_envoye == "themes" else None)
+    if formulaire_envoye == "origine":
+        with transaction.atomic():
+            RegleMeule.objects.all().delete()
+            historiser(["Toutes les règles remises aux valeurs d'origine"], request.user)
+        messages.success(request, "Règles remises aux valeurs d'origine. Les thèmes ne changent pas.")
+        return redirect("regles_meules")
+    if formulaire_envoye == "regles" and form_regles.is_valid():
+        nouveaux, phrases = form_regles.changements()
+        with transaction.atomic():
+            for code, (actif, valeurs) in nouveaux.items():
+                RegleMeule.objects.update_or_create(code=code, defaults={"actif": actif, "valeurs": valeurs})
+            historiser(phrases, request.user)
+        messages.success(request, f"Règles enregistrées ({len(phrases)} changement{'s' if len(phrases) > 1 else ''}).")
+        return redirect("regles_meules")
+    if formulaire_envoye == "themes" and form_themes.is_valid():
+        with transaction.atomic():
+            phrases = form_themes.enregistrer()
+            historiser(phrases, request.user)
+        messages.success(request, f"Thèmes enregistrés ({len(phrases)} changement{'s' if len(phrases) > 1 else ''}).")
+        return redirect("regles_meules")
+    return render(request, "remontees/regles_meules.html", {
+        "form_regles": form_regles, "form_themes": form_themes, "theme_defaut": regles.THEME_DEFAUT,
+        "historique": HistoriqueRegle.objects.select_related("utilisateur")[:NOMBRE_LIGNES_HISTORIQUE],
     })

@@ -123,11 +123,16 @@ class SaisieMeule(models.Model):
     demonte_par = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                     related_name="+", verbose_name="démontage saisi par (compte)")
     demonte_le = models.DateTimeField("démontage saisi le", null=True, blank=True)
+    non_finie = models.BooleanField("démontée avant usure totale", default=False,
+                                    help_text="La marque « X » : il restait plus que le seuil au démontage.")
     defaut = models.BooleanField("meule défectueuse", default=False,
                                  help_text="Cassée ou fissurée et démontée avant usure : l'onglet « Data défaut ».")
 
     # Avertissements que la personne a lus puis confirmés, gardés pour le contrôle qualité.
     avertissements = models.TextField(blank=True)
+    corrige_par = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="+", verbose_name="corrigé par")
+    corrige_le = models.DateTimeField("corrigé le", null=True, blank=True)
 
     objects = SaisieMeuleQuerySet.as_manager()
 
@@ -176,7 +181,56 @@ class SaisieMeule(models.Model):
     def hauteur_usee_par_face(self):
         return regles.hauteur_usee_par_face(self.nombre_faces_brut, self.hauteur_usee)
 
-    @property
-    def demontee_avant_usure(self):
-        """La marque « X » du classeur : il restait de la meule au démontage."""
-        return regles.demontee_avant_usure(self.hauteur_finale)
+    def marquer(self, reglages):
+        """Pose les marques du démontage : X (non finie) et défaut, avec les règles du moment."""
+        self.non_finie = regles.demontee_avant_usure(self.hauteur_finale, reglages)
+        self.defaut = regles.est_un_defaut(self.probleme, self.themes, self.hauteur_finale, reglages)
+
+
+class RegleMeule(models.Model):
+    """Réglage d'une règle du catalogue (regles.CATALOGUE) : interrupteur et valeurs, en texte décimal."""
+
+    code = models.CharField(max_length=40, unique=True)
+    actif = models.BooleanField(default=True)
+    valeurs = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["code"]
+        verbose_name = "règle des meules"
+        verbose_name_plural = "règles des meules"
+
+    def __str__(self):
+        regle = regles.PAR_CODE.get(self.code)
+        return regle.titre if regle else self.code
+
+
+class HistoriqueRegle(models.Model):
+    """Chaque changement fait dans le back-office des règles : qui, quand, quoi."""
+
+    date = models.DateTimeField(default=timezone.now)
+    utilisateur = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    texte = models.CharField(max_length=300)
+
+    class Meta:
+        ordering = ["-date", "-pk"]
+        verbose_name = "changement de règle"
+        verbose_name_plural = "historique des règles"
+
+    def __str__(self):
+        return self.texte
+
+
+class ThemeProbleme(models.Model):
+    """Thème proposé à la question « Qu'est-ce qui a posé problème ? » du démontage."""
+
+    libelle = models.CharField("libellé", max_length=80, unique=True)
+    ordre = models.PositiveIntegerField(default=0)
+    actif = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["ordre", "libelle"]
+        verbose_name = "thème de problème"
+        verbose_name_plural = "thèmes de problème"
+
+    def __str__(self):
+        return self.libelle

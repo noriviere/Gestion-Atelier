@@ -579,3 +579,12 @@ ul.legende-aide .pastille { margin-right: 6px; }
 .aide-commentaire .bouton { min-height: 32px; padding: 4px 10px; font-size: 13px; }
 .alerte-non-finie { color: var(--attention); font-weight: 600; }
 .champ input[type="checkbox"] { align-self: flex-start; width: 18px; height: 18px; }
+
+/* Remontées : navigation entre les pages et back-office des règles */
+.sous-navigation { margin-top: 0; }
+.sous-navigation .bouton[aria-current] { pointer-events: none; }
+.liste-regles { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0 18px; }
+.carte.regle .discret { margin: 4px 0 10px; font-size: 14px; }
+.entete-regle { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.interrupteur { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-weight: 600; }
+@media (max-width: 480px) { .liste-regles { grid-template-columns: 1fr; } }

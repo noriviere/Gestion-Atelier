@@ -264,7 +264,7 @@ for _produit, _machines, _cadence in _AFFECTATIONS:
         FORMATS_MEULE.append((_produit, _matiere, f"L{_produit[1:]}{_matiere}", _ma5,
                               [_MEULE_PAR_TAILLE[TAILLES[_produit]]], _machines_a_meule))
 
-# Historique fictif : nombre de meules démontées, sur environ 4 mois, et durée de vie typique de chaque meule.
+# Historique fictif : nombre de meules démontées, sur environ un an, et durée de vie typique de chaque meule.
 NOMBRE_MEULES_DEMONTEES = 90
 FACES_PAR_MM = {"MEU-200": 95, "MEU-300": 120}
 # Meules montées et pas encore démontées : machine, produit, matière, face, montée il y a N jours.
@@ -300,10 +300,16 @@ def saisies_meules_historique(alea):
         faces = round((hauteur_initiale - hauteur_finale) * FACES_PAR_MM[meule] * alea.uniform(0.85, 1.15))
         saisies.append({
             "produit": produit, "matiere": matiere, "machine": alea.choice(machines), "face": alea.choice("AB"),
-            "meule": meule, "monte_il_y_a": 3 + round(numero * 1.3), "duree_jours": alea.randint(1, 3),
+            "meule": meule, "monte_il_y_a": 3 + numero * 4, "duree_jours": alea.randint(1, 3),
             "pression": 0 if alea.random() < 0.05 else alea.choice([5, 6, 6, 6, 7]),
             "vitesse_rotation": vitesse_meule, "vitesse_avance": avance, "hauteur_initiale": hauteur_initiale,
             "hauteur_finale": hauteur_finale, "compteur_fin": faces, "probleme": probleme, "themes": themes,
             "commentaire": commentaire,
         })
+    # Quelques saisies absurdes, pour que le contrôle qualité de la démo ait quelque chose à montrer.
+    saisies[4]["compteur_fin"] = 0  # aucune face
+    saisies[11].update(hauteur_finale=9.5, commentaire="")  # non finie sans explication
+    saisies[23]["compteur_fin"] *= 3  # durée de vie très éloignée des meules identiques
+    saisies[37]["machine"] = "S8" if saisies[37]["machine"] != "S8" else "S1"  # machine peut-être pas prévue
+    saisies[52] = dict(saisies[51])  # doublon
     return saisies

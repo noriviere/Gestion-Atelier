@@ -18,7 +18,9 @@ ENTREES = {
         "produits", "produit", "fiche", "machine", "nouveau_produit", "modifier_produit", "nouvelle_fiche",
         "modifier_fiche",
     }),
-    "remontees": ("Remontées", "remontees", {"remontees", "montage_meule", "demontage_meule", "saisie_meule"}),
+    "remontees": ("Remontées", "remontees", {"remontees", "montage_meule", "demontage_meule", "saisie_meule",
+                                             "saisies_meules", "statistiques_meules", "controle_meules",
+                                             "modifier_saisie_meule", "regles_meules"}),
     "droits": ("Droits", "droits", {"droits"}),
 }
 

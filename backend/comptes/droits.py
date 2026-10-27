@@ -60,7 +60,9 @@ BLOCS = [
         Fonction("remontees_saisir", "Saisir le montage et le démontage des meules, ajouter un matricule", []),
         Fonction("remontees_consulter", "Consulter les remontées",
                  _vues("remontees.saisiemeule", "remontees.matricule", "remontees.formatmatiere")),
-        Fonction("remontees_parametrer", "Régler la table « Formats et matière » et la liste des matricules",
+        Fonction("remontees_corriger", "Corriger ou supprimer une saisie meule", []),
+        Fonction("remontees_parametrer",
+                 "Régler les règles des meules, les thèmes de problème, la table « Formats et matière » et les matricules",
                  _edition("remontees.formatmatiere", "remontees.matricule")),
     ]),
     Bloc("administration", "Administration", [
@@ -118,6 +120,13 @@ PAGES = {
     "montage_meule": "remontees_saisir",
     "demontage_meule": "remontees_saisir",
     "saisie_meule": "remontees_consulter",
+    "saisies_meules": "remontees_consulter",
+    "statistiques_meules": "remontees_consulter",
+    "controle_meules": "remontees_consulter",
+    "export_controle_meules": "remontees_consulter",
+    "modifier_saisie_meule": "remontees_corriger",
+    "supprimer_saisie_meule": "remontees_corriger",
+    "regles_meules": "remontees_parametrer",
     "droits": "admin_droits",
 }
 

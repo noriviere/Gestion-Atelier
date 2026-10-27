@@ -16,7 +16,7 @@ from inventaire.models import Article, ArticleFournisseur, Fournisseur, Mouvemen
 from outillage.models import Outil, PieceOutil
 from produits.models import Consommation, Document, Machine, Parametre, Produit, ProduitMachine
 from remontees import regles
-from remontees.models import FormatMatiere, Matricule, SaisieMeule
+from remontees.models import FormatMatiere, HistoriqueRegle, Matricule, RegleMeule, SaisieMeule, ThemeProbleme
 
 MOT_DE_PASSE_DEMO = "demo"
 
@@ -55,7 +55,8 @@ class Command(BaseCommand):
     def effacer_donnees_metier():
         for document in Document.objects.all():
             document.fichier.delete(save=False)
-        for modele in (SaisieMeule, FormatMatiere, Matricule, LigneCommande, Commande, Mouvement, Document, Parametre, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
+        for modele in (SaisieMeule, FormatMatiere, Matricule, RegleMeule, HistoriqueRegle, ThemeProbleme,
+                       LigneCommande, Commande, Mouvement, Document, Parametre, Consommation, ProduitMachine, Produit, Machine, PieceOutil, Outil,
                        ArticleFournisseur, Article, TypeInventaire, Fournisseur):
             modele.objects.all().delete()
 
@@ -208,6 +209,9 @@ class Command(BaseCommand):
     @staticmethod
     def creer_remontees(articles, produits, machines, comptes):
         # Les saisies passées ne font pas de sortie de stock : les stocks de la démo restent ceux de donnees.py.
+        # Règles à leurs valeurs d'origine (RegleMeule vide) et thèmes d'origine.
+        ThemeProbleme.objects.bulk_create([ThemeProbleme(libelle=libelle, ordre=ordre)
+                                           for ordre, libelle in enumerate(regles.THEMES_D_ORIGINE)])
         matricules = [Matricule.objects.create(numero=numero, nom=nom) for numero, nom in donnees.MATRICULES]
         formats = {}
         for reference, matiere, code_lame, ma5, meules, codes_machines in donnees.FORMATS_MEULE:
@@ -236,6 +240,7 @@ class Command(BaseCommand):
                 compteur_fin=valeurs["compteur_fin"], hauteur_finale=hauteur_finale, probleme=valeurs["probleme"],
                 themes=valeurs["themes"], commentaire=valeurs["commentaire"], demonte_par=comptes["operateur"],
                 demonte_le=a_heure(date_montage + timedelta(days=valeurs["duree_jours"]), 14),
+                non_finie=regles.demontee_avant_usure(hauteur_finale),
                 defaut=regles.est_un_defaut(valeurs["probleme"], valeurs["themes"], hauteur_finale),
             ))
         for code_machine, reference, matiere, face, il_y_a in donnees.MEULES_MONTEES:

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load aide %}
+{% block titre %}Remontées{% if machine_choisie %} {{ machine_choisie.code }}{% endif %} – Gestion Atelier{% endblock %}
+{% block contenu %}
+<h1>Remontées terrain</h1>
+<p class="sous-titre">Choisissez la machine, puis ce que vous voulez signaler. {% info "remontees" "ecran" "L'écran des remontées" %}</p>
+
+<h2>Machine</h2>
+<div class="grille grille-compacte grille-machines">
+  {% for machine in machines %}<a class="tuile{% if machine == machine_choisie %} choisie{% endif %}" href="{% url 'remontees' %}?machine={{ machine.code }}"{% if machine == machine_choisie %} aria-current="true"{% endif %}><div class="valeur">{{ machine.code }}</div><div class="libelle">{% if machine.meules_montees %}<span class="etiquette ok">{{ machine.meules_montees }} meule{{ machine.meules_montees|pluralize }} montée{{ machine.meules_montees|pluralize }}</span>{% else %}{{ machine.nom }}{% endif %}</div></a>
+  {% empty %}<p class="carte">Aucune machine : elles se créent dans « Produits et machines ».</p>{% endfor %}
+</div>
+
+{% if machine_choisie %}
+<h2>Que voulez-vous signaler sur {{ machine_choisie.code }} ?</h2>
+<div class="grille grille-compacte">
+  <a class="tuile" href="{% url 'montage_meule' %}?machine={{ machine_choisie.code }}"><div class="valeur">Meule</div><div class="libelle">Monter une meule ; le démontage se fait depuis la liste ci-dessous.</div></a>
+  <div class="tuile a-venir" aria-disabled="true"><div class="valeur">Porte-lame</div><div class="libelle">Bientôt : montage, démontage et faces de chaque porte-lame.</div></div>
+  <div class="tuile a-venir" aria-disabled="true"><div class="valeur">Autre</div><div class="libelle">Bientôt : signaler un problème sur une autre pièce ou un consommable.</div></div>
+</div>
+
+<h2>Meules montées sur {{ machine_choisie.code }}{% info "remontees" "en-attente" "Les meules montées" %}</h2>
+{% if meules_montees %}
+<div class="tableau"><table>
+  <tr><th>Montée le</th><th>Meule</th><th>Format</th><th>Face</th><th>Monteur</th><th></th></tr>
+  {% for saisie in meules_montees %}
+  <tr><td>{{ saisie.date_montage|date:"d/m/Y" }}</td><td>{{ saisie.meule.reference }}</td><td>{{ saisie.format_matiere }}</td><td>{{ saisie.face }}</td><td>{{ saisie.matricule_monteur.numero }}</td>
+    <td><a class="bouton" href="{% url 'demontage_meule' saisie.pk %}">Démonter</a></td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="carte">Aucune meule montée en attente de démontage sur {{ machine_choisie.code }}.</p>{% endif %}
+
+<h2>Derniers démontages sur {{ machine_choisie.code }}</h2>
+{% if dernieres_demontees %}
+<div class="tableau"><table>
+  <tr><th>Démontée le</th><th>Meule</th><th>Format</th><th>Face</th><th class="nombre">Faces</th><th class="nombre">Faces / meule de 89 mm</th><th>Remarque</th></tr>
+  {% for saisie in dernieres_demontees %}
+  <tr><td><a href="{{ saisie.get_absolute_url }}">{{ saisie.demonte_le|date:"d/m/Y" }}</a></td><td>{{ saisie.meule.reference }}</td><td>{{ saisie.format_matiere }}</td><td>{{ saisie.face }}</td>
+    <td class="nombre">{{ saisie.nombre_faces_brut }}</td><td class="nombre">{{ saisie.faces_par_meule_reference|floatformat:0|default:"—" }}</td>
+    <td>{% include "remontees/_etat_saisie.html" %}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="carte">Aucun démontage saisi sur {{ machine_choisie.code }}.</p>{% endif %}
+{% endif %}
+{% endblock %}

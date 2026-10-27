@@ -239,3 +239,71 @@ COMMANDES = [
     ("Meules et Bandes Diffusion", "passee", 5, 4, 6, None, "MBD-4410", [("MEU-300", 4, None)], ""),
     ("Abrasifs Industriels", "attente", 0, None, None, None, "", [("BAN-80", 50, None)], "À regrouper avec le prochain besoin en bandes."),
 ]
+
+# --- Remontées terrain : suivi d'usure des meules -------------------------------------------------
+MATRICULES = [
+    # numéro, nom (facultatif)
+    ("0534", "Équipe A"), ("0612", "Équipe A"), ("0718", "Équipe B"), ("0841", "Équipe B"), ("0907", "Équipe C"),
+    ("1023", "Équipe C"),
+]
+
+# Table « Formats et matière » : le format est le produit. Seules les machines à meule (S1 à S8) sont prévues.
+_PRODUITS_PEUT_ETRE_MA5 = ("N4", "N8")
+FORMATS_MEULE = [
+    # produit, matière (I inox / C carbone), code lame, MA5 (oui / non / peut_etre), meules prévues, machines prévues
+]
+for _produit, _machines, _cadence in _AFFECTATIONS:
+    _machines_a_meule = [machine for machine in _machines if machine.startswith("S")]
+    for _matiere in ("I", "C"):
+        if _matiere == "C":
+            _ma5 = "non"
+        elif _produit in _PRODUITS_PEUT_ETRE_MA5:
+            _ma5 = "peut_etre"
+        else:
+            _ma5 = "oui" if TAILLES[_produit] == "G" else "non"
+        FORMATS_MEULE.append((_produit, _matiere, f"L{_produit[1:]}{_matiere}", _ma5,
+                              [_MEULE_PAR_TAILLE[TAILLES[_produit]]], _machines_a_meule))
+
+# Historique fictif : nombre de meules démontées, sur environ 4 mois, et durée de vie typique de chaque meule.
+NOMBRE_MEULES_DEMONTEES = 90
+FACES_PAR_MM = {"MEU-200": 95, "MEU-300": 120}
+# Meules montées et pas encore démontées : machine, produit, matière, face, montée il y a N jours.
+MEULES_MONTEES = [("S3", "N4", "I", "A", 2), ("S5", "N7", "C", "B", 1), ("S7", "N10", "I", "A", 0)]
+
+
+def saisies_meules_historique(alea):
+    """Saisies démontées fictives, tirées avec le générateur `alea` (graine fixe : la démo est toujours la même).
+
+    Renvoie des dicts : produit, matière, machine, face, il y a N jours, réglages, hauteurs, compteur fin, retour."""
+    formats = [(produit, matiere, machines) for produit, matiere, _, _, _, machines in FORMATS_MEULE]
+    saisies = []
+    for numero in range(NOMBRE_MEULES_DEMONTEES):
+        produit, matiere, machines = alea.choice(formats)
+        taille = TAILLES[produit]
+        vitesse_meule, avance = (int(valeur) for valeur in _PARAMETRES_PAR_TAILLE[taille][:2])
+        hauteur_initiale = round(alea.uniform(98, 105), 1)
+        tirage = alea.random()
+        probleme, themes, commentaire = False, [], ""
+        if tirage < 0.04:
+            hauteur_finale = round(alea.uniform(25, 60), 1)
+            probleme, themes = True, ["Meule cassée ou fissurée"]
+            commentaire = "Constat : fissure sur le flanc après un choc au chargement.\nAction : meule démontée et mise de côté."
+        elif tirage < 0.12:
+            hauteur_finale = round(alea.uniform(4, 20), 1)
+            commentaire = alea.choice(["Changement de série : format suivant sur une autre meule.",
+                                       "Usure irrégulière, la qualité de coupe se dégradait."])
+            if "irrégulière" in commentaire:
+                probleme, themes = True, ["Usure irrégulière", "Mauvaise qualité de coupe"]
+        else:
+            hauteur_finale = round(alea.uniform(0, 1.5), 1)
+        meule = _MEULE_PAR_TAILLE[taille]
+        faces = round((hauteur_initiale - hauteur_finale) * FACES_PAR_MM[meule] * alea.uniform(0.85, 1.15))
+        saisies.append({
+            "produit": produit, "matiere": matiere, "machine": alea.choice(machines), "face": alea.choice("AB"),
+            "meule": meule, "monte_il_y_a": 3 + round(numero * 1.3), "duree_jours": alea.randint(1, 3),
+            "pression": 0 if alea.random() < 0.05 else alea.choice([5, 6, 6, 6, 7]),
+            "vitesse_rotation": vitesse_meule, "vitesse_avance": avance, "hauteur_initiale": hauteur_initiale,
+            "hauteur_finale": hauteur_finale, "compteur_fin": faces, "probleme": probleme, "themes": themes,
+            "commentaire": commentaire,
+        })
+    return saisies

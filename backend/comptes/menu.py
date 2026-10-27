@@ -18,14 +18,15 @@ ENTREES = {
         "produits", "produit", "fiche", "machine", "nouveau_produit", "modifier_produit", "nouvelle_fiche",
         "modifier_fiche",
     }),
+    "remontees": ("Remontées", "remontees", {"remontees", "montage_meule", "demontage_meule", "saisie_meule"}),
     "droits": ("Droits", "droits", {"droits"}),
 }
 
 # Bureau (admin, méthode et management, intendant) : le stock et les commandes d'abord.
 ORDRE_BUREAU = ["accueil", "stock", "a_commander", "commandes", "fournisseurs", "inventaires", "outillage", "produits",
-                "droits"]
-# Atelier : les fiches de production d'abord ; il suit les commandes (réceptions) mais ne les prépare pas.
-ORDRE_ATELIER = ["accueil", "produits", "outillage", "stock", "inventaires", "commandes", "droits"]
+                "remontees", "droits"]
+# Atelier : les remontées et les fiches de production d'abord ; il suit les commandes (réceptions) mais ne les prépare pas.
+ORDRE_ATELIER = ["accueil", "remontees", "produits", "outillage", "stock", "inventaires", "commandes", "droits"]
 
 
 def entrees_menu(user, page_courante):

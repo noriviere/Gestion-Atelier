@@ -1,0 +1,8 @@
+{% load aide %}{% for erreur in form.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+{% if form.avertissements_a_confirmer %}<div class="carte avertissements" role="alert">
+  <h2 class="titre-carte">À vérifier avant d'enregistrer{% info "remontees" "avertissements" "Les avertissements" %}</h2>
+  <ul>{% for avertissement in form.avertissements_a_confirmer %}<li>{{ avertissement }}</li>{% endfor %}</ul>
+  <p class="discret">Corrigez la saisie si besoin. Si tout est juste, cliquez sur « Enregistrer quand même ».</p>
+</div>{% endif %}
+{{ form.avertissements_vus }}
+<datalist id="matricules">{% for matricule in matricules %}<option value="{{ matricule.numero }}">{{ matricule.nom }}</option>{% endfor %}</datalist>

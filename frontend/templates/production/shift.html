@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load aide production %}
+{% block titre %}Shift {{ shift.machine.code }} {{ shift.jour|date:"d/m" }} {{ shift.creneau.nom }} – Gestion Atelier{% endblock %}
+{% block contenu %}
+{% url 'production' as adresse_production %}
+<nav class="fil no-print" aria-label="Fil d'Ariane"><ol><li><a href="{{ adresse_production }}">Production</a></li><li><a href="{{ adresse_production }}?machine={{ shift.machine.code }}">{{ shift.machine.code }}</a></li><li aria-current="page">Shift du {{ shift.jour|date:"d/m/Y" }}</li></ol></nav>
+<h1>{{ shift.machine.code }} · {{ shift.creneau.nom }} du {{ shift.jour|date:"l d/m/Y" }}</h1>
+<p class="sous-titre">Équipe <strong>{{ shift.equipe }}</strong>{% if shift.matricule %} · matricule {{ shift.matricule.numero }}{% endif %} · {{ shift.debut|time:"H:i" }} – {{ shift.fin|time:"H:i" }}
+  {% if shift.est_termine %}<span class="etiquette">Shift terminé</span>{% else %}<span class="etiquette ok">En cours</span>{% endif %}
+  {% info "production" "ecran" "La saisie du shift" %}</p>
+{% if correction %}<p class="carte">Ce shift est terminé : chaque modification est notée dans l'historique en bas de page. {% info "production" "corrections" "Corriger un shift terminé" %}</p>
+{% elif not modifiable %}<p class="carte">Ce shift est terminé : seuls les profils autorisés à corriger peuvent encore le modifier.</p>{% endif %}
+
+<div class="grille grille-compacte">
+  <div class="tuile"><div class="valeur">{{ bilan.theorique|minutes }}</div><div class="libelle">temps théorique</div></div>
+  <div class="tuile{% if bilan.arrets %} attention{% endif %}"><div class="valeur">{{ bilan.arrets|minutes }}</div><div class="libelle">d'arrêts</div></div>
+  <div class="tuile"><div class="valeur">{{ bilan.marche|minutes }}</div><div class="libelle">temps de marche</div></div>
+  <div class="tuile"><div class="valeur">{{ bilan.quantite|floatformat:"0g" }}</div><div class="libelle">pièces produites</div></div>
+  <div class="tuile{% if bilan.rendement is not None and bilan.rendement < 0.85 %} alerte{% endif %}"><div class="valeur">{{ bilan.rendement|pourcent }}</div><div class="libelle">rendement {% info "production" "calculs" "Temps de marche et rendement" %}</div></div>
+</div>
+
+{% if peut_sortir_du_stock or peut_faire_une_remontee %}
+<p class="actions no-print">{% if peut_sortir_du_stock %}<a class="bouton secondaire" href="{% url 'articles' %}">Sortir une pièce du stock</a>{% endif %}
+  {% if peut_faire_une_remontee %}<a class="bouton secondaire" href="{% url 'remontees' %}?machine={{ shift.machine.code }}">Suivi des meules et porte-lames</a>{% endif %}
+  {% info "production" "raccourcis" "Les raccourcis" %}</p>
+{% endif %}
+
+<h2>Produits{% info "production" "produits" "Produits et quantités" %}</h2>
+{% if bilan.troncons %}
+<div class="tableau"><table>
+  <tr><th>Produit</th><th>De</th><th>À</th><th class="nombre">Arrêts</th><th class="nombre">Marche</th><th class="nombre">Cadence</th><th class="nombre">Attendu</th><th class="nombre">Quantité</th><th class="nombre">Rendement</th>{% if modifiable %}<th>Compteurs</th><th></th>{% endif %}</tr>
+  {% for element in bilan.troncons %}{% with troncon=element.troncon %}
+  <tr><td><a href="{{ troncon.produit.get_absolute_url }}">{{ troncon.produit.reference }}</a></td><td>{{ troncon.debut|time:"H:i" }}</td><td>{{ element.fin|time:"H:i" }}</td>
+    <td class="nombre">{{ element.arrets }} min</td><td class="nombre">{{ element.marche|minutes }}</td>
+    <td class="nombre">{% if troncon.cadence %}{{ troncon.cadence|floatformat:"-1" }} p/h{% else %}<span class="discret">—</span>{% endif %}</td>
+    <td class="nombre">{{ element.attendue|floatformat:"0g"|default:"—" }}</td>
+    <td class="nombre">{% if element.quantite is None %}<span class="etiquette attention">à saisir</span>{% else %}{{ element.quantite|floatformat:"0g" }}{% endif %}</td>
+    <td class="nombre">{% include "production/_rendement.html" with rendement=element.rendement %}</td>
+    {% if modifiable %}
+    <td><form method="post" class="champs-compteurs" data-demo="production" data-demo-texte="Quantité vérifiée : sur la version installée, elle est enregistrée et le rendement recalculé.">{% csrf_token %}<input type="hidden" name="action" value="quantite"><input type="hidden" name="troncon" value="{{ troncon.pk }}">
+      {% if troncon_en_erreur == troncon.pk %}{% with form=form_quantite_en_erreur %}
+      <label>Début <input type="number" name="compteur_debut" min="0" inputmode="numeric" value="{{ form.compteur_debut.value|default_if_none:'' }}"></label>
+      <label>Fin <input type="number" name="compteur_fin" min="0" inputmode="numeric" required value="{{ form.compteur_fin.value|default_if_none:'' }}"></label>
+      {% for erreurs in form.errors.values %}{% for erreur in erreurs %}<span class="erreur">{{ erreur }}</span>{% endfor %}{% endfor %}
+      {% endwith %}{% else %}
+      <label>Début <input type="number" name="compteur_debut" min="0" inputmode="numeric" value="{{ troncon.compteur_debut }}"></label>
+      <label>Fin <input type="number" name="compteur_fin" min="0" inputmode="numeric" required value="{{ troncon.compteur_fin|default_if_none:'' }}"></label>
+      {% endif %}
+      <button class="bouton" type="submit">Enregistrer</button></form></td>
+    <td><form method="post" data-demo="production" data-demo-texte="Sur la version installée, le produit est retiré du shift." data-confirmation="Retirer {{ troncon.produit.reference }} de ce shift ? Ses arrêts restent dans le shift.">{% csrf_token %}<input type="hidden" name="action" value="retirer_produit"><input type="hidden" name="troncon" value="{{ troncon.pk }}"><button class="lien-bouton" type="submit">Retirer</button></form></td>
+    {% endif %}</tr>
+  {% endwith %}{% endfor %}
+</table></div>
+{% else %}<p class="carte">Aucun produit démarré sur ce shift.</p>{% endif %}
+
+{% if modifiable %}
+<form method="post" class="formulaire" data-demo="production" data-demo-texte="Produit vérifié : sur la version installée, il est ajouté au shift.">{% csrf_token %}<input type="hidden" name="action" value="produit">
+  <div class="carte">
+    <h3 class="titre-carte">{% if bilan.troncons %}Changer de produit{% else %}Démarrer un produit{% endif %}</h3>
+    {% for erreur in form_produit.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form_produit.produit %}
+      {% include "_champ.html" with champ=form_produit.heure aide_sujet="production" aide_ancre="changement" %}
+      {% if form_produit.compteur_fin_precedent %}{% include "_champ.html" with champ=form_produit.compteur_fin_precedent %}{% endif %}
+      {% include "_champ.html" with champ=form_produit.compteur_debut aide_sujet="production" aide_ancre="compteur" %}
+    </div>
+    <div class="actions"><button class="bouton" type="submit">{% if bilan.troncons %}Changer de produit{% else %}Démarrer{% endif %}</button></div>
+  </div>
+</form>
+{% endif %}
+
+<h2>Arrêts{% info "production" "arrets" "Les arrêts" %}</h2>
+{% if shift.arrets.all %}
+<div class="tableau"><table>
+  <tr><th>Cause</th><th class="nombre">Durée</th><th>Produit</th><th>Commentaire</th><th>Saisi à</th>{% if modifiable %}<th></th>{% endif %}</tr>
+  {% for arret in shift.arrets.all %}
+  <tr><td>{{ arret.cause }}</td><td class="nombre">{{ arret.duree }} min</td><td>{{ arret.troncon.produit.reference|default:"—" }}</td><td>{{ arret.commentaire }}</td><td>{{ arret.saisi_le|date:"d/m H:i" }}</td>
+    {% if modifiable %}<td><form method="post" data-demo="production" data-demo-texte="Sur la version installée, l'arrêt est retiré." data-confirmation="Retirer l'arrêt {{ arret.cause }} de {{ arret.duree }} min ?">{% csrf_token %}<input type="hidden" name="action" value="retirer_arret"><input type="hidden" name="arret" value="{{ arret.pk }}"><button class="lien-bouton" type="submit">Retirer</button></form></td>{% endif %}</tr>
+  {% endfor %}
+  <tr><th>Total</th><th class="nombre">{{ bilan.arrets }} min</th><th colspan="{% if modifiable %}4{% else %}3{% endif %}"></th></tr>
+</table></div>
+{% else %}<p class="carte">Aucun arrêt saisi.</p>{% endif %}
+
+{% if modifiable %}
+<form method="post" class="formulaire" data-demo="production" data-demo-texte="Arrêt vérifié : sur la version installée, il est ajouté et le temps de marche recalculé.">{% csrf_token %}<input type="hidden" name="action" value="arret">
+  <div class="carte">
+    <h3 class="titre-carte">Ajouter un arrêt</h3>
+    {% for erreur in form_arret.non_field_errors %}<p class="erreur">{{ erreur }}</p>{% endfor %}
+    <div class="grille-champs">
+      {% include "_champ.html" with champ=form_arret.cause aide_sujet="production" aide_ancre="causes" %}
+      {% include "_champ.html" with champ=form_arret.duree %}
+      {% include "_champ.html" with champ=form_arret.troncon %}
+      {% include "_champ.html" with champ=form_arret.commentaire classe="champ-large" %}
+    </div>
+    <div class="actions"><button class="bouton" type="submit">Ajouter l'arrêt</button></div>
+  </div>
+</form>
+{% endif %}
+
+{% if shift.corrections.all %}
+<h2>Historique des corrections</h2>
+<div class="tableau"><table>
+  <tr><th>Le</th><th>Par</th><th>Modification</th></tr>
+  {% for correction in shift.corrections.all %}<tr><td>{{ correction.le|date:"d/m/Y H:i" }}</td><td>{{ correction.par|default:"—" }}</td><td>{{ correction.description }}</td></tr>{% endfor %}
+</table></div>
+{% endif %}
+{% endblock %}

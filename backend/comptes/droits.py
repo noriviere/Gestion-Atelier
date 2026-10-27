@@ -63,6 +63,15 @@ BLOCS = [
         Fonction("remontees_parametrer", "Régler la table « Formats et matière » et la liste des matricules",
                  _edition("remontees.formatmatiere", "remontees.matricule")),
     ]),
+    Bloc("production", "Rapport de production", [
+        Fonction("production_saisir", "Saisir les shifts (produits, quantités, arrêts) et voir le rapport de la veille", []),
+        Fonction("production_consulter", "Consulter le rapport de production sur toute période et l'exporter",
+                 _vues("production.shift", "production.troncon", "production.arret", "production.causearret",
+                       "production.creneau", "production.equipe")),
+        Fonction("production_corriger", "Corriger un shift terminé", []),
+        Fonction("production_parametrer", "Régler les causes d'arrêt, les créneaux horaires et les équipes",
+                 _edition("production.causearret", "production.creneau", "production.equipe")),
+    ]),
     Bloc("administration", "Administration", [
         Fonction("admin_droits", "Gérer les droits des profils et le profil des comptes", []),
     ]),
@@ -118,13 +127,18 @@ PAGES = {
     "montage_meule": "remontees_saisir",
     "demontage_meule": "remontees_saisir",
     "saisie_meule": "remontees_consulter",
+    "production": "production_saisir",
     "droits": "admin_droits",
 }
 
 # Pages hors de PAGES : ouvertes à tout compte connecté (leur contenu suit les droits), ou dont la vue
 # vérifie elle-même les droits. Un test oblige chaque nouvelle page à figurer dans l'une des deux listes.
-PAGES_SANS_DROIT_UNIQUE = {"connexion", "deconnexion", "accueil", "recherche", "aide", "aide_sujet", "modifier_fiche"}
+PAGES_SANS_DROIT_UNIQUE = {"connexion", "deconnexion", "accueil", "recherche", "aide", "aide_sujet", "modifier_fiche",
+                            # production_saisir ou production_consulter, vérifié dans la vue :
+                            "shift", "rapport_production", "export_rapport_production"}
 
+# Tout le monde saisit son shift ; corriger un shift terminé reste à Méthode et management (choix de Noel).
+PRODUCTION_REGLAGES = ["production_saisir", "production_consulter", "production_parametrer"]
 # Tout le monde saisit les remontées et les consulte ; leur paramétrage reste à Méthode et management.
 REMONTEES = ["remontees_saisir", "remontees_consulter"]
 _ATELIER = ["stock_consulter", "stock_mouvements", "commandes_consulter", "commandes_receptionner",
@@ -136,7 +150,8 @@ DEFAUTS = {
     "Méthode et management": [code for code in TOUS_LES_CODES if code != "admin_droits"],
     "Intendant": ["stock_consulter", "stock_mouvements", "stock_comptages", "stock_articles", "stock_fournisseurs",
                   "commandes_consulter", "commandes_preparer", "commandes_receptionner",
-                  "outillage_consulter", "produits_consulter"] + REMONTEES,
-    "Régleur": _ATELIER + ["produits_documents_voir", "produits_documents_gerer", "produits_reglages"],
-    "Opérateur": _ATELIER,
+                  "outillage_consulter", "produits_consulter"] + REMONTEES + PRODUCTION_REGLAGES,
+    "Régleur": _ATELIER + ["produits_documents_voir", "produits_documents_gerer", "produits_reglages"]
+    + PRODUCTION_REGLAGES,
+    "Opérateur": _ATELIER + ["production_saisir"],
 }

@@ -307,3 +307,26 @@ def saisies_meules_historique(alea):
             "commentaire": commentaire,
         })
     return saisies
+
+# --- Rapport de production -------------------------------------------------------------------------
+# Équipes, créneaux et causes : les listes de départ de la migration production 0002.
+PRODUCTION_JOURS = 7
+MACHINES_DE_NUIT = ["S1", "S2", "S3", "S5", "MAD1"]
+MACHINES_DU_WEEKEND = ["S1", "S2"]
+# Machines dont le shift en cours est déjà ouvert dans la démo.
+MACHINES_SHIFT_EN_COURS = ["S1", "S3", "S5"]
+MATRICULES_PAR_EQUIPE = {"E1": ["0534", "0612"], "E2": ["0718", "0841"], "E3": ["0907"], "E4": ["1023"]}
+# Arrêts de chaque shift : cause, durée (min). Le weekend (12 h) a deux pauses.
+ARRETS_HABITUELS = [("Pause", 20), ("Nettoyage", 15)]
+# Arrêts tirés au hasard : cause, durée mini, durée maxi, commentaires possibles.
+ARRETS_ALEATOIRES = [
+    ("Panne machine", 15, 90, ["Défaut broche, intervention maintenance", "Capteur de porte en défaut", ""]),
+    ("Changement de meule ou de bande", 20, 45, ["Meule VGR + VGL", "Bande usée", ""]),
+    ("Outillages", 10, 40, ["Réglage pince", "vgl", ""]),
+    ("Changement de série / réglage", 20, 50, [""]),
+    ("Attente matière", 10, 60, ["Palette pas prête", ""]),
+    ("Organisation", 10, 30, ["démarrage lundi", ""]),
+    ("Réunion", 30, 40, ["mensuelle"]),
+    ("Contrôle qualité", 10, 25, ["Contrôle dimensionnel après réglage", ""]),
+    ("Attente régleur", 10, 30, [""]),
+]

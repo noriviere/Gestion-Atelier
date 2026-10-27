@@ -1,0 +1,1 @@
+{% load production %}{% if rendement is None %}<span class="discret">—</span>{% elif rendement < 0.85 %}<span class="etiquette alerte">{{ rendement|pourcent }}</span>{% else %}{{ rendement|pourcent }}{% endif %}

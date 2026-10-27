@@ -579,3 +579,16 @@ ul.legende-aide .pastille { margin-right: 6px; }
 .aide-commentaire .bouton { min-height: 32px; padding: 4px 10px; font-size: 13px; }
 .alerte-non-finie { color: var(--attention); font-weight: 600; }
 .champ input[type="checkbox"] { align-self: flex-start; width: 18px; height: 18px; }
+
+/* Rapport de production */
+.colonnes-egales { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.colonnes-egales > section { min-width: 0; }
+@media (max-width: 900px) { .colonnes-egales { grid-template-columns: 1fr; gap: 0; } }
+.graphique-barres .colonne-barre { width: 25%; min-width: 70px; }
+.graphique-barres .nombre { white-space: nowrap; }
+svg.barre { display: block; width: 100%; height: 12px; }
+svg.barre rect { fill: var(--accent); }
+.champs-compteurs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.champs-compteurs label { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+.champs-compteurs input { width: 90px; }
+.champs-compteurs .bouton { min-height: 32px; padding: 4px 10px; font-size: 13px; }
